@@ -1,6 +1,7 @@
 ﻿#include<windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h> // ★シェーダーコンパイル用に追加
+#include <cmath>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib") // ★追加
@@ -26,6 +27,17 @@ struct SimpleVertex
     float x, y, z;
     float r, g, b; // ★色データを追加
 };
+
+// ★★★ 定数バッファのために追加 ★★★
+// シェーダーに送るデータの構造体（16バイトの倍数にする規則があります、理由は後述）
+struct ConstantBuffer
+{
+    float offsetX;    // X軸の移動量
+    float dummy[3];   // 16バイトの倍数にするための詰め物（アライメント用）
+};
+
+ID3D11Buffer* g_pConstantBuffer = nullptr; // 定数バッファオブジェクト
+float g_Time = 0.0f;                       // 時間計測用
 
 // 関数の前方宣言
 bool InitDevice(HWND hWnd);
@@ -282,6 +294,19 @@ bool InitDevice(HWND hWnd)
     hr = g_pd3dDevice->CreateBuffer(&ibd, &InitDataIndex, &g_pIndexBuffer);
     if (FAILED(hr)) return false;
 
+    // ------------------------------------------------------------------------
+// 10. 【新規追加】定数バッファ（Constant Buffer）の作成
+// ------------------------------------------------------------------------
+    D3D11_BUFFER_DESC cbd = {};
+    cbd.Usage = D3D11_USAGE_DEFAULT;             // 毎フレームGPU側で更新する
+    cbd.ByteWidth = sizeof(ConstantBuffer);      // 構造体のサイズ（必ず16の倍数）
+    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER; // ★定数バッファとして設定
+    cbd.CPUAccessFlags = 0;
+
+    hr = g_pd3dDevice->CreateBuffer(&cbd, nullptr, &g_pConstantBuffer); // 初期データは空でOK
+    if (FAILED(hr)) return false;
+
+
     return true;
 }
 
@@ -292,6 +317,21 @@ void Render()
 {
     float clearColor[] = { 0.392f, 0.584f, 0.929f, 1.0f };
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
+
+    // 毎フレーム時間を進める（約60fps想定で適当な値を足します。本来はタイマーを使います）
+    g_Time += 0.03f;
+
+    // サイン波を使って -0.5 ～ +0.5 の間で左右に往復する値を計算
+    ConstantBuffer cb;
+    cb.offsetX = sinf(g_Time) * 0.5f;
+
+    // 1. C++側のデータをGPU側のバッファにコピーする（OpenGLの glBufferSubData に相当）
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+    // 2. 頂点シェーダーの「0番スロット」にこの定数バッファをセットする
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+
+    // （この後に既存の IASetInputLayout などの描画処理が続きます...）
 
     // ★★★ ここから描画処理を追加 ★★★
 
@@ -336,6 +376,7 @@ void CleanupDevice()
     if (g_pPixelShader)     g_pPixelShader->Release();
     if (g_pVertexShader)    g_pVertexShader->Release();
     if (g_pIndexBuffer) g_pIndexBuffer->Release();
+    if(g_pIndexBuffer )g_pConstantBuffer->Release();
 
     // 既存のオブジェクトの解放
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
