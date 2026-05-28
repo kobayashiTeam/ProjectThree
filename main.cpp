@@ -22,6 +22,7 @@ ID3D11Buffer* g_pVertexBuffer = nullptr;  // 頂点バッファ
 struct SimpleVertex
 {
     float x, y, z;
+    float r, g, b; // ★色データを追加
 };
 
 // 関数の前方宣言
@@ -213,11 +214,23 @@ bool InitDevice(HWND hWnd)
             0,                      // C++構造体の先頭からのオフセット（0バイト目）
             D3D11_INPUT_PER_VERTEX_DATA, // 頂点データごとに読み込む
             0
-        }
+        },
+
+        // ★ 2つ目の属性として「COLOR」を追加
+    {
+        "COLOR",                     // HLSL側のセマンティクス名
+        0,                           // インデックス
+        DXGI_FORMAT_R32G32B32_FLOAT, // float 3つ分（R, G, B）
+        0,                           // 入力スロット（頂点バッファと同じ0番）
+        sizeof(float) * 3,           // ★オフセット：最初のXYZ（float×3）を飛び越えた位置からスタート
+        D3D11_INPUT_PER_VERTEX_DATA,
+        0
+    }
+
     };
 
     // レイアウトの作成（頂点シェーダーのバイナリ情報が照合に必要になります）
-    hr = g_pd3dDevice->CreateInputLayout(layout, 1, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
+    hr = g_pd3dDevice->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
     pVSBlob->Release(); // 頂点シェーダーのバイナリもここで解放してOK
     if (FAILED(hr)) return false;
 
@@ -228,10 +241,13 @@ bool InitDevice(HWND hWnd)
     // 三角形の頂点データ（クリップ空間。中心が 0.0、画面端が -1.0 〜 1.0）
     SimpleVertex vertices[] =
     {
-        {  0.0f,  0.5f, 0.5f }, // 上
-        {  0.5f, -0.5f, 0.5f }, // 右下
-        { -0.5f, -0.5f, 0.5f }  // 左下
+        // { 座標(X,Y,Z), 色(R,G,B) }
+        { -0.5f,  0.5f, 0.5f,  1.0f, 0.0f, 0.0f }, // 0: 左上（赤）
+        {  0.5f,  0.5f, 0.5f,  0.0f, 1.0f, 0.0f }, // 1: 右上（緑）
+        {  0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f }, // 2: 右下（青）
+        { -0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 0.0f }  // 3: 左下（黄）
     };
+    // ※ bd.ByteWidth = sizeof(SimpleVertex) * 4; などの記述はそのまま使えます！
 
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;                 // GPUによる読み書きの標準的な設定
