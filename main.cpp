@@ -1,4 +1,4 @@
-﻿#include <windows.h>
+﻿#include<windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h> // ★シェーダーコンパイル用に追加
 
@@ -7,7 +7,7 @@
 // ---------------------------------------------------------
 // 全局変数（DirectX 11のオブジェクトたち）
 // ---------------------------------------------------------
-ID3D11Device* g_pd3dDevice = nullptr;
+ID3D11Device * g_pd3dDevice = nullptr;
 ID3D11DeviceContext* g_pImmediateContext = nullptr;
 IDXGISwapChain* g_pSwapChain = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
@@ -17,6 +17,8 @@ ID3D11VertexShader* g_pVertexShader = nullptr;  // 頂点シェーダー
 ID3D11PixelShader* g_pPixelShader = nullptr;   // ピクセルシェーダー
 ID3D11InputLayout* g_pVertexLayout = nullptr;  // 頂点レイアウト（指示書）
 ID3D11Buffer* g_pVertexBuffer = nullptr;  // 頂点バッファ
+// ★★★ 四角形（インデックス描画）のために追加 ★★★
+ID3D11Buffer* g_pIndexBuffer = nullptr; // インデックスバッファ
 
 // C++側の頂点構造体
 struct SimpleVertex
@@ -236,9 +238,8 @@ bool InitDevice(HWND hWnd)
 
 
     // ------------------------------------------------------------------------
-    // 8. 頂点バッファ（VBO）の作成
-    // ------------------------------------------------------------------------
-    // 三角形の頂点データ（クリップ空間。中心が 0.0、画面端が -1.0 〜 1.0）
+// 8. 頂点バッファ（VBO）の作成 (4頂点に変更)
+// ------------------------------------------------------------------------
     SimpleVertex vertices[] =
     {
         // { 座標(X,Y,Z), 色(R,G,B) }
@@ -247,20 +248,38 @@ bool InitDevice(HWND hWnd)
         {  0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f }, // 2: 右下（青）
         { -0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 0.0f }  // 3: 左下（黄）
     };
-    // ※ bd.ByteWidth = sizeof(SimpleVertex) * 4; などの記述はそのまま使えます！
 
     D3D11_BUFFER_DESC bd = {};
-    bd.Usage = D3D11_USAGE_DEFAULT;                 // GPUによる読み書きの標準的な設定
-    bd.ByteWidth = sizeof(SimpleVertex) * 3;        // バッファ全体のサイズ（3頂点分）
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // 「頂点バッファ」としてバインドする設定
-    bd.CPUAccessFlags = 0;                          // CPUからは直接アクセスしない
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SimpleVertex) * 4; // ★ 4頂点分に変更
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-    // サブソース（初期化用のデータの実体）の設定
     D3D11_SUBRESOURCE_DATA InitData = {};
-    InitData.pSysMem = vertices;                    // C++側の配列の先頭ポインタ
-
-    // バッファの生成
+    InitData.pSysMem = vertices;
     hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
+    if (FAILED(hr)) return false;
+
+    // ------------------------------------------------------------------------
+    // 9. 【新規追加】インデックスバッファ（EBO）の作成
+    // ------------------------------------------------------------------------
+    // 三角形を2つ作って四角形にする（左上・右上・右下 で1つ、左上・右下・左下 で1つ）
+    WORD indices[] =
+    {
+        0, 1, 2, // 1つ目の三角形
+        0, 2, 3  // 2つ目の三角形
+    };
+
+    D3D11_BUFFER_DESC ibd = {};
+    ibd.Usage = D3D11_USAGE_DEFAULT;
+    ibd.ByteWidth = sizeof(WORD) * 6;         // 6個のインデックス分
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER; // ★インデックスバッファとして設定
+    ibd.CPUAccessFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA InitDataIndex = {};
+    InitDataIndex.pSysMem = indices;
+
+    // インデックスバッファの生成 (頂点バッファと同じCreateBuffer関数を使います)
+    hr = g_pd3dDevice->CreateBuffer(&ibd, &InitDataIndex, &g_pIndexBuffer);
     if (FAILED(hr)) return false;
 
     return true;
@@ -284,6 +303,10 @@ void Render()
     UINT offset = 0;                    // バッファのどこから読み始めるか
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 
+    // ★ 2.5. パイプラインに「インデックスバッファ」を設定
+// OpenGLの glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo) に相当
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
     // 3. プリミティブ・トポロジー（どういうトポロジーで描くか。今回は三角形リスト）の設定
     // LearnOpenGLの GL_TRIANGLES に相当
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -292,9 +315,10 @@ void Render()
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
 
-    // 5. 描画！（3つの頂点を使って描画する。引数は「頂点数」と「開始インデックス」）
-    // LearnOpenGLの glDrawArrays(GL_TRIANGLES, 0, 3) に相当
-    g_pImmediateContext->Draw(3, 0);
+    // ★ 5. 描画！（Draw から DrawIndexed に変更）
+// LearnOpenGLの glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0) に相当
+// 引数は「描画するインデックス数(6)」「開始インデックス(0)」「ベース頂点位置(0)」
+    g_pImmediateContext->DrawIndexed(6, 0, 0);
 
     // ★★★ ここまで ★★★
 
@@ -311,6 +335,7 @@ void CleanupDevice()
     if (g_pVertexLayout)    g_pVertexLayout->Release();
     if (g_pPixelShader)     g_pPixelShader->Release();
     if (g_pVertexShader)    g_pVertexShader->Release();
+    if (g_pIndexBuffer) g_pIndexBuffer->Release();
 
     // 既存のオブジェクトの解放
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
