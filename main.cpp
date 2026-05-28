@@ -20,12 +20,17 @@ ID3D11InputLayout* g_pVertexLayout = nullptr;  // 頂点レイアウト（指示
 ID3D11Buffer* g_pVertexBuffer = nullptr;  // 頂点バッファ
 // ★★★ 四角形（インデックス描画）のために追加 ★★★
 ID3D11Buffer* g_pIndexBuffer = nullptr; // インデックスバッファ
+// 全局変数に追加
+ID3D11ShaderResourceView* g_pTextureRV = nullptr; // テクスチャを表示するための窓口（SRV）
+ID3D11SamplerState* g_pSamplerLinear = nullptr; // テクスチャの補間設定
 
 // C++側の頂点構造体
+// 1. C++側の頂点構造体の変更
 struct SimpleVertex
 {
     float x, y, z;
-    float r, g, b; // ★色データを追加
+    float r, g, b;
+    float u, v;    // ★追加：UV座標（テクスチャのどこを指すか）
 };
 
 // ★★★ 定数バッファのために追加 ★★★
@@ -239,12 +244,22 @@ bool InitDevice(HWND hWnd)
         sizeof(float) * 3,           // ★オフセット：最初のXYZ（float×3）を飛び越えた位置からスタート
         D3D11_INPUT_PER_VERTEX_DATA,
         0
+    },
+        // ★ 3つ目の属性として「TEXCOORD」を追加
+    {
+        "TEXCOORD",                  // HLSL側のセマンティクス名
+        0,                           // インデックス
+        DXGI_FORMAT_R32G32_FLOAT,    // float 2つ分（U, V）
+        0,                           // 入力スロット
+        sizeof(float) * 6,           // ★オフセット：XYZ(3) + RGB(3) = float 6つ分を飛び越えた位置
+        D3D11_INPUT_PER_VERTEX_DATA,
+        0
     }
 
     };
 
     // レイアウトの作成（頂点シェーダーのバイナリ情報が照合に必要になります）
-    hr = g_pd3dDevice->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
+    hr = g_pd3dDevice->CreateInputLayout(layout, 3, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
     pVSBlob->Release(); // 頂点シェーダーのバイナリもここで解放してOK
     if (FAILED(hr)) return false;
 
@@ -252,14 +267,16 @@ bool InitDevice(HWND hWnd)
     // ------------------------------------------------------------------------
 // 8. 頂点バッファ（VBO）の作成 (4頂点に変更)
 // ------------------------------------------------------------------------
+    // 頂点データの末尾に U, V を追加 (4頂点)
     SimpleVertex vertices[] =
     {
-        // { 座標(X,Y,Z), 色(R,G,B) }
-        { -0.5f,  0.5f, 0.5f,  1.0f, 0.0f, 0.0f }, // 0: 左上（赤）
-        {  0.5f,  0.5f, 0.5f,  0.0f, 1.0f, 0.0f }, // 1: 右上（緑）
-        {  0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f }, // 2: 右下（青）
-        { -0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 0.0f }  // 3: 左下（黄）
+        // { 座標(X,Y,Z), 色(R,G,B), UV(U,V) }
+        { -0.5f,  0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f }, // 0: 左上 (UVは左上)
+        {  0.5f,  0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f }, // 1: 右上 (UVは右上)
+        {  0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f }, // 2: 右下 (UVは右下)
+        { -0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f }  // 3: 左下 (UVは左下)
     };
+    // ※テクスチャの色をそのまま見たいので、頂点カラーは一旦全部白（1.0f）にしています。
 
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -304,6 +321,57 @@ bool InitDevice(HWND hWnd)
     cbd.CPUAccessFlags = 0;
 
     hr = g_pd3dDevice->CreateBuffer(&cbd, nullptr, &g_pConstantBuffer); // 初期データは空でOK
+    if (FAILED(hr)) return false;
+
+    // ------------------------------------------------------------------------
+// 11. 【新規追加】簡易テクスチャ（2x2マス）の作成
+// ------------------------------------------------------------------------
+// 2x2ピクセルのカラーデータ（RGBA各8bit、1ピクセル4バイト）
+// 0xFFFFFFFF = 白（全ビット1）, 0xFF000000 = 黒（アルファだけ1）
+    UINT32 pixels[4] = {
+        0xFFFFFFFF, 0xFF000000, // [白][黒]
+        0xFF000000, 0xFFFFFFFF  // [黒][白] （チェッカーフラッグ模様）
+    };
+
+    // A. テクスチャの実体（Texture2D）の設定
+    D3D11_TEXTURE2D_DESC td = {};
+    td.Width = 2;                             // 横幅2ピクセル
+    td.Height = 2;                            // 縦幅2ピクセル
+    td.MipLevels = 1;                         // ミップマップは使わないので1
+    td.ArraySize = 1;
+    td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;   // 1ピクセル4バイトの標準フォーマット
+    td.SampleDesc.Count = 1;
+    td.Usage = D3D11_USAGE_DEFAULT;
+    td.BindFlags = D3D11_BIND_SHADER_RESOURCE; // ★シェーダーから読み込むリソースとして設定
+
+    D3D11_SUBRESOURCE_DATA tInitData = {};
+    tInitData.pSysMem = pixels;
+    tInitData.SysMemPitch = 2 * sizeof(UINT32); // 横1行のバイト数（2ピクセル分）
+
+    ID3D11Texture2D* pTexture2D = nullptr;
+    hr = g_pd3dDevice->CreateTexture2D(&td, &tInitData, &pTexture2D);
+    if (FAILED(hr)) return false;
+
+    // B. シェーダーに渡すためのビュー（SRV）を作成
+    hr = g_pd3dDevice->CreateShaderResourceView(pTexture2D, nullptr, &g_pTextureRV);
+    pTexture2D->Release(); // ビューを作ったので実体ポインタは解放してOK
+    if (FAILED(hr)) return false;
+
+    // ------------------------------------------------------------------------
+    // 12. 【新規追加】サンプラーステートの作成
+    // ------------------------------------------------------------------------
+    D3D11_SAMPLER_DESC sampDesc = {};
+    //sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // ★線形補間（LearnOpenGLのGL_LINEARに相当）
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    // もしドット絵みたいにクッキリさせたい場合は D3D11_FILTER_MIN_MAG_MIP_POINT (GL_NEAREST) にします
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;   // ★UVが1を超えたらリピート（GL_REPEAT）
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = g_pd3dDevice->CreateSamplerState(&sampDesc, &g_pSamplerLinear);
     if (FAILED(hr)) return false;
 
 
@@ -355,6 +423,12 @@ void Render()
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
 
+    // ピクセルシェーダーの「0番スロット」にテクスチャビュー（SRV）をセット
+    g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV);
+
+    // ピクセルシェーダーの「0番スロット」にサンプラーをセット
+    g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
+
     // ★ 5. 描画！（Draw から DrawIndexed に変更）
 // LearnOpenGLの glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0) に相当
 // 引数は「描画するインデックス数(6)」「開始インデックス(0)」「ベース頂点位置(0)」
@@ -377,6 +451,8 @@ void CleanupDevice()
     if (g_pVertexShader)    g_pVertexShader->Release();
     if (g_pIndexBuffer) g_pIndexBuffer->Release();
     if(g_pIndexBuffer )g_pConstantBuffer->Release();
+    if (g_pSamplerLinear) g_pSamplerLinear->Release();
+    if (g_pTextureRV)      g_pTextureRV->Release();
 
     // 既存のオブジェクトの解放
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
