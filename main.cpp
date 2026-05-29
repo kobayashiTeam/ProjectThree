@@ -2,9 +2,12 @@
 #include <d3d11.h>
 #include <d3dcompiler.h> // ★シェーダーコンパイル用に追加
 #include <cmath>
+#include <DirectXMath.h> // ★追加：DirectXの数学ライブラリ（GLMの代わりに全般的に使用します）
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib") // ★追加
+
+using namespace DirectX; // XMFLOAT4X4 などを使いやすくするため
 // ---------------------------------------------------------
 // 全局変数（DirectX 11のオブジェクトたち）
 // ---------------------------------------------------------
@@ -34,12 +37,13 @@ struct SimpleVertex
 };
 
 // ★★★ 定数バッファのために追加 ★★★
-// シェーダーに送るデータの構造体（16バイトの倍数にする規則があります、理由は後述）
+// シェーダーに送る定数バッファの構造体（16バイトアライメントに注意）
 struct ConstantBuffer
 {
-    float offsetX;    // X軸の移動量
-    float dummy[3];   // 16バイトの倍数にするための詰め物（アライメント用）
-};
+    XMMATRIX mModel;      // 4x4行列 (64バイト)
+    XMMATRIX mView;       // 4x4行列 (64バイト)
+    XMMATRIX mProjection; // 4x4行列 (64バイト)
+}; // 合計192バイト (16の倍数なのでアライメントはOK)]
 
 ID3D11Buffer* g_pConstantBuffer = nullptr; // 定数バッファオブジェクト
 float g_Time = 0.0f;                       // 時間計測用
@@ -265,22 +269,45 @@ bool InitDevice(HWND hWnd)
 
 
     // ------------------------------------------------------------------------
-// 8. 頂点バッファ（VBO）の作成 (4頂点に変更)
-// ------------------------------------------------------------------------
-    // 頂点データの末尾に U, V を追加 (4頂点)
+     // 8. 頂点バッファ（VBO）の作成 (立方体: 24頂点)
+     // ------------------------------------------------------------------------
     SimpleVertex vertices[] =
     {
-        // { 座標(X,Y,Z), 色(R,G,B), UV(U,V) }
-        { -0.5f,  0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f }, // 0: 左上 (UVは左上)
-        {  0.5f,  0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f }, // 1: 右上 (UVは右上)
-        {  0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f }, // 2: 右下 (UVは右下)
-        { -0.5f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f }  // 3: 左下 (UVは左下)
+        // 前面 (Z = -0.5) -> UVが正しく貼れるように
+        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 背面 (Z = 0.5)
+        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 上面 (Y = 0.5)
+        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 下面 (Y = -0.5)
+        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 左側面 (X = -0.5)
+        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 右側面 (X = 0.5)
+        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
     };
-    // ※テクスチャの色をそのまま見たいので、頂点カラーは一旦全部白（1.0f）にしています。
 
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * 4; // ★ 4頂点分に変更
+    bd.ByteWidth = sizeof(SimpleVertex) * 24; // 24頂点分
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA InitData = {};
@@ -289,25 +316,26 @@ bool InitDevice(HWND hWnd)
     if (FAILED(hr)) return false;
 
     // ------------------------------------------------------------------------
-    // 9. 【新規追加】インデックスバッファ（EBO）の作成
-    // ------------------------------------------------------------------------
-    // 三角形を2つ作って四角形にする（左上・右上・右下 で1つ、左上・右下・左下 で1つ）
-    WORD indices[] =
+     // 9. インデックスバッファ（EBO）の作成 (6面 × 2個の三角形 × 3頂点 = 36個)
+     // ------------------------------------------------------------------------
+    DWORD indices[] =
     {
-        0, 1, 2, // 1つ目の三角形
-        0, 2, 3  // 2つ目の三角形
+        0, 1, 2,    0, 2, 3,    // 前
+        4, 5, 6,    4, 6, 7,    // 後
+        8, 9, 10,   8, 10, 11,  // 上
+        12, 13, 14, 12, 14, 15, // 下
+        16, 17, 18, 16, 18, 19, // 左
+        20, 21, 22, 20, 22, 23  // 右
     };
 
     D3D11_BUFFER_DESC ibd = {};
     ibd.Usage = D3D11_USAGE_DEFAULT;
-    ibd.ByteWidth = sizeof(WORD) * 6;         // 6個のインデックス分
-    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER; // ★インデックスバッファとして設定
+    ibd.ByteWidth = sizeof(DWORD) * 36;      // 36個のインデックス分
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     ibd.CPUAccessFlags = 0;
 
     D3D11_SUBRESOURCE_DATA InitDataIndex = {};
     InitDataIndex.pSysMem = indices;
-
-    // インデックスバッファの生成 (頂点バッファと同じCreateBuffer関数を使います)
     hr = g_pd3dDevice->CreateBuffer(&ibd, &InitDataIndex, &g_pIndexBuffer);
     if (FAILED(hr)) return false;
 
@@ -386,55 +414,58 @@ void Render()
     float clearColor[] = { 0.392f, 0.584f, 0.929f, 1.0f };
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
 
-    // 毎フレーム時間を進める（約60fps想定で適当な値を足します。本来はタイマーを使います）
-    g_Time += 0.03f;
+    // 時間を進める
+    g_Time += 0.01f;
 
-    // サイン波を使って -0.5 ～ +0.5 の間で左右に往復する値を計算
+    // ------------------------------------------------------------------------
+    // 各種行列の計算 (LearnOpenGLでのglm::関数群に相当)
+    // ------------------------------------------------------------------------
+    // 1. Model行列 : Y軸を中心に時間で回転させる
+    XMMATRIX mModel = XMMatrixRotationY(g_Time);
+
+    // 2. View行列 : カメラの位置、注視点、上方向を設定
+    XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -3.0f, 0.0f);  // カメラ位置
+    XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);   // ターゲット
+    XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);   // 上方向ベクトル
+    XMMATRIX mView = XMMatrixLookAtLH(Eye, At, Up);       // LH = 左手系(Left-Hand)用
+
+    // 3. Projection行列 : 遠近感（パース）の設定
+    // XMConvertToRadians(45.0f) = 45度をラジアンに変換
+    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), 800.0f / 600.0f, 0.01f, 100.0f);
+
+    // ------------------------------------------------------------------------
+    // GPUへのデータ転送準備（重要：転置処理）
+    // ------------------------------------------------------------------------
     ConstantBuffer cb;
-    cb.offsetX = sinf(g_Time) * 0.5f;
+    // C++(行優先) から HLSL(デフォルト列優先) へ渡すために転置(Transpose)する
+    cb.mModel = XMMatrixTranspose(mModel);
+    cb.mView = XMMatrixTranspose(mView);
+    cb.mProjection = XMMatrixTranspose(mProjection);
 
-    // 1. C++側のデータをGPU側のバッファにコピーする（OpenGLの glBufferSubData に相当）
+    // GPU上の定数バッファを更新
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-    // 2. 頂点シェーダーの「0番スロット」にこの定数バッファをセットする
+    // ------------------------------------------------------------------------
+    // パイプラインの設定と描画コマンド発行
+    // ------------------------------------------------------------------------
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-
-    // （この後に既存の IASetInputLayout などの描画処理が続きます...）
-
-    // ★★★ ここから描画処理を追加 ★★★
-
-    // 1. パイプラインに「頂点レイアウト」を設定
     g_pImmediateContext->IASetInputLayout(g_pVertexLayout);
 
-    // 2. パイプラインに「頂点バッファ」を設定（VAOがないので毎回指定する）
-    UINT stride = sizeof(SimpleVertex); // 頂点1個分のバイトサイズ
-    UINT offset = 0;                    // バッファのどこから読み始めるか
+    UINT stride = sizeof(SimpleVertex);
+    UINT offset = 0;
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 
-    // ★ 2.5. パイプラインに「インデックスバッファ」を設定
-// OpenGLの glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo) に相当
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-    // 3. プリミティブ・トポロジー（どういうトポロジーで描くか。今回は三角形リスト）の設定
-    // LearnOpenGLの GL_TRIANGLES に相当
+    // インデックスの型を DXGI_FORMAT_R32_UINT (DWORD用) に変更してセット
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // 4. 使用する「シェーダー」を設定
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-
-    // ピクセルシェーダーの「0番スロット」にテクスチャビュー（SRV）をセット
     g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV);
-
-    // ピクセルシェーダーの「0番スロット」にサンプラーをセット
     g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
 
-    // ★ 5. 描画！（Draw から DrawIndexed に変更）
-// LearnOpenGLの glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0) に相当
-// 引数は「描画するインデックス数(6)」「開始インデックス(0)」「ベース頂点位置(0)」
-    g_pImmediateContext->DrawIndexed(6, 0, 0);
-
-    // ★★★ ここまで ★★★
+    // インデックス数が36個になったので、36を指定
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     g_pSwapChain->Present(1, 0);
 }
