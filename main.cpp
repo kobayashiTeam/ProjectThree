@@ -450,7 +450,7 @@ void CleanupDevice()
     if (g_pPixelShader)     g_pPixelShader->Release();
     if (g_pVertexShader)    g_pVertexShader->Release();
     if (g_pIndexBuffer) g_pIndexBuffer->Release();
-    if(g_pIndexBuffer )g_pConstantBuffer->Release();
+    if(g_pConstantBuffer)g_pConstantBuffer->Release();
     if (g_pSamplerLinear) g_pSamplerLinear->Release();
     if (g_pTextureRV)      g_pTextureRV->Release();
 
