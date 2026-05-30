@@ -1,80 +1,85 @@
-// 1. C++側と完全に一致させる定数バッファ
+// ---------------------------------------------------------
+// 定数バッファ（C++側の ConstantBuffer 構造体と完全一致させる）
+// ---------------------------------------------------------
 cbuffer ConstantBuffer : register(b0)
 {
     matrix mModel;
     matrix mView;
     matrix mProjection;
-    float4 vLightDir; // ライトの方向
+    float4 vLightDir; // ライトの方向 (wはダミー)
     float4 vLightColor; // ライトの色
 };
 
-// 2. 頂点シェーダーへの入力構造体 (インプットレイアウトに対応)
+// ---------------------------------------------------------
+// シェーダーの入出力構造体
+// ---------------------------------------------------------
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float3 Normal : NORMAL; // ★追加
+    float3 Normal : NORMAL;
     float4 Color : COLOR;
-    float2 TexCoord : TEXCOORD0;
+    float2 Tex : TEXCOORD0;
 };
 
-// 3. ピクセルシェーダーへのバトンタッチ用構造体
 struct PS_INPUT
 {
-    float4 Pos : SV_POSITION;
-    float3 wNormal : NORMAL; // ★追加：ワールド空間での法線
+    float4 Pos : SV_POSITION; // システム用座標
+    float3 Normal : NORMAL; // ワールド空間での法線
     float4 Color : COLOR;
-    float2 TexCoord : TEXCOORD0;
+    float2 Tex : TEXCOORD0;
 };
 
-// テクスチャとサンプラー
+// テクスチャとサンプラーの設定
 Texture2D txDiffuse : register(t0);
 SamplerState samLinear : register(s0);
 
-// ------------------------------------------------------------------------
-// 頂点シェーダー
-// ------------------------------------------------------------------------
+// ---------------------------------------------------------
+// 頂点シェーダー (VS)
+// ---------------------------------------------------------
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
     
     // 座標変換 (Local -> World -> View -> Projection)
     float4 worldPos = mul(input.Pos, mModel);
-    float4 viewPos = mul(worldPos, mView);
-    output.Pos = mul(viewPos, mProjection);
+    output.Pos = mul(worldPos, mView);
+    output.Pos = mul(output.Pos, mProjection);
     
-    // ★法線のワールド変換
-    // 本来はモデル行列の逆転置行列をかけますが、拡大縮小（スケーリング）がない場合は
-    // モデル行列をそのままかけて正規化するだけでワールド空間の向きになります。
-    output.wNormal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
+    // ★重要: 法線ベクトルをワールド空間に変換する（回転に対応させるため）
+    // 本来はモデル行列の「逆転置行列」を掛けますが、等倍スケーリングならmModelのままでOK
+    output.Normal = mul(float4(input.Normal, 0.0f), mModel).xyz;
+    output.Normal = normalize(output.Normal); // 正規化
     
+    // カラーとUVはそのままピクセルシェーダーに引き渡す
     output.Color = input.Color;
-    output.TexCoord = input.TexCoord;
+    output.Tex = input.Tex;
     
     return output;
 }
 
-// ------------------------------------------------------------------------
-// ピクセルシェーダー
-// ------------------------------------------------------------------------
-float4 PS(PS_INPUT input) : SV_TARGET
+// ---------------------------------------------------------
+// ピクセルシェーダー (PS)
+// ---------------------------------------------------------
+float4 PS(PS_INPUT input) : SV_Target
 {
-    // A. テクスチャの色をサンプリング
-    float4 texColor = txDiffuse.Sample(samLinear, input.TexCoord);
+    // 1. テクスチャの色と頂点の色を乗算（LearnOpenGLでお馴染みの処理）
+    float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
+    float4 objectColor = texColor * input.Color;
     
-    // B. 環境光（Ambient）の計算
-    // 光が全く当たっていない影の部分も、うっすら見えるようにする（例: 20%の明るさ）
-    float3 ambient = float3(0.2f, 0.2f, 0.2f) * vLightColor.xyz;
+    // 2. Ambient (環境光) の計算
+    float ambientStrength = 0.2f;
+    float3 ambient = ambientStrength * vLightColor.xyz;
     
-    // C. 拡散反射（Diffuse）の計算
-    // ランバートの余弦則：面の向き(Normal) と 光の届く方向 の内積（dot）を計算する
-    // ※vLightDirは「ライトが進む向き」なので、計算時はマイナスを反転して「ライトへ向かう向き」にします。
-    float3 lightVec = -vLightDir.xyz;
-    float diffuseFactor = max(dot(input.wNormal, lightVec), 0.0f); // 負の数は0にする(max)
-    float3 diffuse = diffuseFactor * vLightColor.xyz;
+    // 3. Diffuse (拡散反射光) の計算
+    // ライトの「進む方向」の逆向きベクトルを作る
+    float3 lightDir = -vLightDir.xyz;
     
-    // D. 最終的な光の強さをテクスチャ色に掛け算する
-    float3 finalColor = (ambient + diffuse) * texColor.xyz;
+    // 法線とライト方向の内積を計算 (0.0以下は0.0にクランプ)
+    float diff = max(dot(input.Normal, lightDir), 0.0f);
+    float3 diffuse = diff * vLightColor.xyz;
     
-    // アルファ値（透明度）はテクスチャのものをそのまま使う
-    return float4(finalColor, texColor.a);
+    // 4. 最終的な色の結合
+    float3 finalColor = (ambient + diffuse) * objectColor.xyz;
+    
+    return float4(finalColor, objectColor.a);
 }
