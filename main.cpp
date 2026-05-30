@@ -32,18 +32,24 @@ ID3D11SamplerState* g_pSamplerLinear = nullptr; // テクスチャの補間設�
 struct SimpleVertex
 {
     float x, y, z;
+    float nx, ny, nz; // ★追加：法線ベクトル（面の向き）
     float r, g, b;
-    float u, v;    // ★追加：UV座標（テクスチャのどこを指すか）
+    float u, v;
 };
 
 // ★★★ 定数バッファのために追加 ★★★
 // シェーダーに送る定数バッファの構造体（16バイトアライメントに注意）
+// ★変更：定数バッファ構造体
 struct ConstantBuffer
 {
-    XMMATRIX mModel;      // 4x4行列 (64バイト)
-    XMMATRIX mView;       // 4x4行列 (64バイト)
-    XMMATRIX mProjection; // 4x4行列 (64バイト)
-}; // 合計192バイト (16の倍数なのでアライメントはOK)]
+    XMMATRIX mModel;      // 64バイト
+    XMMATRIX mView;       // 64バイト
+    XMMATRIX mProjection; // 64バイト
+
+    // ★追加：ライト情報 (計32バイト、全体で224バイトとなり16の倍数を維持)
+    XMFLOAT4 vLightDir;   // ライトの進む方向 (x, y, z, w=0)
+    XMFLOAT4 vLightColor; // ライトの色と輝度 (r, g, b, a=1)
+};
 
 ID3D11Buffer* g_pConstantBuffer = nullptr; // 定数バッファオブジェクト
 float g_Time = 0.0f;                       // 時間計測用
@@ -223,47 +229,23 @@ bool InitDevice(HWND hWnd)
     if (FAILED(hr)) return false;
 
 
-    // ------------------------------------------------------------------------
     // 7. 頂点インプットレイアウト（指示書）の作成
-    // ------------------------------------------------------------------------
-    // LearnOpenGLの glVertexAttribPointer に相当
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
-        {
-            "POSITION",             // ★HLSLのセマンティクス名と完全一致させる
-            0,                      // セマンティクスのインデックス（0番目）
-            DXGI_FORMAT_R32G32B32_FLOAT, // データの型（float3 つまり X, Y, Z）
-            0,                      // 入力スロット（基本は0）
-            0,                      // C++構造体の先頭からのオフセット（0バイト目）
-            D3D11_INPUT_PER_VERTEX_DATA, // 頂点データごとに読み込む
-            0
-        },
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
-        // ★ 2つ目の属性として「COLOR」を追加
-    {
-        "COLOR",                     // HLSL側のセマンティクス名
-        0,                           // インデックス
-        DXGI_FORMAT_R32G32B32_FLOAT, // float 3つ分（R, G, B）
-        0,                           // 入力スロット（頂点バッファと同じ0番）
-        sizeof(float) * 3,           // ★オフセット：最初のXYZ（float×3）を飛び越えた位置からスタート
-        D3D11_INPUT_PER_VERTEX_DATA,
-        0
-    },
-        // ★ 3つ目の属性として「TEXCOORD」を追加
-    {
-        "TEXCOORD",                  // HLSL側のセマンティクス名
-        0,                           // インデックス
-        DXGI_FORMAT_R32G32_FLOAT,    // float 2つ分（U, V）
-        0,                           // 入力スロット
-        sizeof(float) * 6,           // ★オフセット：XYZ(3) + RGB(3) = float 6つ分を飛び越えた位置
-        D3D11_INPUT_PER_VERTEX_DATA,
-        0
-    }
+        // ★追加：NORMALセマンティクス
+        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
+        // ★変更：オフセットを調整（XYZ(3) + Normal(3) = float 6つ分をスキップ）
+        { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * 6, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+        // ★変更：オフセットを調整（XYZ(3) + Normal(3) + COLOR(3) = float 9つ分をスキップ）
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 9, D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
 
     // レイアウトの作成（頂点シェーダーのバイナリ情報が照合に必要になります）
-    hr = g_pd3dDevice->CreateInputLayout(layout, 3, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
+    hr = g_pd3dDevice->CreateInputLayout(layout, 4, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_pVertexLayout);
     pVSBlob->Release(); // 頂点シェーダーのバイナリもここで解放してOK
     if (FAILED(hr)) return false;
 
@@ -273,36 +255,37 @@ bool InitDevice(HWND hWnd)
      // ------------------------------------------------------------------------
     SimpleVertex vertices[] =
     {
-        // 前面 (Z = -0.5) -> UVが正しく貼れるように
-        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
-        // 背面 (Z = 0.5)
-        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
-        // 上面 (Y = 0.5)
-        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
-        // 下面 (Y = -0.5)
-        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
-        // 左側面 (X = -0.5)
-        { -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        { -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        { -0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
-        // 右側面 (X = 0.5)
-        {  0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
-        {  0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // フォーマット：{ X, Y, Z }, { NX, NY, NZ }, { R, G, B }, { U, V }
+        // 前面 (Z = -0.5) -> すべて手前（Zのマイナス方向）を向いている
+        { -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 背面 (Z = 0.5) -> すべて奥（Zのプラス方向）を向いている
+        {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        { -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        {  0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 上面 (Y = 0.5)  -> { 0.0f,  1.0f,  0.0f }//追記
+        {  -0.5f,  0.5f, 0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 下面 (Y = -0.5) -> { 0.0f, -1.0f,  0.0f }//いったん赤色に
+        { -0.5f, -0.5f,  0.5f,  0.0f,  -1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,  0.0f,  -1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,  0.0f,  -1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f, -0.5f,  0.0f,  -1.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 左側面 (X = -0.5) -> {-1.0f,  0.0f,  0.0f }
+        { -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        { -0.5f,  0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        { -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        { -0.5f, -0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
+        // 右側面 (X = 0.5)  -> { 1.0f,  0.0f,  0.0f }
+        {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f },
+        {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f },
     };
 
     D3D11_BUFFER_DESC bd = {};
@@ -442,6 +425,15 @@ void Render()
     cb.mView = XMMatrixTranspose(mView);
     cb.mProjection = XMMatrixTranspose(mProjection);
 
+    // ★追加：ライトのデータを設定
+    // 斜め上から照らす（平行光源なので、位置ではなく「方向」）
+    XMVECTOR lightDir = XMVectorSet(0.5f, -1.0f, 0.5f, 0.0f);
+    lightDir = XMVector3Normalize(lightDir); // 計算のために正規化しておく
+    XMStoreFloat4(&cb.vLightDir, lightDir);
+
+    // ライトの色（白）
+    cb.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
     // GPU上の定数バッファを更新
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
@@ -449,6 +441,7 @@ void Render()
     // パイプラインの設定と描画コマンド発行
     // ------------------------------------------------------------------------
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer); // ★この行を追加
     g_pImmediateContext->IASetInputLayout(g_pVertexLayout);
 
     UINT stride = sizeof(SimpleVertex);
