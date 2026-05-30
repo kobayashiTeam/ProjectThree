@@ -63,6 +63,10 @@ struct ConstantBuffer
 ID3D11Buffer* g_pConstantBuffer = nullptr; // 定数バッファオブジェクト
 float g_Time = 0.0f;                       // 時間計測用
 
+// 既存のオブジェクトの下に追加
+#include "Camera.h"
+Camera* g_pCamera = nullptr;
+
 // 関数の前方宣言
 bool InitDevice(HWND hWnd);
 void CleanupDevice();
@@ -108,6 +112,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         CleanupDevice();
         return 0;
     }
+
+    // InitDevice(hWnd) が成功した後に
+    g_pCamera = new Camera(800.0f, 600.0f);
 
     MSG msg = {};
     while (msg.message != WM_QUIT)
@@ -470,13 +477,12 @@ void Render()
     g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
 
     // カメラ・プロジェクション
-    XMVECTOR Eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
-    XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-    XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX mView = XMMatrixLookAtLH(Eye, At, Up);
-    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(
-        XMConvertToRadians(45.0f), 800.0f / 600.0f, 0.01f, 100.0f);
+    XMVECTOR eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
+    XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    g_pCamera->Update(eye, at, up); // カメラの更新
 
+    
     // ライト位置
     float lightRadius = 1.5f;
     float lightX = sinf(g_Time * 2.0f) * lightRadius;
@@ -488,11 +494,11 @@ void Render()
 
     ConstantBuffer cb;
     cb.mModel = XMMatrixTranspose(mModel);
-    cb.mView = XMMatrixTranspose(mView);
-    cb.mProjection = XMMatrixTranspose(mProjection);
+    cb.mView = XMMatrixTranspose(g_pCamera->GetViewMatrix());
+    cb.mProjection = XMMatrixTranspose(g_pCamera->GetProjectionMatrix());
     XMStoreFloat4(&cb.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
     cb.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    XMStoreFloat4(&cb.vEyePos, Eye);
+	cb.vEyePos = g_pCamera->GetEyePosition();
     cb.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
 
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
@@ -531,6 +537,8 @@ void CleanupDevice()
     if(g_pConstantBuffer)g_pConstantBuffer->Release();
     if (g_pSamplerLinear) g_pSamplerLinear->Release();
     if (g_pTextureRV)      g_pTextureRV->Release();
+    // 後片付け
+    if (g_pCamera) { delete g_pCamera; g_pCamera = nullptr; }
 
     // 既存のオブジェクトの解放
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
