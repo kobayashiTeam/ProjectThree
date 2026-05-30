@@ -15,6 +15,10 @@ ID3D11Device * g_pd3dDevice = nullptr;
 ID3D11DeviceContext* g_pImmediateContext = nullptr;
 IDXGISwapChain* g_pSwapChain = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
+// ★★★ 深度バッファのために追加 ★★★
+ID3D11Texture2D* g_pDepthStencil = nullptr;      // 深度バッファの実体（テクスチャ）
+ID3D11DepthStencilView* g_pDepthStencilView = nullptr;  // 深度バッファの窓口（DSV）
+ID3D11RasterizerState* g_pRasterizerState = nullptr;   // カリング設定用のステート
 
 // ★★★ 三角形描画のために追加するオブジェクト ★★★
 ID3D11VertexShader* g_pVertexShader = nullptr;  // 頂点シェーダー
@@ -171,8 +175,51 @@ bool InitDevice(HWND hWnd)
     pBackBuffer->Release(); // 実体テクスチャ自体は、ビューを作った後はもう参照を外してOK
     if (FAILED(hr)) return false;
 
-    // 4. パイプラインに「ここに描画してね」とターゲットを設定する
-    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, nullptr);
+    // ------------------------------------------------------------------------
+    // 【新規追加】深度バッファ（Depth/Stencil Buffer）の作成
+    // ------------------------------------------------------------------------
+    D3D11_TEXTURE2D_DESC descDepth = {};
+    descDepth.Width = sd.BufferDesc.Width;   // レンダーターゲットと同じ幅 (800)
+    descDepth.Height = sd.BufferDesc.Height; // レンダーターゲットと同じ高さ (600)
+    descDepth.MipLevels = 1;
+    descDepth.ArraySize = 1;
+    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 深度24bit、ステンシル8bit（LearnOpenGLの標準的な設定と同じ）
+    descDepth.SampleDesc.Count = 1;
+    descDepth.SampleDesc.Quality = 0;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL; // ★深度ステンシルとしてバインド
+
+    hr = g_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &g_pDepthStencil);
+    if (FAILED(hr)) return false;
+
+    // 深度バッファのビュー（DSV）を作成
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+    descDSV.Format = descDepth.Format;
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSV.Texture2D.MipSlice = 0;
+
+    hr = g_pd3dDevice->CreateDepthStencilView(g_pDepthStencil, &descDSV, &g_pDepthStencilView);
+    if (FAILED(hr)) return false;
+
+    // 4. 【変更】パイプラインにレンダーターゲットと「深度バッファ」を両方セットする
+    // 第3引数の nullptr だった場所に g_pDepthStencilView を渡します
+    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
+
+    // ------------------------------------------------------------------------
+    // 【新規追加】ラスタライザーステート（背面カリング）の作成
+    // ------------------------------------------------------------------------
+    D3D11_RASTERIZER_DESC dr = {};
+    dr.FillMode = D3D11_FILL_SOLID;   // 塗りつぶしモード（ワイヤーフレームなら D3D11_FILL_WIREFRAME）
+    dr.CullMode = D3D11_CULL_BACK;    // ★背面カリング（裏を向いているポリゴンを描画しない）
+    dr.FrontCounterClockwise = FALSE; // ★時計回りを表とする（DirectXの左手系の標準）
+    // ※もし立方体の面がいくつか消えてしまったら、頂点のインデックスの指定順が逆（反時計回り）になっている可能性があります。
+    // その場合は、ここを TRUE（反時計回りを表）にするか、インデックスの定義を直します。
+
+    hr = g_pd3dDevice->CreateRasterizerState(&dr, &g_pRasterizerState);
+    if (FAILED(hr)) return false;
+
+    // パイプラインにカリング設定を適用
+    g_pImmediateContext->RSSetState(g_pRasterizerState);
 
     // 5. ビューポート（画面のどこに描画するか）の設定（LearnOpenGLの glViewport に相当）
     D3D11_VIEWPORT vp;
@@ -397,6 +444,14 @@ void Render()
     float clearColor[] = { 0.392f, 0.584f, 0.929f, 1.0f };
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
 
+    // ★★★【新規追加】毎フレーム深度バッファをクリアする ★构★
+    // D3D11_CLEAR_DEPTH: 深度をクリア
+    // 1.0f: クリアする値（1.0が最も遠い奥）
+    // 0: ステンシルのクリア値
+    if (g_pDepthStencilView) {
+        g_pImmediateContext->ClearDepthStencilView(g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    }
+
     // 時間を進める
     g_Time += 0.01f;
 
@@ -468,6 +523,10 @@ void Render()
 // ---------------------------------------------------------
 void CleanupDevice()
 {
+    // 追加したオブジェクトの解放
+    if (g_pDepthStencilView)  g_pDepthStencilView->Release(); // ビュー（窓口）を先に
+    if (g_pDepthStencil)      g_pDepthStencil->Release();     // 実体（テクスチャ）を後に
+    if (g_pRasterizerState)   g_pRasterizerState->Release();
     // 追加したオブジェクトの解放
     if (g_pVertexBuffer)    g_pVertexBuffer->Release();
     if (g_pVertexLayout)    g_pVertexLayout->Release();
