@@ -24,27 +24,17 @@ ID3D11RasterizerState* g_pRasterizerState = nullptr;   // カリング設定用�
 ID3D11VertexShader* g_pVertexShader = nullptr;  // 頂点シェーダー
 ID3D11PixelShader* g_pPixelShader = nullptr;   // ピクセルシェーダー
 ID3D11InputLayout* g_pVertexLayout = nullptr;  // 頂点レイアウト（指示書）
-ID3D11Buffer* g_pVertexBuffer = nullptr;  // 頂点バッファ
 // ★★★ 四角形（インデックス描画）のために追加 ★★★
-ID3D11Buffer* g_pIndexBuffer = nullptr; // インデックスバッファ
 // 全局変数に追加
 ID3D11ShaderResourceView* g_pTextureRV = nullptr; // テクスチャを表示するための窓口（SRV）
 ID3D11SamplerState* g_pSamplerLinear = nullptr; // テクスチャの補間設定
 
-// C++側の頂点構造体
-// 1. C++側の頂点構造体の変更
-struct SimpleVertex
-{
-    float x, y, z;
-    float nx, ny, nz; // ★追加：法線ベクトル（面の向き）
-    float r, g, b;
-    float u, v;
-};
+//ユーザ定義ファイル
+#include "vertex.h"
 
 // ★★★ 定数バッファのために追加 ★★★
 // シェーダーに送る定数バッファの構造体（16バイトアライメントに注意）
 // ★変更：定数バッファ構造体
-// C++側の定数バッファ構造体の変更
 // C++側の定数バッファ構造体の変更
 struct ConstantBuffer
 {
@@ -66,6 +56,8 @@ float g_Time = 0.0f;                       // 時間計測用
 // 既存のオブジェクトの下に追加
 #include "Camera.h"
 Camera* g_pCamera = nullptr;
+#include "mesh.h"
+Mesh* g_pCubeMesh = nullptr; // 立方体メッシュ
 
 // 関数の前方宣言
 bool InitDevice(HWND hWnd);
@@ -105,6 +97,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (hWnd == nullptr) return 0;
 
     ShowWindow(hWnd, nCmdShow);
+
+    g_pCubeMesh = new Mesh(); // ← InitDevice の前に移動
 
     // ★★★ DirectX 11の初期化 ★★★
     if (!InitDevice(hWnd))
@@ -347,15 +341,6 @@ bool InitDevice(HWND hWnd)
         {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f },
     };
 
-    D3D11_BUFFER_DESC bd = {};
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * 24; // 24頂点分
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA InitData = {};
-    InitData.pSysMem = vertices;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
-    if (FAILED(hr)) return false;
 
     // ------------------------------------------------------------------------
      // 9. インデックスバッファ（EBO）の作成 (6面 × 2個の三角形 × 3頂点 = 36個)
@@ -370,16 +355,16 @@ bool InitDevice(HWND hWnd)
         20, 21, 22, 20, 22, 23  // 右
     };
 
-    D3D11_BUFFER_DESC ibd = {};
-    ibd.Usage = D3D11_USAGE_DEFAULT;
-    ibd.ByteWidth = sizeof(DWORD) * 36;      // 36個のインデックス分
-    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    ibd.CPUAccessFlags = 0;
+    // ------------------------------------------------------------------------
+    // 8. 9. 【変更】メッシュクラスを利用してバッファを作成
+    // ------------------------------------------------------------------------
+    UINT vertexCount = sizeof(vertices) / sizeof(SimpleVertex);
+    UINT indexCount = sizeof(indices) / sizeof(DWORD);
 
-    D3D11_SUBRESOURCE_DATA InitDataIndex = {};
-    InitDataIndex.pSysMem = indices;
-    hr = g_pd3dDevice->CreateBuffer(&ibd, &InitDataIndex, &g_pIndexBuffer);
-    if (FAILED(hr)) return false;
+    if (!g_pCubeMesh->Create(g_pd3dDevice, vertices, vertexCount, indices, indexCount))
+    {
+        return false;
+    }
 
     // ------------------------------------------------------------------------
 // 10. 【新規追加】定数バッファ（Constant Buffer）の作成
@@ -466,8 +451,6 @@ void Render()
 
     UINT stride = sizeof(SimpleVertex);
     UINT offset = 0;
-    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
@@ -504,7 +487,7 @@ void Render()
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
+	g_pCubeMesh->Render(g_pImmediateContext);
 
     // --- 2回目：電球キューブ ---
     XMMATRIX mLightModel =
@@ -515,7 +498,7 @@ void Render()
     cb.vLightColor.w = 0.0f; // ライト計算スキップフラグ
 
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
+    g_pCubeMesh->Render(g_pImmediateContext);
 
     g_pSwapChain->Present(1, 0);
 }
@@ -529,16 +512,15 @@ void CleanupDevice()
     if (g_pDepthStencil)      g_pDepthStencil->Release();     // 実体（テクスチャ）を後に
     if (g_pRasterizerState)   g_pRasterizerState->Release();
     // 追加したオブジェクトの解放
-    if (g_pVertexBuffer)    g_pVertexBuffer->Release();
     if (g_pVertexLayout)    g_pVertexLayout->Release();
     if (g_pPixelShader)     g_pPixelShader->Release();
     if (g_pVertexShader)    g_pVertexShader->Release();
-    if (g_pIndexBuffer) g_pIndexBuffer->Release();
     if(g_pConstantBuffer)g_pConstantBuffer->Release();
     if (g_pSamplerLinear) g_pSamplerLinear->Release();
     if (g_pTextureRV)      g_pTextureRV->Release();
     // 後片付け
     if (g_pCamera) { delete g_pCamera; g_pCamera = nullptr; }
+	if (g_pCubeMesh) { delete g_pCubeMesh; g_pCubeMesh = nullptr; }
 
     // 既存のオブジェクトの解放
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
