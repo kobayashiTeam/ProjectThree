@@ -92,7 +92,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_pCubeMesh = new Mesh();
 
-    // シェーダーやリソース類の初期化（引数として生成済みのデバイスを渡すよう変更可能ですが、今はInitDevice内でg_pGraphicsから取得します）
+    // シェーダーやリソース類の初期化（引数として生成済みのデバイスを渡すよう変更可能ですが、
+    // 今はInitDevice内でg_pGraphicsから取得します）
     if (!InitDevice(hWnd))
     {
         CleanupDevice();
