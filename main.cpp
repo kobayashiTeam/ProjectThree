@@ -45,17 +45,19 @@ struct SimpleVertex
 // シェーダーに送る定数バッファの構造体（16バイトアライメントに注意）
 // ★変更：定数バッファ構造体
 // C++側の定数バッファ構造体の変更
+// C++側の定数バッファ構造体の変更
 struct ConstantBuffer
 {
     XMMATRIX mModel;      // 64バイト
     XMMATRIX mView;       // 64バイト
     XMMATRIX mProjection; // 64バイト
 
-    XMFLOAT4 vLightDir;   // 16バイト
+    XMFLOAT4 vLightPos;   // ★変更：ライトの「方向」から「ワールド座標」(x, y, z, w=1.0) に変更
     XMFLOAT4 vLightColor; // 16バイト
-
-    // ★追加：カメラ（視点）のワールド座標 (x, y, z, w=1.0)
     XMFLOAT4 vEyePos;     // 16バイト
+
+    // ★追加：点光源の減衰パラメータ (x: Constant, y: Linear, z: Quadratic, w: ダミー)
+    XMFLOAT4 vAttenuation;// 16バイト
 };
 
 ID3D11Buffer* g_pConstantBuffer = nullptr; // 定数バッファオブジェクト
@@ -444,86 +446,73 @@ bool InitDevice(HWND hWnd)
 // ---------------------------------------------------------
 void Render()
 {
-    float clearColor[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
-
-    // ★★★【新規追加】毎フレーム深度バッファをクリアする ★构★
-    // D3D11_CLEAR_DEPTH: 深度をクリア
-    // 1.0f: クリアする値（1.0が最も遠い奥）
-    // 0: ステンシルのクリア値
-    if (g_pDepthStencilView) {
-        g_pImmediateContext->ClearDepthStencilView(g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    }
-
-    // 時間を進める
     g_Time += 0.01f;
 
-    // ------------------------------------------------------------------------
-    // 各種行列の計算 (LearnOpenGLでのglm::関数群に相当)
-    // ------------------------------------------------------------------------
-    // 1. Model行列 : Y軸を中心に時間で回転させる
-    XMMATRIX mModel = XMMatrixRotationY(g_Time);
+    // ★画面クリア（これがないと前フレームの残像が残る）
+    float clearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
+    g_pImmediateContext->ClearDepthStencilView(g_pDepthStencilView,
+        D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-    // 2. View行列 : カメラの位置、注視点、上方向を設定
-    XMVECTOR Eye = XMVectorSet(0.0f, -3.0f, -5.0f, 0.0f);  // カメラ位置
-    XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);   // ターゲット
-    XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);   // 上方向ベクトル
-    XMMATRIX mView = XMMatrixLookAtLH(Eye, At, Up);       // LH = 左手系(Left-Hand)用
-
-    // 3. Projection行列 : 遠近感（パース）の設定
-    // XMConvertToRadians(45.0f) = 45度をラジアンに変換
-    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), 800.0f / 600.0f, 0.01f, 100.0f);
-
-    // ------------------------------------------------------------------------
-    // GPUへのデータ転送準備（重要：転置処理）
-    // ------------------------------------------------------------------------
-    ConstantBuffer cb;
-    // C++(行優先) から HLSL(デフォルト列優先) へ渡すために転置(Transpose)する
-    cb.mModel = XMMatrixTranspose(mModel);
-    cb.mView = XMMatrixTranspose(mView);
-    cb.mProjection = XMMatrixTranspose(mProjection);
-
-    // ★追加：ライトのデータを設定
-    // 斜め上から照らす（平行光源なので、位置ではなく「方向」）
-    XMVECTOR lightDir = XMVectorSet(0.5f, -1.0f, 0.5f, 0.0f);
-    lightDir = XMVector3Normalize(lightDir); // 計算のために正規化しておく
-    XMStoreFloat4(&cb.vLightDir, lightDir);
-
-    // ライトの色（白）
-    cb.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    // ★追加：カメラの位置を定数バッファに格納
-    XMStoreFloat4(&cb.vEyePos, Eye);
-
-    // GPU上の定数バッファを更新
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-    // ------------------------------------------------------------------------
-    // パイプラインの設定と描画コマンド発行
-    // ------------------------------------------------------------------------
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer); // ★この行を追加
+    // ★パイプライン設定（毎フレーム必須）
     g_pImmediateContext->IASetInputLayout(g_pVertexLayout);
 
     UINT stride = sizeof(SimpleVertex);
     UINT offset = 0;
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
-
-    // インデックスの型を DXGI_FORMAT_R32_UINT (DWORD用) に変更してセット
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+
     g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV);
     g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
 
-    // インデックス数が36個になったので、36を指定
+    // カメラ・プロジェクション
+    XMVECTOR Eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
+    XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMMATRIX mView = XMMatrixLookAtLH(Eye, At, Up);
+    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(
+        XMConvertToRadians(45.0f), 800.0f / 600.0f, 0.01f, 100.0f);
+
+    // ライト位置
+    float lightRadius = 1.5f;
+    float lightX = sinf(g_Time * 2.0f) * lightRadius;
+    float lightZ = cosf(g_Time * 2.0f) * lightRadius;
+    float lightY = 0.5f;
+
+    // --- 1回目：メインキューブ ---
+    XMMATRIX mModel = XMMatrixRotationY(g_Time);
+
+    ConstantBuffer cb;
+    cb.mModel = XMMatrixTranspose(mModel);
+    cb.mView = XMMatrixTranspose(mView);
+    cb.mProjection = XMMatrixTranspose(mProjection);
+    XMStoreFloat4(&cb.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
+    cb.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    XMStoreFloat4(&cb.vEyePos, Eye);
+    cb.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
+
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    // --- 2回目：電球キューブ ---
+    XMMATRIX mLightModel =
+        XMMatrixScaling(0.1f, 0.1f, 0.1f) *
+        XMMatrixTranslation(lightX, lightY, lightZ);
+
+    cb.mModel = XMMatrixTranspose(mLightModel);
+    cb.vLightColor.w = 0.0f; // ライト計算スキップフラグ
+
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     g_pSwapChain->Present(1, 0);
 }
-
 // ---------------------------------------------------------
 // 後片付け関数
 // ---------------------------------------------------------

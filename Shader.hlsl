@@ -1,14 +1,16 @@
 // ---------------------------------------------------------
 // 定数バッファ（C++側と完全一致させる）
 // ---------------------------------------------------------
+// ★変更が必要
 cbuffer ConstantBuffer : register(b0)
 {
     matrix mModel;
     matrix mView;
     matrix mProjection;
-    float4 vLightDir;
+    float4 vLightPos; // vLightDir → vLightPos に変更
     float4 vLightColor;
-    float4 vEyePos; // ★追加：カメラの位置
+    float4 vEyePos;
+    float4 vAttenuation; // ★追加（C++側に合わせる）
 };
 
 struct VS_INPUT
@@ -59,6 +61,12 @@ PS_INPUT VS(VS_INPUT input)
 // ---------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
+    // ★ vLightColor.w == 0 なら「光源オブジェクト」として白を返す
+    if (vLightColor.w == 0.0f)
+    {
+        return float4(1.0f, 1.0f, 1.0f, 1.0f); // 純白で描画
+    }
+    
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
     float4 objectColor = texColor * input.Color;
     
@@ -68,7 +76,7 @@ float4 PS(PS_INPUT input) : SV_Target
     
     // 2. Diffuse (拡散反射光)
     float3 normal = normalize(input.Normal);
-    float3 lightDir = -vLightDir.xyz;
+    float3 lightDir = normalize(vLightPos.xyz - input.WorldPos);
     float diff = max(dot(normal, lightDir), 0.0f);
     float3 diffuse = diff * vLightColor.xyz;
     
