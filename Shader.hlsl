@@ -64,32 +64,58 @@ float4 PS(PS_INPUT input) : SV_Target
     // ★ vLightColor.w == 0 なら「光源オブジェクト」として白を返す
     if (vLightColor.w == 0.0f)
     {
-        return float4(1.0f, 1.0f, 1.0f, 1.0f); // 純白で描画
+        return float4(1.0f, 1.0f, 1.0f, 1.0f); // 純白で描画（電球自体は減衰しない）
     }
     
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
     float4 objectColor = texColor * input.Color;
     
+    // --------------------------------------------------------
+    // 【新規計算】光源とピクセル間の距離と減衰率の計算
+    // --------------------------------------------------------
+    // 光源からピクセルへのベクトルを一度計算（正規化前）
+    float3 lightVec = vLightPos.xyz - input.WorldPos;
+    
+    // length関数で「距離 (d)」を計算
+    float distance = length(lightVec);
+    
+    // ライトの方向ベクトル（正規化）
+    float3 lightDir = normalize(lightVec);
+    
+    // 減衰率の計算 (C++側から送られた vAttenuation.xyz を使用)
+    // x: Constant(1.0), y: Linear(0.09), z: Quadratic(0.032)
+    float attenuation = 1.0f / (vAttenuation.x +
+                                 vAttenuation.y * distance +
+                                 vAttenuation.z * (distance * distance));
+    
+    // --------------------------------------------------------
+    // 各ライティング成分の計算（既存のロジック）
+    // --------------------------------------------------------
     // 1. Ambient (環境光)
     float ambientStrength = 0.2f;
     float3 ambient = ambientStrength * vLightColor.xyz;
     
     // 2. Diffuse (拡散反射光)
     float3 normal = normalize(input.Normal);
-    float3 lightDir = normalize(vLightPos.xyz - input.WorldPos);
     float diff = max(dot(normal, lightDir), 0.0f);
     float3 diffuse = diff * vLightColor.xyz;
     
-    // 3. Specular (鏡面反射光：Blinn-Phongモデル) ★新規追加
-    float specularStrength = 0.5f; // ハイライトの強さ
-    float3 viewDir = normalize(vEyePos.xyz - input.WorldPos); // ピクセルからカメラへの方向
-    float3 halfwayDir = normalize(lightDir + viewDir); // ライト方向と視点方向のハーフベクトル
+    // 3. Specular (鏡面反射光：Blinn-Phongモデル)
+    float specularStrength = 0.5f;
+    float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
+    float3 halfwayDir = normalize(lightDir + viewDir);
     
-    // 法線とハーフベクトルの内積をとり、32乗してハイライトを鋭くする（この数値が大きいほどツルツルになる）
     float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
     float3 specular = specularStrength * spec * vLightColor.xyz;
     
-    // 4. 最終的な色の結合（テクスチャ・頂点色には specular は乗算せず、最後に足す）
+    // --------------------------------------------------------
+    // 【変更】すべての光の成分に減衰率（attenuation）を乗算する
+    // --------------------------------------------------------
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+    
+    // 4. 最終的な色の結合
     float3 finalColor = (ambient + diffuse) * objectColor.xyz + specular;
     
     return float4(finalColor, objectColor.a);
