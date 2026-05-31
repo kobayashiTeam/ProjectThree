@@ -20,17 +20,8 @@ Graphics* g_pGraphics = nullptr;
 Material* g_pCubeMaterial = nullptr;
 
 #include "vertex.h"
+#include"model.h"
 
-struct ConstantBuffer
-{
-    XMMATRIX mModel;
-    XMMATRIX mView;
-    XMMATRIX mProjection;
-    XMFLOAT4 vLightPos;
-    XMFLOAT4 vLightColor;
-    XMFLOAT4 vEyePos;
-    XMFLOAT4 vAttenuation;
-};
 
 ID3D11Buffer* g_pConstantBuffer = nullptr;
 float g_Time = 0.0f;
@@ -39,6 +30,11 @@ float g_Time = 0.0f;
 Camera* g_pCamera = nullptr;
 #include "mesh.h"
 Mesh* g_pCubeMesh = nullptr;
+#include "graphicsCommon.h"
+
+// ★【進化ポイント】ゲーム上のオブジェクトは「Model」として管理！
+Model* g_pMainCubeInstance = nullptr;
+Model* g_pLightCubeInstance = nullptr;
 
 bool InitDevice(HWND hWnd);
 void CleanupDevice();
@@ -175,7 +171,7 @@ bool InitDevice(HWND hWnd)
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
-    cbd.ByteWidth = sizeof(ConstantBuffer);
+    cbd.ByteWidth = sizeof(ConstantBufferParameters);
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = 0;
 
@@ -185,75 +181,71 @@ bool InitDevice(HWND hWnd)
     // ↑ テクスチャ・シェーダー・サンプラーの個別作成コードは
     //   すべてMaterial::Initialize内で処理されるため削除
 
+    // ★【進化ポイント】Modelインスタンスの生成と初期配置
+    // 同じ g_pCubeMesh と g_pCubeMaterial を2つのモデルで「共有」している点に注目してください！
+    g_pMainCubeInstance = new Model(g_pCubeMesh, g_pCubeMaterial);
+    g_pMainCubeInstance->SetPosition(0.0f, 0.0f, 0.0f);
+
+    g_pLightCubeInstance = new Model(g_pCubeMesh, g_pCubeMaterial);
+    g_pLightCubeInstance->SetScale(0.1f, 0.1f, 0.1f); // 電球は小さく
+
     return true;
 }
 
 void Render()
 {
     g_Time += 0.01f;
-
     ID3D11DeviceContext* pContext = g_pGraphics->GetContext();
-
     g_pGraphics->BeginScene(0.1f, 0.1f, 0.1f, 1.0f);
-
-    // Materialがシェーダー・テクスチャ・サンプラー・InputLayoutを一括セット
-    g_pCubeMaterial->Bind(pContext);
-
-    // ↓ Bind()で済んでいるので以下の個別セットはすべて削除
-    // pContext->IASetInputLayout(...)
-    // pContext->VSSetShader(...)
-    // pContext->PSSetShader(...)
-    // pContext->PSSetShaderResources(...)
-    // pContext->PSSetSamplers(...)
 
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+    // カメラの更新
     XMVECTOR eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
     XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_pCamera->Update(eye, at, up);
 
+    // ライトの位置計算
     float lightRadius = 1.5f;
     float lightX = sinf(g_Time * 2.0f) * lightRadius;
     float lightZ = cosf(g_Time * 2.0f) * lightRadius;
     float lightY = 0.5f;
 
-    // --- メインキューブ ---
-    XMMATRIX mModel = XMMatrixRotationY(g_Time);
+    // 各モデルを更新（main側で行列を直に計算しなくてよくなりました）
+    g_pMainCubeInstance->SetRotation(0.0f, g_Time, 0.0f); // Y軸回転
+    g_pLightCubeInstance->SetPosition(lightX, lightY, lightZ); // ライトの位置へ追従
 
-    ConstantBuffer cb;
-    cb.mModel = XMMatrixTranspose(mModel);
-    cb.mView = XMMatrixTranspose(g_pCamera->GetViewMatrix());
-    cb.mProjection = XMMatrixTranspose(g_pCamera->GetProjectionMatrix());
-    XMStoreFloat4(&cb.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
-    cb.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    cb.vEyePos = g_pCamera->GetEyePosition();
-    cb.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
+    // パラメータの詰め込み
+    ConstantBufferParameters lightingParams;
+    XMStoreFloat4(&lightingParams.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
+    lightingParams.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    lightingParams.vEyePos = g_pCamera->GetEyePosition();
+    lightingParams.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
 
-    pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    pContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pCubeMesh->Render(pContext);
+    // ★【進化ポイント】それぞれのインスタンスに「描画して！」と命令するだけ
+    // --- 1. メインキューブの描画 ---
+    g_pMainCubeInstance->Draw(pContext, g_pConstantBuffer, g_pCamera, lightingParams);
 
-    // --- 電球キューブ ---
-    XMMATRIX mLightModel = XMMatrixScaling(0.1f, 0.1f, 0.1f) *
-        XMMatrixTranslation(lightX, lightY, lightZ);
-    cb.mModel = XMMatrixTranspose(mLightModel);
-    cb.vLightColor.w = 0.0f;
-
-    pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pCubeMesh->Render(pContext);
+    // --- 2. 電球キューブの描画 ---
+    // 電球自体は発光しているように見せたいので、ライトカラーのアルファ(w)を0にして区別していた元の仕様を適用
+    lightingParams.vLightColor.w = 0.0f;
+    g_pLightCubeInstance->Draw(pContext, g_pConstantBuffer, g_pCamera, lightingParams);
 
     g_pGraphics->EndScene();
 }
 
 void CleanupDevice()
 {
-    if (g_pCubeMaterial) { delete g_pCubeMaterial;  g_pCubeMaterial = nullptr; }
-    if (g_pConstantBuffer)  g_pConstantBuffer->Release();
+    // Modelインスタンスの解放
+    if (g_pMainCubeInstance) { delete g_pMainCubeInstance;  g_pMainCubeInstance = nullptr; }
+    if (g_pLightCubeInstance) { delete g_pLightCubeInstance; g_pLightCubeInstance = nullptr; }
 
-    if (g_pCamera) { delete g_pCamera;   g_pCamera = nullptr; }
-    if (g_pCubeMesh) { delete g_pCubeMesh; g_pCubeMesh = nullptr; }
+    // アセットの解放
+    if (g_pCubeMaterial) { delete g_pCubeMaterial;   g_pCubeMaterial = nullptr; }
+    if (g_pCubeMesh) { delete g_pCubeMesh;       g_pCubeMesh = nullptr; }
 
-    if (g_pGraphics) { delete g_pGraphics; g_pGraphics = nullptr; }
+    if (g_pConstantBuffer) g_pConstantBuffer->Release();
+    if (g_pCamera) { delete g_pCamera;         g_pCamera = nullptr; }
+    if (g_pGraphics) { delete g_pGraphics;       g_pGraphics = nullptr; }
 }
