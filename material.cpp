@@ -1,53 +1,18 @@
 #include "material.h"
 
-Material::Material()
-    : m_pVertexShader(nullptr),
-    m_pPixelShader(nullptr),
-    m_pVertexLayout(nullptr),
-    m_pTextureRV(nullptr),
-    m_pSamplerLinear(nullptr)
-{
-}
+Material::Material() : m_pShader(nullptr), m_pTextureRV(nullptr), m_pSamplerLinear(nullptr) {}
+Material::~Material() { Cleanup(); }
 
-Material::~Material()
-{
-    Cleanup();
-}
-
-bool Material::Initialize(ID3D11Device* pDevice, const wchar_t* vsFileName, const wchar_t* psFileName, const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight)
+bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader, 
+    const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight)
 {
     HRESULT hr;
     ID3DBlob* pVSBlob = nullptr;
     ID3DBlob* pErrorBlob = nullptr;
 
-    // 1. 頂点シェーダーのコンパイルと生成
-    hr = D3DCompileFromFile(vsFileName, nullptr, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, &pErrorBlob);
-    if (FAILED(hr)) { if (pErrorBlob) pErrorBlob->Release(); return false; }
-
-    hr = pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &m_pVertexShader);
-    if (FAILED(hr)) { pVSBlob->Release(); return false; }
-
-    // 2. 頂点レイアウトの作成
-    D3D11_INPUT_ELEMENT_DESC layout[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * 6, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 9, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-
-    hr = pDevice->CreateInputLayout(layout, 4, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pVertexLayout);
-    pVSBlob->Release(); // レイアウトを作ったらBlobは不要
-    if (FAILED(hr)) return false;
-
-    // 3. ピクセルシェーダーのコンパイルと生成
-    ID3DBlob* pPSBlob = nullptr;
-    hr = D3DCompileFromFile(psFileName, nullptr, nullptr, "PS", "ps_5_0", 0, 0, &pPSBlob, &pErrorBlob);
-    if (FAILED(hr)) { if (pErrorBlob) pErrorBlob->Release(); return false; }
-
-    hr = pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &m_pPixelShader);
-    pPSBlob->Release();
-    if (FAILED(hr)) return false;
+    // 1. シェーダーポインタを貰うだけ
+    m_pShader = pShader;
+    if (!m_pShader) return false;
 
     // 4. テクスチャの作成
     D3D11_TEXTURE2D_DESC td = {};
@@ -90,19 +55,19 @@ bool Material::Initialize(ID3D11Device* pDevice, const wchar_t* vsFileName, cons
 
 void Material::Bind(ID3D11DeviceContext* pContext)
 {
-    // パイプラインへの状態セットをこのメソッド内で完結させる
-    pContext->IASetInputLayout(m_pVertexLayout);
-    pContext->VSSetShader(m_pVertexShader, nullptr, 0);
-    pContext->PSSetShader(m_pPixelShader, nullptr, 0);
+    // シェーダー側をバインドさせる
+    if (m_pShader) m_pShader->Bind(pContext);
+
+    // テクスチャとサンプラーをバインド (以前のコードのまま)
     pContext->PSSetShaderResources(0, 1, &m_pTextureRV);
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 }
 
 void Material::Cleanup()
 {
-    if (m_pVertexLayout) { m_pVertexLayout->Release();   m_pVertexLayout = nullptr; }
-    if (m_pPixelShader) { m_pPixelShader->Release();    m_pPixelShader = nullptr; }
-    if (m_pVertexShader) { m_pVertexShader->Release();   m_pVertexShader = nullptr; }
-    if (m_pSamplerLinear) { m_pSamplerLinear->Release();  m_pSamplerLinear = nullptr; }
-    if (m_pTextureRV) { m_pTextureRV->Release();      m_pTextureRV = nullptr; }
+    // ★ m_pShader はマネージャーが管理・解放するので、ここでは delete しない！
+    m_pShader = nullptr;
+
+    if (m_pSamplerLinear) { m_pSamplerLinear->Release(); m_pSamplerLinear = nullptr; }
+    if (m_pTextureRV) { m_pTextureRV->Release();     m_pTextureRV = nullptr; }
 }

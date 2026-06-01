@@ -19,6 +19,10 @@ Graphics* g_pGraphics = nullptr;
 #include "material.h"
 Material* g_pCubeMaterial = nullptr;
 
+// ↓ ★【追加】シェーダーマネージャーのインクルードとグローバル変数
+#include "ShaderManager.h"
+ShaderManager* g_pShaderManager = nullptr;
+
 #include "vertex.h"
 #include"model.h"
 
@@ -164,8 +168,15 @@ bool InitDevice(HWND hWnd)
         0xFF000000, 0xFFFFFFFF
     };
 
+    // --- ★【変更】シェーダーマネージャーの生成とシェーダーの取得 ---
+    g_pShaderManager = new ShaderManager();
+    Shader* pShader = g_pShaderManager->GetOrCreate(pDevice, L"Shader.hlsl");
+    if (!pShader) return false;
+
+    // --- マテリアルの生成と初期化 ---
     g_pCubeMaterial = new Material();
-    if (!g_pCubeMaterial->Initialize(pDevice, L"Shader.hlsl", L"Shader.hlsl", pixels, 2, 2))
+    // 引数にファイル名ではなく、取得した pShader を渡すように変更
+    if (!g_pCubeMaterial->Initialize(pDevice, pShader, pixels, 2, 2))
         return false;
 
     // --- 定数バッファの作成 ---
@@ -243,6 +254,10 @@ void CleanupDevice()
 
     // アセットの解放
     if (g_pCubeMaterial) { delete g_pCubeMaterial;   g_pCubeMaterial = nullptr; }
+
+    // --- ★【追加】シェーダーマネージャーの解放 ---
+    if (g_pShaderManager) { delete g_pShaderManager; g_pShaderManager = nullptr; }
+
     if (g_pCubeMesh) { delete g_pCubeMesh;       g_pCubeMesh = nullptr; }
 
     if (g_pConstantBuffer) g_pConstantBuffer->Release();
