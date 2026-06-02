@@ -1,22 +1,46 @@
 #include "model.h"
+#include "mesh.h"
+#include "material.h"
 
+// 従来のコンストラクタ：単一のパーツとしてリストに1個だけ登録する（これで立方体も動く！）
 Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
-    : m_pMesh(pMesh), m_pMaterial(pMaterial),
-    m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
+    : m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
 {
-    // ★自分専用の定数バッファ（PerObjectCB用）を生成
+    ModelPart singlePart;
+    singlePart.pMesh = pMesh;
+    singlePart.pMaterial = pMaterial;
+    singlePart.localTransform = DirectX::XMMatrixIdentity(); // 立方体はオフセットなし
+    m_Parts.push_back(singlePart);
+
+    // 定数バッファ生成
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
-    cbd.ByteWidth = sizeof(PerObjectCB); // ワールド行列1枚分のサイズ
+    cbd.ByteWidth = sizeof(PerObjectCB);
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = 0;
+    pDevice->CreateBuffer(&cbd, nullptr, &m_pObjectBuffer);
+}
 
+// 新設コンストラクタ：ModelResourceが読み込んだパーツ群をまるごとコピーする
+Model::Model(ID3D11Device* pDevice, const ModelResource* pResource)
+    : m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
+{
+    if (pResource)
+    {
+        m_Parts = pResource->GetParts(); // ベクターをまるごとコピー
+    }
+
+    // 定数バッファ生成
+    D3D11_BUFFER_DESC cbd = {};
+    cbd.Usage = D3D11_USAGE_DEFAULT;
+    cbd.ByteWidth = sizeof(PerObjectCB);
+    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cbd.CPUAccessFlags = 0;
     pDevice->CreateBuffer(&cbd, nullptr, &m_pObjectBuffer);
 }
 
 Model::~Model()
 {
-    // ★自分が生成した独占バッファなので、ここで責任を持って解放
     if (m_pObjectBuffer)
     {
         m_pObjectBuffer->Release();
@@ -34,24 +58,30 @@ DirectX::XMMATRIX Model::GetWorldMatrix() const
 
 void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
 {
-    if (!m_pMesh || !m_pMaterial) return;
-
-    // 1. マテリアル（シェーダーやテクスチャ）を適用
-    m_pMaterial->Bind(pContext);
-
-    // 2. ★【スロット0】フレームバッファの適用（main側で既に中身が更新されている前提）
-    // 引数で渡された pFrameBuffer をそのままスロット0にセット
+    // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回
     pContext->VSSetConstantBuffers(0, 1, &pFrameBuffer);
     pContext->PSSetConstantBuffers(0, 1, &pFrameBuffer);
 
-    // 3. ★【スロット1】オブジェクトバッファ（自身専用）の更新と適用
-    Model::PerObjectCB objCB;
-    objCB.mModel = DirectX::XMMatrixTranspose(GetWorldMatrix()); // 自身の行列
+    // モデルが持つすべてのパーツをループ描画
+    for (const auto& part : m_Parts)
+    {
+        if (!part.pMesh || !part.pMaterial) continue;
 
-    pContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
-    pContext->VSSetConstantBuffers(1, 1, &m_pObjectBuffer); // スロット1にセット！
-    // ※UnlitShaderのピクセルシェーダーではmModelを使わないので、今回はVS側だけでOKです
+        // 1. マテリアルの適用
+        part.pMaterial->Bind(pContext);
 
-    // 4. メッシュの描画
-    m_pMesh->Render(pContext);
+        // 2. ★超重要：このパーツ専用の行列を計算
+        // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
+        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, GetWorldMatrix());
+
+        Model::PerObjectCB objCB;
+        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX用に転置
+
+        // 3. 定数バッファをパーツごとに書き換えてスロット1にバインド
+        pContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
+        pContext->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
+
+        // 4. メッシュの描画
+        part.pMesh->Render(pContext);
+    }
 }

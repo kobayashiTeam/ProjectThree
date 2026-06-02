@@ -48,7 +48,8 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
     return true;
 }
 
-void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX parentTransform) {
+void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device* pDevice, 
+    ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX parentTransform) {
     // Assimpの4x4行列を DirectXMath の XMMATRIX に変換
     aiMatrix4x4 m = node->mTransformation;
     DirectX::XMMATRIX localTransform = DirectX::XMMatrixSet(
@@ -118,7 +119,9 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
 
     // 自前のMeshオブジェクトを生成
     Mesh* newMesh = new Mesh();
-    newMesh->Create(pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());
+    newMesh->Create(
+        pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());
+
     m_ownedMeshes.push_back(newMesh);
 
     // --- マテリアル（テクスチャ）の簡易紐付け ---

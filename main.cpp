@@ -42,6 +42,11 @@ Mesh* g_pCubeMesh = nullptr;
 Model* g_pMainCubeInstance = nullptr;
 Model* g_pLightCubeInstance = nullptr;
 
+// --- main.cpp の上部グローバル変数エリアに追加 ---
+#include "ModelResource.h"
+ModelResource* g_pCameraResource = nullptr;      // カメラのリソース実体
+Model* g_pCameraInstance = nullptr;      // 画面に配置するカメラオブジェクト
+
 bool InitDevice(HWND hWnd);
 void CleanupDevice();
 void Render();
@@ -201,11 +206,26 @@ bool InitDevice(HWND hWnd)
     // ↑ テクスチャ・シェーダー・サンプラーの個別作成コードは
     //   すべてMaterial::Initialize内で処理されるため削除
 
+    // ★【追加】古いカメラの.gltfファイルをロード
+    g_pCameraResource = new ModelResource();
+    // ディレクトリ構造に合わせてパスを指定（作業ディレクトリからの相対パス）
+    if (!g_pCameraResource->LoadFromFile(pDevice, g_pShaderManager, L"assets/oldCamera/scene.gltf"))
+    {
+        // 読み込み失敗時はデバッグ出力など
+        OutputDebugString(L"Failed to load gltf model.\n");
+        return false;
+    }
+
+    // ★【追加】ロードしたリソースを元に、インスタンス（配置オブジェクト）を生成
+    g_pCameraInstance = new Model(pDevice, g_pCameraResource);
+    g_pCameraInstance->SetPosition(0.0f, 0.0f, 0.0f); // 原点に置く
+    g_pCameraInstance->SetScale(1.0f, 1.0f, 1.0f);    // モデルが大きすぎる/小さすぎる場合は微調整
+
     // ★【進化ポイント】Modelインスタンスの生成と初期配置
     // 同じ g_pCubeMesh と g_pCubeMaterial を2つのモデルで「共有」している点に注目してください！
     // 第1引数に pDevice を追加
     g_pMainCubeInstance = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-    g_pMainCubeInstance->SetPosition(0.0f, 0.0f, 0.0f);
+    g_pMainCubeInstance->SetPosition(2.0f, 0.0f, 0.0f);
 
     g_pLightCubeInstance = new Model(pDevice, g_pCubeMesh, g_pUnlitMaterial);
     g_pLightCubeInstance->SetScale(0.1f, 0.1f, 0.1f);
@@ -250,12 +270,20 @@ void Render()
     // 共通のグローバルバッファ（スロット0用）に書き込み
     pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 
+    // ★【追加】古いカメラの更新と描画命令
+    if (g_pCameraInstance)
+    {
+        g_pCameraInstance->SetRotation(0.0f, g_Time * 0.5f, 0.0f); // ゆっくりY軸回転させてみる
+        g_pCameraInstance->Draw(pContext, g_pConstantBuffer);      // 描画！
+    }
+
     // ★【進化ポイント】それぞれのインスタンスに「描画して！」と命令するだけ
     // --- 1. メインキューブの描画 ---
     g_pMainCubeInstance->Draw(pContext, g_pConstantBuffer);
 
     // --- 2. 電球キューブの描画 ---
-    // 電球自体は発光しているように見せたいので、ライトカラーのアルファ(w)を0にして区別していた元の仕様を適用
+    // 電球自体は発光しているように見せたいので、ライトカラーのアルファ(w)を0にして
+    // 区別していた元の仕様を適用
     frameParams.vLightColor.w = 0.0f;
     g_pLightCubeInstance->Draw(pContext, g_pConstantBuffer);
 
@@ -264,6 +292,10 @@ void Render()
 
 void CleanupDevice()
 {
+    // ★【追加】カメラ関連の解放
+    if (g_pCameraInstance) { delete g_pCameraInstance; g_pCameraInstance = nullptr; }
+    if (g_pCameraResource) { delete g_pCameraResource; g_pCameraResource = nullptr; }
+
     // Modelインスタンスの解放
     if (g_pMainCubeInstance) { delete g_pMainCubeInstance;  g_pMainCubeInstance = nullptr; }
     if (g_pLightCubeInstance) { delete g_pLightCubeInstance; g_pLightCubeInstance = nullptr; }
