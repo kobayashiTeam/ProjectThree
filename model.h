@@ -8,29 +8,34 @@
 
 class Model
 {
-private:
-    Mesh* m_pMesh;       // 描画に使用するメッシュ（外部から貸与）
-    Material* m_pMaterial;   // 描画に使用するマテリアル（外部から貸与）
+public:
+    // ★構造体の定義を「Modelクラスの内部」に引っ越し！
+    // これにより、この構造体の正式名称は「Model::PerObjectCB」になり、外部と絶対衝突しなくなります。
+    struct PerObjectCB
+    {
+        DirectX::XMMATRIX mModel;
+    };
 
-    // 物体固有のトランスフォーム（位置、回転、拡大縮小）
+private:
+    Mesh* m_pMesh;
+    Material* m_pMaterial;
+
     DirectX::XMFLOAT3 m_Position;
-    DirectX::XMFLOAT3 m_Rotation; // 放射界（ラジアン）でのXYZ回転
+    DirectX::XMFLOAT3 m_Rotation;
     DirectX::XMFLOAT3 m_Scale;
 
+    ID3D11Buffer* m_pObjectBuffer = nullptr;
+
 public:
-    Model(Mesh* pMesh, Material* pMaterial);
+    Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial);
     ~Model();
 
-    // アクセサ（位置や回転を外から操作できるようにする）
     void SetPosition(float x, float y, float z) { m_Position = DirectX::XMFLOAT3(x, y, z); }
     void SetRotation(float x, float y, float z) { m_Rotation = DirectX::XMFLOAT3(x, y, z); }
     void SetScale(float x, float y, float z) { m_Scale = DirectX::XMFLOAT3(x, y, z); }
 
     const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
-
-    // ワールド行列（Model行列）の計算
     DirectX::XMMATRIX GetWorldMatrix() const;
 
-    // 描画処理（main.cpp にあった定数バッファ更新と描画の泥臭い部分をここに隠蔽）
-    void Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pConstantBuffer, Camera* pCamera, const struct ConstantBufferParameters& lightingParams);
+    void Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer);
 };

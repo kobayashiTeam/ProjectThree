@@ -17,7 +17,8 @@ Graphics* g_pGraphics = nullptr;
 // （MaterialクラスとMeshクラスに移譲済み）
 
 #include "material.h"
-Material* g_pCubeMaterial = nullptr;
+Material* g_pLitMaterial = nullptr;
+Material* g_pUnlitMaterial = nullptr;
 
 // ↓ ★【追加】シェーダーマネージャーのインクルードとグローバル変数
 #include "ShaderManager.h"
@@ -170,19 +171,24 @@ bool InitDevice(HWND hWnd)
 
     // --- ★【変更】シェーダーマネージャーの生成とシェーダーの取得 ---
     g_pShaderManager = new ShaderManager();
-    Shader* pShader = g_pShaderManager->GetOrCreate(pDevice, L"Shader.hlsl");
-    if (!pShader) return false;
+    Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");
+    Shader* pUnlitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnlitShader.hlsl");
+
+    if (!pLitShader||!pUnlitShader) return false;
 
     // --- マテリアルの生成と初期化 ---
-    g_pCubeMaterial = new Material();
+	g_pLitMaterial = new Material();
+	g_pUnlitMaterial = new Material();
     // 引数にファイル名ではなく、取得した pShader を渡すように変更
-    if (!g_pCubeMaterial->Initialize(pDevice, pShader, pixels, 2, 2))
+    if ((!g_pLitMaterial->Initialize(pDevice, pLitShader, pixels, 2, 2))||
+        (!g_pUnlitMaterial->Initialize(pDevice, pUnlitShader, pixels, 2, 2)))
         return false;
+
 
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
-    cbd.ByteWidth = sizeof(ConstantBufferParameters);
+    cbd.ByteWidth = sizeof(PerFrameCB);//ConstantBufferParameters
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = 0;
 
@@ -194,11 +200,12 @@ bool InitDevice(HWND hWnd)
 
     // ★【進化ポイント】Modelインスタンスの生成と初期配置
     // 同じ g_pCubeMesh と g_pCubeMaterial を2つのモデルで「共有」している点に注目してください！
-    g_pMainCubeInstance = new Model(g_pCubeMesh, g_pCubeMaterial);
+    // 第1引数に pDevice を追加
+    g_pMainCubeInstance = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainCubeInstance->SetPosition(0.0f, 0.0f, 0.0f);
 
-    g_pLightCubeInstance = new Model(g_pCubeMesh, g_pCubeMaterial);
-    g_pLightCubeInstance->SetScale(0.1f, 0.1f, 0.1f); // 電球は小さく
+    g_pLightCubeInstance = new Model(pDevice, g_pCubeMesh, g_pUnlitMaterial);
+    g_pLightCubeInstance->SetScale(0.1f, 0.1f, 0.1f);
 
     return true;
 }
@@ -228,20 +235,26 @@ void Render()
     g_pLightCubeInstance->SetPosition(lightX, lightY, lightZ); // ライトの位置へ追従
 
     // パラメータの詰め込み
-    ConstantBufferParameters lightingParams;
-    XMStoreFloat4(&lightingParams.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
-    lightingParams.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    lightingParams.vEyePos = g_pCamera->GetEyePosition();
-    lightingParams.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
+    PerFrameCB frameParams;
+    // ↓★★★ これらが抜けているため、行列がゴミデータ（あるいは0）になっています！
+    frameParams.matView = DirectX::XMMatrixTranspose(g_pCamera->GetViewMatrix());
+    frameParams.matProjection = DirectX::XMMatrixTranspose(g_pCamera->GetProjectionMatrix());
+    XMStoreFloat4(&frameParams.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
+    frameParams.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    frameParams.vEyePos = g_pCamera->GetEyePosition();
+    frameParams.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
+
+    // 共通のグローバルバッファ（スロット0用）に書き込み
+    pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 
     // ★【進化ポイント】それぞれのインスタンスに「描画して！」と命令するだけ
     // --- 1. メインキューブの描画 ---
-    g_pMainCubeInstance->Draw(pContext, g_pConstantBuffer, g_pCamera, lightingParams);
+    g_pMainCubeInstance->Draw(pContext, g_pConstantBuffer);
 
     // --- 2. 電球キューブの描画 ---
     // 電球自体は発光しているように見せたいので、ライトカラーのアルファ(w)を0にして区別していた元の仕様を適用
-    lightingParams.vLightColor.w = 0.0f;
-    g_pLightCubeInstance->Draw(pContext, g_pConstantBuffer, g_pCamera, lightingParams);
+    frameParams.vLightColor.w = 0.0f;
+    g_pLightCubeInstance->Draw(pContext, g_pConstantBuffer);
 
     g_pGraphics->EndScene();
 }
@@ -253,7 +266,8 @@ void CleanupDevice()
     if (g_pLightCubeInstance) { delete g_pLightCubeInstance; g_pLightCubeInstance = nullptr; }
 
     // アセットの解放
-    if (g_pCubeMaterial) { delete g_pCubeMaterial;   g_pCubeMaterial = nullptr; }
+    if (g_pLitMaterial) { delete g_pLitMaterial;   g_pLitMaterial = nullptr; }
+    if (g_pUnlitMaterial) { delete g_pUnlitMaterial;   g_pUnlitMaterial = nullptr; }
 
     // --- ★【追加】シェーダーマネージャーの解放 ---
     if (g_pShaderManager) { delete g_pShaderManager; g_pShaderManager = nullptr; }
