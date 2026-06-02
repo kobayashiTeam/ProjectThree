@@ -17,7 +17,8 @@ Graphics* g_pGraphics = nullptr;
 // （MaterialクラスとMeshクラスに移譲済み）
 
 #include "material.h"
-Material* g_pLitMaterial = nullptr;
+#include"litMaterial.h"
+LitMaterial* g_pLitMaterial = nullptr;
 Material* g_pUnlitMaterial = nullptr;
 
 // ↓ ★【追加】シェーダーマネージャーのインクルードとグローバル変数
@@ -177,12 +178,14 @@ bool InitDevice(HWND hWnd)
     if (!pLitShader||!pUnlitShader) return false;
 
     // --- マテリアルの生成と初期化 ---
-	g_pLitMaterial = new Material();
+	g_pLitMaterial = new LitMaterial();
 	g_pUnlitMaterial = new Material();
     // 引数にファイル名ではなく、取得した pShader を渡すように変更
     if ((!g_pLitMaterial->Initialize(pDevice, pLitShader, pixels, 2, 2))||
         (!g_pUnlitMaterial->Initialize(pDevice, pUnlitShader, pixels, 2, 2)))
         return false;
+    g_pLitMaterial->CreateMaterialBuffer(pDevice); // 専用バッファ作成
+    g_pLitMaterial->SetMaterialColor(1.0f, 0.5f, 0.5f, 1.0f); // 例えばちょっと赤っぽくしてみる
 
 
     // --- 定数バッファの作成 ---

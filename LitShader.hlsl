@@ -18,6 +18,11 @@ cbuffer PerObjectBuffer : register(b1)
     matrix mModel;
 };
 
+cbuffer PerMaterialBuffer : register(b2)
+{
+    float4 vMaterialColor; // C++側の構造体と完全一致させる
+};
+
 // スロット2：マテリアル単位（将来的な拡張用）
 // cbuffer PerMaterialBuffer : register(b2) { };
 
@@ -74,7 +79,9 @@ PS_INPUT VS(VS_INPUT input)
 float4 PS(PS_INPUT input) : SV_Target
 {
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    float4 objectColor = texColor * input.Color;
+    
+    // ★オブジェクトの色に、マテリアル固有の色（vMaterialColor）も掛け合わせる！
+    float4 objectColor = texColor * input.Color * vMaterialColor;
     
     // 光源からピクセルへのベクトル（正規化前）
     float3 lightVec = vLightPos.xyz - input.WorldPos;
