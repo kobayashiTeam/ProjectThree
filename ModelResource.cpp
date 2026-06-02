@@ -1,4 +1,4 @@
-#include "ModelResource.h"
+#include "modelResource.h"
 #include "mesh.h"
 #include "material.h"
 #include "litMaterial.h" // •K—v‚É‰ž‚¶‚ÄŽg‚¢•ª‚¯
