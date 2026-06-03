@@ -1,11 +1,11 @@
-#include "modelResource.h"
+ï»¿#include "modelResource.h"
 #include "mesh.h"
 #include "material.h"
-#include "litMaterial.h" // •K—v‚É‰‚¶‚Äg‚¢•ª‚¯
+#include "litMaterial.h" // å¿…è¦ã«å¿œã˜ã¦ä½¿ã„åˆ†ã‘
 #include "shaderManager.h"
-#include "vertex.h"      // SimpleVertex ‚ª’è‹`‚³‚ê‚Ä‚¢‚éƒwƒbƒ_
+#include "vertex.h"      // SimpleVertex ãŒå®šç¾©ã•ã‚Œã¦ã„ã‚‹ãƒ˜ãƒƒãƒ€
 
-// Assimp‚ÌƒCƒ“ƒNƒ‹[ƒh
+// Assimpã®ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -13,7 +13,7 @@
 ModelResource::ModelResource() {}
 
 ModelResource::~ModelResource() {
-    // ©g‚ª¶¬‚µ‚½Mesh‚ÆMaterial‚ğ‚·‚×‚ÄˆÀ‘S‚É‰ğ•ú
+    // è‡ªèº«ãŒç”Ÿæˆã—ãŸMeshã¨Materialã‚’ã™ã¹ã¦å®‰å…¨ã«è§£æ”¾
     for (auto* m : m_ownedMeshes) { delete m; }
     for (auto* mat : m_ownedMaterials) { delete mat; }
 }
@@ -21,15 +21,15 @@ ModelResource::~ModelResource() {
 bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& filePath) {
     Assimp::Importer importer;
 
-    // Assimp‚Íƒ}ƒ‹ƒ`ƒoƒCƒg•¶š—ñ‚ğ—v‹‚·‚é‚½‚ß•ÏŠ·
+    // Assimpã¯ãƒãƒ«ãƒãƒã‚¤ãƒˆæ–‡å­—åˆ—ã‚’è¦æ±‚ã™ã‚‹ãŸã‚å¤‰æ›
     std::string pathStr(filePath.begin(), filePath.end());
 
-    // š LearnOpenGL‚©‚çDirectX‚É’u‚«Š·‚¦‚éÛAÅd—v‚Ìƒtƒ‰ƒO
+    // â˜… LearnOpenGLã‹ã‚‰DirectXã«ç½®ãæ›ãˆã‚‹éš›ã€æœ€é‡è¦ã®ãƒ•ãƒ©ã‚°
     unsigned int flags =
-        aiProcess_Triangulate |             // ƒ|ƒŠƒSƒ“‚ğ‹­§“I‚ÉOŠpŒ`‚É‚·‚é
-        aiProcess_ConvertToLeftHanded |     // š’´d—v: ‰EèŒn‚©‚çDirectX•W€‚Ìu¶èŒnv‚Éˆê”­•ÏŠ·
-        aiProcess_CalcTangentSpace |        // –@üƒ}ƒbƒv—p‚ÌÚüiTangentj‚ğ©“®ŒvZ
-        aiProcess_GenSmoothNormals;         // –@ü‚ª‚È‚¢ê‡‚É©“®¶¬
+        aiProcess_Triangulate |             // ãƒãƒªã‚´ãƒ³ã‚’å¼·åˆ¶çš„ã«ä¸‰è§’å½¢ã«ã™ã‚‹
+        aiProcess_ConvertToLeftHanded |     // â˜…è¶…é‡è¦: å³æ‰‹ç³»ã‹ã‚‰DirectXæ¨™æº–ã®ã€Œå·¦æ‰‹ç³»ã€ã«ä¸€ç™ºå¤‰æ›
+        aiProcess_CalcTangentSpace |        // æ³•ç·šãƒãƒƒãƒ—ç”¨ã®æ¥ç·šï¼ˆTangentï¼‰ã‚’è‡ªå‹•è¨ˆç®—
+        aiProcess_GenSmoothNormals;         // æ³•ç·šãŒãªã„å ´åˆã«è‡ªå‹•ç”Ÿæˆ
 
     const aiScene* scene = importer.ReadFile(pathStr, flags);
 
@@ -38,10 +38,10 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
         return false;
     }
 
-    // ƒeƒNƒXƒ`ƒƒ‚ğ‘Š‘ÎƒpƒX‚Å“Ç‚İ‚Ş‚½‚ß‚ÉAƒtƒ@ƒCƒ‹‚ÌeƒfƒBƒŒƒNƒgƒŠ‚ğæ“¾‚µ‚Ä‚¨‚­
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’ç›¸å¯¾ãƒ‘ã‚¹ã§èª­ã¿è¾¼ã‚€ãŸã‚ã«ã€ãƒ•ã‚¡ã‚¤ãƒ«ã®è¦ªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’å–å¾—ã—ã¦ãŠã
     std::wstring directory = filePath.substr(0, filePath.find_last_of(L"/\\") + 1);
 
-    // ‰Šús—ñi’PˆÊs—ñj‚©‚çÄ‹A‰ğÍ‚ğŠJn
+    // åˆæœŸè¡Œåˆ—ï¼ˆå˜ä½è¡Œåˆ—ï¼‰ã‹ã‚‰å†å¸°è§£æã‚’é–‹å§‹
     DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
     ProcessNode(scene->mRootNode, scene, pDevice, pShaderManager, directory, identity);
 
@@ -50,7 +50,7 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
 
 void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device* pDevice, 
     ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX parentTransform) {
-    // Assimp‚Ì4x4s—ñ‚ğ DirectXMath ‚Ì XMMATRIX ‚É•ÏŠ·
+    // Assimpã®4x4è¡Œåˆ—ã‚’ DirectXMath ã® XMMATRIX ã«å¤‰æ›
     aiMatrix4x4 m = node->mTransformation;
     DirectX::XMMATRIX localTransform = DirectX::XMMatrixSet(
         m.a1, m.b1, m.c1, m.d1,
@@ -58,16 +58,16 @@ void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device
         m.a3, m.b3, m.c3, m.d3,
         m.a4, m.b4, m.c4, m.d4
     );
-    // eƒm[ƒh‚Ìƒgƒ‰ƒ“ƒXƒtƒH[ƒ€‚ÆŠ|‚¯‡‚í‚¹‚é
+    // è¦ªãƒãƒ¼ãƒ‰ã®ãƒˆãƒ©ãƒ³ã‚¹ãƒ•ã‚©ãƒ¼ãƒ ã¨æ›ã‘åˆã‚ã›ã‚‹
     DirectX::XMMATRIX globalTransform = DirectX::XMMatrixMultiply(localTransform, parentTransform);
 
-    // ‚±‚Ìƒm[ƒh‚ÉŠÜ‚Ü‚ê‚éƒƒbƒVƒ…iƒp[ƒcj‚ğˆ—
+    // ã“ã®ãƒãƒ¼ãƒ‰ã«å«ã¾ã‚Œã‚‹ãƒ¡ãƒƒã‚·ãƒ¥ï¼ˆãƒ‘ãƒ¼ãƒ„ï¼‰ã‚’å‡¦ç†
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         ProcessMesh(mesh, scene, pDevice, pShaderManager, directory, globalTransform);
     }
 
-    // qƒm[ƒh‚ÖÄ‹A
+    // å­ãƒãƒ¼ãƒ‰ã¸å†å¸°
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         ProcessNode(node->mChildren[i], scene, pDevice, pShaderManager, directory, globalTransform);
     }
@@ -77,30 +77,30 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     std::vector<SimpleVertex> vertices;
     std::vector<DWORD> indices;
 
-    // --- ’¸“_ƒf[ƒ^‚ÌƒRƒ“ƒo[ƒg ---
+    // --- é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã®ã‚³ãƒ³ãƒãƒ¼ãƒˆ ---
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         SimpleVertex vertex = {};
 
-        // À•W (X, Y, Z)
+        // åº§æ¨™ (X, Y, Z)
         vertex.x = mesh->mVertices[i].x;//Pos.x
         vertex.y = mesh->mVertices[i].y;
         vertex.z = mesh->mVertices[i].z;
 
-        // –@ü (Normal)
+        // æ³•ç·š (Normal)
         if (mesh->HasNormals()) {
             vertex.nx = mesh->mNormals[i].x;//Normak.x
             vertex.ny = mesh->mNormals[i].y;
             vertex.nz = mesh->mNormals[i].z;
         }
 
-        // UVÀ•W (ƒeƒNƒXƒ`ƒƒÀ•W)
+        // UVåº§æ¨™ (ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™)
         if (mesh->mTextureCoords[0]) {
             vertex.u = mesh->mTextureCoords[0][i].x;//Tex.x
             vertex.v = mesh->mTextureCoords[0][i].y;
-            // ¦ aiProcess_ConvertToLeftHanded ‚ğw’è‚µ‚Ä‚¢‚ê‚ÎAV²(Y)‚Ì”½“]i1.0f - yj‚ÍAssimp‚ª©“®‚Å‚â‚Á‚Ä‚­‚ê‚Ü‚·I
+            // â€» aiProcess_ConvertToLeftHanded ã‚’æŒ‡å®šã—ã¦ã„ã‚Œã°ã€Vè»¸(Y)ã®åè»¢ï¼ˆ1.0f - yï¼‰ã¯AssimpãŒè‡ªå‹•ã§ã‚„ã£ã¦ãã‚Œã¾ã™ï¼
         }
 
-        // ‚ ‚È‚½‚Ì’¸“_\‘¢‘Ì‚ÌƒJƒ‰[‰Šú’l‚È‚Ç‚ª‚ ‚ê‚Î“K‹Xİ’è
+        // ã‚ãªãŸã®é ‚ç‚¹æ§‹é€ ä½“ã®ã‚«ãƒ©ãƒ¼åˆæœŸå€¤ãªã©ãŒã‚ã‚Œã°é©å®œè¨­å®š
         //vertex.Color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
         vertex.r = 1.0f;
         vertex.g = 1.0f;
@@ -109,7 +109,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
         vertices.push_back(vertex);
     }
 
-    // --- ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÌƒRƒ“ƒo[ƒg ---
+    // --- ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã®ã‚³ãƒ³ãƒãƒ¼ãƒˆ ---
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
@@ -117,41 +117,60 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
         }
     }
 
-    // ©‘O‚ÌMeshƒIƒuƒWƒFƒNƒg‚ğ¶¬
+    // è‡ªå‰ã®Meshã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆ
     Mesh* newMesh = new Mesh();
     newMesh->Create(
         pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());
 
     m_ownedMeshes.push_back(newMesh);
 
-    // --- ƒ}ƒeƒŠƒAƒ‹iƒeƒNƒXƒ`ƒƒj‚ÌŠÈˆÕ•R•t‚¯ ---
+    // --- ãƒãƒ†ãƒªã‚¢ãƒ«ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£ï¼‰ã®æœ¬é€£å‹• ---
     Material* newMaterial = nullptr;
     Shader* pLitShader = pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        // –{—ˆ‚Í‚±‚±‚Åƒ}ƒeƒŠƒAƒ‹‚©‚çƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹–¼‚ğæ“¾‚µ‚Äƒ[ƒh‚µ‚Ü‚·B
-        // ˆê’UƒeƒXƒg—p‚Æ‚µ‚ÄAŠù‘¶‚Ì pixelsiƒ`ƒFƒbƒJ[‚È‚Çj‚ğ“n‚µ‚Äƒ_ƒ~[‰Šú‰»
-        UINT32 dummyPixels[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
+        aiString texturePath;
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
 
+            std::string texPathSrc(texturePath.C_Str());
+            std::wstring texPathW(texPathSrc.begin(), texPathSrc.end());
+
+            // è¦ªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ‘ã‚¹ã¨çµåˆ
+            std::wstring fullTexPath = directory + texPathW;
+
+            // â˜…ã€å¤‰æ›´ã€‘å¢—è¨­ã—ãŸ InitializeFromFile ã‚’å‘¼ã³å‡ºã™ï¼
+            LitMaterial* litMat = new LitMaterial();
+            if (litMat->InitializeFromFile(pDevice, pLitShader, fullTexPath.c_str())) {
+                litMat->CreateMaterialBuffer(pDevice);
+                litMat->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
+                newMaterial = litMat;
+            }
+            else {
+                // ä¸‡ãŒä¸€ç”»åƒã®ãƒ­ãƒ¼ãƒ‰ã«å¤±æ•—ã—ãŸå ´åˆã¯ã€å®‰å…¨ã®ãŸã‚ã«ãƒ‡ãƒªãƒ¼ãƒˆã—ã¦ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯ã¸è½ã¨ã™
+                delete litMat;
+                litMat = nullptr;
+            }
+        }
+    }
+
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£ãŒãªã„ã€ã¾ãŸã¯ãƒ­ãƒ¼ãƒ‰å¤±æ•—æ™‚ã¯ãƒã‚§ãƒƒã‚«ãƒ¼æ¨¡æ§˜ï¼ˆæ—¢å­˜ã®å®‰å…¨è£…ç½®ï¼‰
+    if (!newMaterial) {
+        UINT32 dummyPixels[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
         LitMaterial* litMat = new LitMaterial();
         litMat->Initialize(pDevice, pLitShader, dummyPixels, 2, 2);
         litMat->CreateMaterialBuffer(pDevice);
         litMat->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
-
         newMaterial = litMat;
     }
-    else {
-        newMaterial = new Material();
-        newMaterial->Initialize(pDevice, pLitShader, nullptr, 0, 0); // ƒtƒH[ƒ‹ƒoƒbƒN
-    }
+
     m_ownedMaterials.push_back(newMaterial);
 
-    // ƒp[ƒc‚Æ‚µ‚Ä“o˜^
+    // ãƒ‘ãƒ¼ãƒ„ã¨ã—ã¦ç™»éŒ²
     ModelPart part;
     part.pMesh = newMesh;
     part.pMaterial = newMaterial;
-    part.localTransform = transform; // Assimp‚©‚ç“¾‚½ƒm[ƒh‚Ì”z’us—ñ
+    part.localTransform = transform; // Assimpã‹ã‚‰å¾—ãŸãƒãƒ¼ãƒ‰ã®é…ç½®è¡Œåˆ—
     m_parts.push_back(part);
 }

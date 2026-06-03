@@ -18,5 +18,6 @@ public:
 
     // ★ virtual をつけて、派生クラスで拡張できるようにする！
     virtual void Bind(ID3D11DeviceContext* pContext);
+    bool InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const wchar_t* pFileName);
     void Cleanup();
 };

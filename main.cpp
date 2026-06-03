@@ -219,7 +219,7 @@ bool InitDevice(HWND hWnd)
     // ★【追加】ロードしたリソースを元に、インスタンス（配置オブジェクト）を生成
     g_pCameraInstance = new Model(pDevice, g_pCameraResource);
     g_pCameraInstance->SetPosition(0.0f, 0.0f, 0.0f); // 原点に置く
-    g_pCameraInstance->SetScale(1.0f, 1.0f, 1.0f);    // モデルが大きすぎる/小さすぎる場合は微調整
+    g_pCameraInstance->SetScale(0.8f, 0.8f, 0.8f);    // モデルが大きすぎる/小さすぎる場合は微調整
 
     // ★【進化ポイント】Modelインスタンスの生成と初期配置
     // 同じ g_pCubeMesh と g_pCubeMaterial を2つのモデルで「共有」している点に注目してください！
