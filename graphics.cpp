@@ -66,18 +66,37 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &m_pDepthStencil);
     if (FAILED(hr)) return false;
 
+    // 4. 深度ステンシルステートの作成（OpenGLの glEnable(GL_DEPTH_TEST) 相当）
+    // 2. ビュー（DSV）の作成（★ここを上に移動）
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
 
-    //深度バッファって深度だけ保存してるんじゃないのか？なぜステンシルと同じように
-    //実際そう、32bitのうち深度とステンシルデータが入っている。同梱したほうがアクセスがいい？
     hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
     if (FAILED(hr)) return false;
 
-    // パイプラインにセット
+    // 3. 深度ステンシルステート（説明書）の作成
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+    dsDesc.DepthEnable = TRUE;
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+    dsDesc.StencilEnable = FALSE;
+
+    ID3D11DepthStencilState* pDepthStencilState = nullptr;
+    hr = m_pd3dDevice->CreateDepthStencilState(&dsDesc, &pDepthStencilState);
+    if (FAILED(hr)) return false; // 失敗時の安全弁
+
+
+    // ==========================================
+    // 後半：準備できたモノをまとめてパイプラインに連結（セット）する
+    // ==========================================
+
+    // 4. レンダーターゲットと深度バッファ（窓口）をセット
     m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+
+    // 5. 深度テストのルール（説明書）をセット
+    m_pImmediateContext->OMSetDepthStencilState(pDepthStencilState, 0);
 
     // 4. ラスタライザーステート（背面カリング）の作成
     D3D11_RASTERIZER_DESC dr = {};
