@@ -37,6 +37,10 @@ Model* g_pModel2 = nullptr;
 // 定数バッファ
 ID3D11Buffer* g_pConstantBuffer = nullptr;
 
+//アウトラインクラス
+#include "outLine.h"
+OutLine* g_pOutLine = nullptr;
+
 float g_Time = 0.0f;
 
 // 関数宣言
@@ -122,7 +126,6 @@ bool InitDevice()
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
-    // ここにSimpleVertexの定義とCreate呼び出し（後述）
 
     // Material
     g_pLitMaterial = new LitMaterial();  // materialは実用できない。litにのみmBufferをもつ。
@@ -151,6 +154,10 @@ bool InitDevice()
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
+
+    //outLine設定
+	g_pOutLine = new OutLine();
+	g_pOutLine->createStencilState(pDevice, g_pGraphics->GetContext());
 
     return true;
 }
@@ -208,7 +215,7 @@ void Render()
     pContext->OMSetDepthStencilState(g_pGraphics->m_pOutlineStencilState, 1);  // Reference = 1
 	g_pMainModel->SetScale(1.2f, 1.2f, 1.2f); // 少し大きくしてアウトラインっぽく
     g_pMainModel->SetShaderOverride(g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl"));
-	g_pLitMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 黒色で描画
+	g_pLitMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
     g_pMainModel->Draw(pContext, g_pConstantBuffer);
 
     // 後処理（元のStateに戻す）
