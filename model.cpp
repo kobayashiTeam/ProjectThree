@@ -1,6 +1,7 @@
 #include "model.h"
 #include "mesh.h"
 #include "material.h"
+#include"litMaterial.h"
 
 // 従来のコンストラクタ：単一のパーツとしてリストに1個だけ登録する（これで立方体も動く！）
 Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
@@ -76,9 +77,9 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
         part.pMaterial->Bind(pContext);
 
         // ★★★ ここを追加：Pixel Shaderのオーバーライド
-        if (m_pOverrideShader)
+        if (m_pOverrideMaterial)
         {
-			m_pOverrideShader->Bind(pContext);
+			m_pOverrideMaterial->Bind(pContext);
         }
 
         // 2. ★超重要：このパーツ専用の行列を計算

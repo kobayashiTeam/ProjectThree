@@ -8,6 +8,7 @@
 class Mesh;
 class Material;
 class Shader;
+class LitMaterial;
 
 class Model
 {
@@ -17,7 +18,7 @@ public:
         DirectX::XMMATRIX mModel;
     };
     //追加
-    Shader* m_pOverrideShader = nullptr;   // ← 新規追加
+    LitMaterial* m_pOverrideMaterial = nullptr;   // ← 新規追加
 
 private:
     // ↓【変更】単一のポインタ保持から、描画すべきパーツのリスト保持に拡張
@@ -50,8 +51,8 @@ public:
 
     //テスト
     // アウトライン描画用に一時的にPixel Shaderを差し替える
-    void SetShaderOverride(Shader* pPS) { m_pOverrideShader = pPS; }
+    void SetMaterialOverride(LitMaterial* pMat) { m_pOverrideMaterial = pMat; }
 
     // オーバーライドを解除
-    void ResetShaderOverride() { m_pOverrideShader = nullptr; }
+    void ResetMaterialOverride() { m_pOverrideMaterial = nullptr; }
 };

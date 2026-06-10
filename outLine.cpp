@@ -65,16 +65,16 @@ void OutLine::DrawOutline(ID3D11DeviceContext* pContext, Model* pModel, ID3D11Bu
     // === Pass 1 ===
     pContext->OMSetDepthStencilState(m_pNormalStencilState, 1);
     pModel->SetScale(1.0f, 1.0f, 1.0f);
-    pModel->ResetShaderOverride();
+    pModel->ResetMaterialOverride();
     pModel->Draw(pContext, pCB);
 
     // === Pass 2 ===
     pContext->OMSetDepthStencilState(m_pOutlineStencilState, 1);
     pModel->SetScale(1.2f, 1.2f, 1.2f);
-    //pModel->SetShaderOverride(m_pOutlineShader);  // ©Pass‚ªŽ‚Â
+    pModel->SetMaterialOverride(m_pOutlineMaterial);  
     pModel->Draw(pContext, pCB);
 
     // === Œã•Ð•t‚¯ ===
     pModel->SetScale(1.0f, 1.0f, 1.0f);
-    pModel->ResetShaderOverride();
+    pModel->ResetMaterialOverride();
 }

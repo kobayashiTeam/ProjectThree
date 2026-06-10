@@ -29,7 +29,8 @@ Camera* g_pCamera = nullptr;
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
-LitMaterial* g_pLitMaterial = nullptr;   // LitMaterialでも可
+LitMaterial* g_pLitMaterial = nullptr; 
+LitMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 Model* g_pMainModel = nullptr;
 //追加
 Model* g_pModel2 = nullptr;
@@ -121,19 +122,26 @@ bool InitDevice()
     // Shader Manager
     g_pShaderManager = new ShaderManager();
     Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
-    Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");//Shadersフォルダに入れるのもいいか
+    Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
     if (!pLitShader||!pOutlineShader) return false;
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
 
     // Material
+    //litMaterial
     g_pLitMaterial = new LitMaterial();  // materialは実用できない。litにのみmBufferをもつ。
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     if (!g_pLitMaterial->Initialize(pDevice, pLitShader, checker, 2, 2))
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(0.8f, 0.6f, 0.2f, 1.0f);
+    //outlienMaterial
+	g_pOutlineMaterial = new LitMaterial();
+	if (!g_pOutlineMaterial->Initialize(pDevice, pOutlineShader, checker, 2, 2))
+		return false;
+	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
+	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
@@ -158,6 +166,7 @@ bool InitDevice()
     //outLine設定
 	g_pOutLine = new OutLine();
 	g_pOutLine->createStencilState(pDevice, g_pGraphics->GetContext());
+    g_pOutLine->setMaterial(g_pOutlineMaterial);
 
     return true;
 }
@@ -204,19 +213,7 @@ void Render()
 	pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
-    // === 1st Pass: 通常オブジェクト + Stencil書き込み ===
-    pContext->OMSetDepthStencilState(g_pGraphics->m_pNormalStencilState, 1);  // Reference = 1
-	g_pMainModel->SetScale(1.0f, 1.0f, 1.0f); // 通常サイズで描画
-	g_pMainModel->ResetShaderOverride(); // 通常のシェーダーで描画
-	g_pLitMaterial->SetMaterialColor(0.8f, 0.6f, 0.2f, 1.0f); // 通常の色
-    g_pMainModel->Draw(pContext, g_pConstantBuffer);
-	
-    // === 2nd Pass: 拡大版アウトライン ===
-    pContext->OMSetDepthStencilState(g_pGraphics->m_pOutlineStencilState, 1);  // Reference = 1
-	g_pMainModel->SetScale(1.2f, 1.2f, 1.2f); // 少し大きくしてアウトラインっぽく
-    g_pMainModel->SetShaderOverride(g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl"));
-	g_pLitMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
-    g_pMainModel->Draw(pContext, g_pConstantBuffer);
+ 	g_pOutLine->DrawOutline(pContext, g_pMainModel, g_pConstantBuffer);
 
     // 後処理（元のStateに戻す）
     pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);
