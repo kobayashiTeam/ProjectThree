@@ -122,7 +122,7 @@ bool InitDevice()
     // ここにSimpleVertexの定義とCreate呼び出し（後述）
 
     // Material
-    g_pLitMaterial = new LitMaterial();  // または Material
+    g_pLitMaterial = new LitMaterial();  // materialは実用できない。litにのみmBufferをもつ。
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     if (!g_pLitMaterial->Initialize(pDevice, pLitShader, checker, 2, 2))
         return false;
