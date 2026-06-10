@@ -117,7 +117,8 @@ bool InitDevice()
     // Shader Manager
     g_pShaderManager = new ShaderManager();
     Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
-    if (!pLitShader) return false;
+    Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");//Shadersフォルダに入れるのもいいか
+    if (!pLitShader||!pOutlineShader) return false;
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
@@ -175,6 +176,7 @@ void UpdateScene()
 void Render()
 {
     ID3D11DeviceContext* pContext = g_pGraphics->GetContext();
+    ID3D11Device* pDevice = g_pGraphics->GetDevice();
     g_pGraphics->BeginScene(0.1f, 0.12f, 0.15f, 1.0f);
 
     UpdateScene();
@@ -195,9 +197,22 @@ void Render()
 	pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
+    // === 1st Pass: 通常オブジェクト + Stencil書き込み ===
+    pContext->OMSetDepthStencilState(g_pGraphics->m_pNormalStencilState, 1);  // Reference = 1
+	g_pMainModel->SetScale(1.0f, 1.0f, 1.0f); // 通常サイズで描画
+	g_pMainModel->ResetShaderOverride(); // 通常のシェーダーで描画
+	g_pLitMaterial->SetMaterialColor(0.8f, 0.6f, 0.2f, 1.0f); // 通常の色
     g_pMainModel->Draw(pContext, g_pConstantBuffer);
-	//Model2
-	g_pModel2->Draw(pContext, g_pConstantBuffer);
+	
+    // === 2nd Pass: 拡大版アウトライン ===
+    pContext->OMSetDepthStencilState(g_pGraphics->m_pOutlineStencilState, 1);  // Reference = 1
+	g_pMainModel->SetScale(1.2f, 1.2f, 1.2f); // 少し大きくしてアウトラインっぽく
+    g_pMainModel->SetShaderOverride(g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl"));
+	g_pLitMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 黒色で描画
+    g_pMainModel->Draw(pContext, g_pConstantBuffer);
+
+    // 後処理（元のStateに戻す）
+    pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);
 
     g_pGraphics->EndScene();
 }

@@ -30,4 +30,11 @@ private:
     ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
     //ステートって何だろう？
     ID3D11RasterizerState* m_pRasterizerState = nullptr;
+
+    //テスト
+public:
+	ID3D11DepthStencilState* m_pDefaultStencilState = nullptr;
+    ID3D11DepthStencilState* m_pNormalStencilState = nullptr;
+	ID3D11DepthStencilState* m_pOutlineStencilState = nullptr;
+
 };

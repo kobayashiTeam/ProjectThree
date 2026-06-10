@@ -75,6 +75,12 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
         // 1. マテリアルの適用
         part.pMaterial->Bind(pContext);
 
+        // ★★★ ここを追加：Pixel Shaderのオーバーライド
+        if (m_pOverrideShader)
+        {
+			m_pOverrideShader->Bind(pContext);
+        }
+
         // 2. ★超重要：このパーツ専用の行列を計算
         // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
         DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, 

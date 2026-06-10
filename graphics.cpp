@@ -77,17 +77,54 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     if (FAILED(hr)) return false;
 
     // 3. 深度ステンシルステート（説明書）の作成
+    //普通のステート
     D3D11_DEPTH_STENCIL_DESC dsDesc = {};
     dsDesc.DepthEnable = TRUE;
     dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
     dsDesc.StencilEnable = FALSE;
 
-    ID3D11DepthStencilState* pDepthStencilState = nullptr;
-    hr = m_pd3dDevice->CreateDepthStencilState(&dsDesc, &pDepthStencilState);
+    hr = m_pd3dDevice->CreateDepthStencilState(&dsDesc, &m_pDefaultStencilState);
     if (FAILED(hr)) return false; // 失敗時の安全弁
 
+    //書き込み用ステート
+    D3D11_DEPTH_STENCIL_DESC normalStencilDesc = {};
+    normalStencilDesc.DepthEnable = TRUE;
+    normalStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    normalStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
 
+    normalStencilDesc.StencilEnable = TRUE;
+    normalStencilDesc.StencilReadMask = 0xFF;
+    normalStencilDesc.StencilWriteMask = 0xFF;
+
+    // 前面・背面とも同じ設定でOK（シンプルに）
+    normalStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    normalStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    normalStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;  // 重要
+    normalStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+    normalStencilDesc.BackFace = normalStencilDesc.FrontFace;  // 同じ設定
+
+    hr=m_pd3dDevice->CreateDepthStencilState(&normalStencilDesc, &m_pNormalStencilState);
+	if (FAILED(hr)) return false;
+
+    //読み込み用ステート
+    D3D11_DEPTH_STENCIL_DESC outlineStencilDesc = {};
+    outlineStencilDesc.DepthEnable = FALSE;           // 重要：深度テスト無効
+    outlineStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    outlineStencilDesc.StencilEnable = TRUE;
+    outlineStencilDesc.StencilReadMask = 0xFF;
+    outlineStencilDesc.StencilWriteMask = 0x00;       // 書き込みはしない
+
+    outlineStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    outlineStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    outlineStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    outlineStencilDesc.FrontFace.StencilFunc = 
+        static_cast<D3D11_COMPARISON_FUNC>(D3D11_COMPARISON_NOT_EQUAL);;  // 1以外なら描画
+
+    outlineStencilDesc.BackFace = outlineStencilDesc.FrontFace;
+
+    m_pd3dDevice->CreateDepthStencilState(&outlineStencilDesc, &m_pOutlineStencilState);
     // ==========================================
     // 後半：準備できたモノをまとめてパイプラインに連結（セット）する
     // ==========================================
@@ -96,7 +133,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
 
     // 5. 深度テストのルール（説明書）をセット
-    m_pImmediateContext->OMSetDepthStencilState(pDepthStencilState, 0);
+    m_pImmediateContext->OMSetDepthStencilState(m_pDefaultStencilState, 0);
 
     // 4. ラスタライザーステート（背面カリング）の作成
     D3D11_RASTERIZER_DESC dr = {};

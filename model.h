@@ -7,6 +7,7 @@
 
 class Mesh;
 class Material;
+class Shader;
 
 class Model
 {
@@ -15,6 +16,8 @@ public:
     {
         DirectX::XMMATRIX mModel;
     };
+    //追加
+    Shader* m_pOverrideShader = nullptr;   // ← 新規追加
 
 private:
     // ↓【変更】単一のポインタ保持から、描画すべきパーツのリスト保持に拡張
@@ -44,4 +47,11 @@ public:
     DirectX::XMMATRIX GetWorldMatrix() const;
 
     void Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer);
+
+    //テスト
+    // アウトライン描画用に一時的にPixel Shaderを差し替える
+    void SetShaderOverride(Shader* pPS) { m_pOverrideShader = pPS; }
+
+    // オーバーライドを解除
+    void ResetShaderOverride() { m_pOverrideShader = nullptr; }
 };
