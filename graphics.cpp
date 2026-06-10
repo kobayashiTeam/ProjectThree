@@ -17,7 +17,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     sd.BufferCount = 1;
     sd.BufferDesc.Width = width;
     sd.BufferDesc.Height = height;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//ここがディスプレイ出力の限界？
     sd.BufferDesc.RefreshRate.Numerator = 60;
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -26,6 +26,9 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     sd.SampleDesc.Quality = 0;
     sd.Windowed = TRUE;
 
+    //これはなんだろう？
+    //GPUに要求する、最低機能レベルのサイン
+    //9_1,10_0にしてみたら窓が一瞬出て消えた。
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
     D3D_FEATURE_LEVEL featureLevel;
 
@@ -39,9 +42,11 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
 
     // 2. レンダーターゲットビューの作成
     ID3D11Texture2D* pBackBuffer = nullptr;
+    //getBufferが情報取得だけじゃなくて、pBackBufferにいれたのか？
     hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
     if (FAILED(hr)) return false;
-
+    //これがカラーバッファーのことか？ここに最終的に出力されたものが表示されるのか？
+    //正しい。インデックス0にPSなどの処理後の出力先にここに送られる。
     hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pRenderTargetView);
     pBackBuffer->Release();
     if (FAILED(hr)) return false;
@@ -66,6 +71,8 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
 
+    //深度バッファって深度だけ保存してるんじゃないのか？なぜステンシルと同じように
+    //実際そう、32bitのうち深度とステンシルデータが入っている。同梱したほうがアクセスがいい？
     hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
     if (FAILED(hr)) return false;
 
@@ -84,6 +91,8 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     m_pImmediateContext->RSSetState(m_pRasterizerState);
 
     // 5. ビューポートの設定
+    //これもなんだっけ？描画出力先を細かい部分で描画したりするんだっけ？
+    //width,heightを1.2にすると出力が左上に限定された。ミニマップなどに使えそう
     D3D11_VIEWPORT vp;
     vp.Width = (float)width;
     vp.Height = (float)height;

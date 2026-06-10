@@ -6,6 +6,7 @@
 class Material {
 protected: // 派生クラスからアクセスできるように protected にする
     Shader* m_pShader;
+    //マテリアルに使うテクスチャ、の設定を持ったview、とサンプラー
     ID3D11ShaderResourceView* m_pTextureRV;
     ID3D11SamplerState* m_pSamplerLinear;
 

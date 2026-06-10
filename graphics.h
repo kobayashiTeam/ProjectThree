@@ -25,7 +25,9 @@ private:
     ID3D11DeviceContext* m_pImmediateContext = nullptr;
     IDXGISwapChain* m_pSwapChain = nullptr;
     ID3D11RenderTargetView* m_pRenderTargetView = nullptr;
+    //描画領域と被るようなオブジェクトは大体texture2dの型？
     ID3D11Texture2D* m_pDepthStencil = nullptr;
     ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
+    //ステートって何だろう？
     ID3D11RasterizerState* m_pRasterizerState = nullptr;
 };

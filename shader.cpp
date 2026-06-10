@@ -15,6 +15,9 @@ bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wcha
     if (FAILED(hr)) { pVSBlob->Release(); return false; }
 
     // 2. 頂点レイアウトの作成（現状のレイアウトをそのまま移植）
+    //インデックスバッファ：meshがもつもの。頂点座標とセット
+    //レイアウト：頂点バッファの解釈。頂点情報に含まれる
+    //種々の属性をパースする
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -23,16 +26,19 @@ bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wcha
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 9, D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
 
-    hr = pDevice->CreateInputLayout(layout, 4, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pVertexLayout);
+    hr = pDevice->CreateInputLayout(layout, 4, pVSBlob->GetBufferPointer(), 
+        pVSBlob->GetBufferSize(), &m_pVertexLayout);
     pVSBlob->Release();
     if (FAILED(hr)) return false;
 
     // 3. ピクセルシェーダーのコンパイルと生成
     ID3DBlob* pPSBlob = nullptr;
-    hr = D3DCompileFromFile(psFileName, nullptr, nullptr, "PS", "ps_5_0", 0, 0, &pPSBlob, &pErrorBlob);
+    hr = D3DCompileFromFile(psFileName, nullptr, nullptr, "PS", "ps_5_0", 0, 0, 
+        &pPSBlob, &pErrorBlob);
     if (FAILED(hr)) { if (pErrorBlob) pErrorBlob->Release(); return false; }
 
-    hr = pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &m_pPixelShader);
+    hr = pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), 
+        pPSBlob->GetBufferSize(), nullptr, &m_pPixelShader);
     pPSBlob->Release();
     if (FAILED(hr)) return false;
 

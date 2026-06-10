@@ -12,8 +12,10 @@ Mesh::~Mesh()
     Cleanup();
 }
 
-bool Mesh::Create(ID3D11Device* pDevice, const SimpleVertex* vertices, UINT vertexCount, const DWORD* indices, UINT indexCount)
+bool Mesh::Create(ID3D11Device* pDevice, const SimpleVertex* vertices, 
+    UINT vertexCount, const DWORD* indices, UINT indexCount)
 {
+    //メッシュは最低限、頂点とインデックスのバッファがあればできるのだ
     // 既存のバッファがあれば一度解放
     Cleanup();
 

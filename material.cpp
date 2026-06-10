@@ -28,6 +28,8 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
     td.Usage = D3D11_USAGE_DEFAULT;
     td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
+	//具体的なテクスチャ内容を渡すための構造体
+    //代入の型が気になる。pSysMemってなんでもいいのか？
     D3D11_SUBRESOURCE_DATA tInitData = {};
     tInitData.pSysMem = pTexturePixels;
     tInitData.SysMemPitch = txtWidth * sizeof(UINT32);
@@ -84,7 +86,8 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
     if (!m_pShader) return false;
 
     // 2. ★ファイルからテクスチャ（SRV）を直接生成する
-    // WICTextureLoaderが、PNGやJPGのデコード、D3D11Texture2Dの作成、SRVの生成まで一発でやってくれます
+    // WICTextureLoaderが、PNGやJPGのデコード、D3D11Texture2Dの作成、SRVの生成まで
+    // 一発でやってくれます
     hr = DirectX::CreateWICTextureFromFile(pDevice, pFileName, nullptr, &m_pTextureRV);
     if (FAILED(hr))
     {
@@ -97,7 +100,8 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
 
     // 3. サンプラーの作成（既存のコードと全く同じ）
     D3D11_SAMPLER_DESC sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // 💡ファイル画像用なのでPOINTからLINEARに変えると綺麗になります
+    // 💡ファイル画像用なのでPOINTからLINEARに変えると綺麗になります
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;

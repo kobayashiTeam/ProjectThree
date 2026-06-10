@@ -18,6 +18,7 @@ public:
 
 private:
     // ↓【変更】単一のポインタ保持から、描画すべきパーツのリスト保持に拡張
+    //model1つのなかに「メッシュ１つ、マテリアル１つの組」の集団が入るイメージ
     std::vector<ModelPart> m_Parts;
 
     DirectX::XMFLOAT3 m_Position;
@@ -36,7 +37,6 @@ public:
     ~Model();
 
     void SetPosition(float x, float y, float z) { m_Position = DirectX::XMFLOAT3(x, y, z); }
-    //void SetRotation(float x, float y, float z) { m_rotation = DirectX::XMFLOAT3(x, y, z); } // mainが小文字(g_Time)を渡しているので小文字プロパティ、または合わせる
     void SetRotation(float x, float y, float z) { m_Rotation = DirectX::XMFLOAT3(x, y, z); }
     void SetScale(float x, float y, float z) { m_Scale = DirectX::XMFLOAT3(x, y, z); }
 

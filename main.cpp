@@ -5,6 +5,7 @@
 #include <cmath>
 #include <DirectXMath.h>
 
+//探すディレクトリはプロジェクトのルートからの相対パスにかかれているところなのか？
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -44,6 +45,7 @@ Model* g_pLightCubeInstance = nullptr;
 
 // --- main.cpp の上部グローバル変数エリアに追加 ---
 #include "ModelResource.h"
+//カメラリソースとは何か
 ModelResource* g_pCameraResource = nullptr;      // カメラのリソース実体
 Model* g_pCameraInstance = nullptr;      // 画面に配置するカメラオブジェクト
 
@@ -66,6 +68,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     const wchar_t CLASS_NAME[] = L"MyGameWindowClass";
 
+    //必須かもしれないけどなじみがない？何をしている？
+    //消したらエラーがでた
     WNDCLASS wc = {};
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
@@ -73,6 +77,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     RegisterClass(&wc);
 
+    //ウインドウ本体はここ
     HWND hWnd = CreateWindowEx(
         0, CLASS_NAME, L"DirectX 11 - Engine Refactoring",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -90,14 +95,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 0;
     }
 
+    //なんでここでやってるんだっけ？
     g_pCubeMesh = new Mesh();
 
+    //d3d関連の初期化はここで行う
     if (!InitDevice(hWnd))
     {
         CleanupDevice();
         return 0;
     }
 
+    //initDeviceの中じゃダメなんだっけ？
     g_pCamera = new Camera(800.0f, 600.0f);
 
     MSG msg = {};
@@ -123,6 +131,8 @@ bool InitDevice(HWND hWnd)
     ID3D11Device* pDevice = g_pGraphics->GetDevice();
     HRESULT hr;
 
+    //これinitでやることか？デバイスか？
+    // ゲームに必要なものが別のクラスや関数で行うべきで、これはむき出しすぎでは？
     // --- メッシュデータ ---
     SimpleVertex vertices[] =
     {
@@ -170,6 +180,7 @@ bool InitDevice(HWND hWnd)
 
     // --- マテリアルの生成と初期化 ---
     // ↓ pixels はここで1回だけ宣言する
+    //ピクセルで送るっていうのがよくわかってない。テクスチャとも違うし
     UINT32 pixels[4] = {
         0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF
@@ -196,7 +207,7 @@ bool InitDevice(HWND hWnd)
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
-    cbd.ByteWidth = sizeof(PerFrameCB);//ConstantBufferParameters
+    cbd.ByteWidth = sizeof(PerFrameCB);
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = 0;
 
@@ -206,7 +217,7 @@ bool InitDevice(HWND hWnd)
     // ↑ テクスチャ・シェーダー・サンプラーの個別作成コードは
     //   すべてMaterial::Initialize内で処理されるため削除
 
-    // ★【追加】古いカメラの.gltfファイルをロード
+    // ★【追加】oldCameraの.gltfファイルをロード
     g_pCameraResource = new ModelResource();
     // ディレクトリ構造に合わせてパスを指定（作業ディレクトリからの相対パス）
     if (!g_pCameraResource->LoadFromFile(pDevice, g_pShaderManager, L"assets/oldCamera/scene.gltf"))
@@ -217,6 +228,7 @@ bool InitDevice(HWND hWnd)
     }
 
     // ★【追加】ロードしたリソースを元に、インスタンス（配置オブジェクト）を生成
+    //modelとmodelResourceの関係性とは
     g_pCameraInstance = new Model(pDevice, g_pCameraResource);
     g_pCameraInstance->SetPosition(0.0f, 0.0f, 0.0f); // 原点に置く
     g_pCameraInstance->SetScale(0.8f, 0.8f, 0.8f);    // モデルが大きすぎる/小さすぎる場合は微調整
@@ -242,6 +254,7 @@ void Render()
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // カメラの更新
+    //この３軸の空間にかえたってことか？
     XMVECTOR eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
     XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -262,12 +275,15 @@ void Render()
     // ↓★★★ これらが抜けているため、行列がゴミデータ（あるいは0）になっています！
     frameParams.matView = DirectX::XMMatrixTranspose(g_pCamera->GetViewMatrix());
     frameParams.matProjection = DirectX::XMMatrixTranspose(g_pCamera->GetProjectionMatrix());
+    //これは何が返ってくるものか？vLightPosに入ったのか？
+    //行列をいっぺんに代入するのに便利？
     XMStoreFloat4(&frameParams.vLightPos, XMVectorSet(lightX, lightY, lightZ, 1.0f));
-    frameParams.vLightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    frameParams.vLightColor = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
     frameParams.vEyePos = g_pCamera->GetEyePosition();
-    frameParams.vAttenuation = XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
+    frameParams.vAttenuation = DirectX::XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
 
     // 共通のグローバルバッファ（スロット0用）に書き込み
+    //subResourceってなんだろう
     pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 
     // ★【追加】古いカメラの更新と描画命令
@@ -284,6 +300,7 @@ void Render()
     // --- 2. 電球キューブの描画 ---
     // 電球自体は発光しているように見せたいので、ライトカラーのアルファ(w)を0にして
     // 区別していた元の仕様を適用
+    //これってresourceUpdateしたあとでもいいのか？
     frameParams.vLightColor.w = 0.0f;
     g_pLightCubeInstance->Draw(pContext, g_pConstantBuffer);
 
@@ -292,6 +309,7 @@ void Render()
 
 void CleanupDevice()
 {
+    //順番は正しいのか？末端インスタンスから解法なのか？
     // ★【追加】カメラ関連の解放
     if (g_pCameraInstance) { delete g_pCameraInstance; g_pCameraInstance = nullptr; }
     if (g_pCameraResource) { delete g_pCameraResource; g_pCameraResource = nullptr; }

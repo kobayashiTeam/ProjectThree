@@ -9,10 +9,12 @@ Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
     ModelPart singlePart;
     singlePart.pMesh = pMesh;
     singlePart.pMaterial = pMaterial;
+    //単位行列を書けるようなもの、変化なし。
     singlePart.localTransform = DirectX::XMMatrixIdentity(); // 立方体はオフセットなし
     m_Parts.push_back(singlePart);
 
     // 定数バッファ生成
+    //モデルはmModel行列だけ持つ。描画の際にスロットに登録する。
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
     cbd.ByteWidth = sizeof(PerObjectCB);
@@ -50,9 +52,12 @@ Model::~Model()
 
 DirectX::XMMATRIX Model::GetWorldMatrix() const
 {
-    DirectX::XMMATRIX mScale = DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z);
-    DirectX::XMMATRIX mRot = DirectX::XMMatrixRotationRollPitchYaw(m_Rotation.x, m_Rotation.y, m_Rotation.z);
-    DirectX::XMMATRIX mTrans = DirectX::XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
+    DirectX::XMMATRIX mScale = 
+        DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z);
+    DirectX::XMMATRIX mRot = 
+        DirectX::XMMatrixRotationRollPitchYaw(m_Rotation.x, m_Rotation.y, m_Rotation.z);
+    DirectX::XMMATRIX mTrans = 
+        DirectX::XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
     return mScale * mRot * mTrans;
 }
 
@@ -72,8 +77,10 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
 
         // 2. ★超重要：このパーツ専用の行列を計算
         // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
-        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, GetWorldMatrix());
+        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, 
+           GetWorldMatrix());
 
+        //バッファは初期化時に生成されている。今はデータを作る
         Model::PerObjectCB objCB;
         objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX用に転置
 
