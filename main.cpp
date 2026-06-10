@@ -31,6 +31,8 @@ Camera* g_pCamera = nullptr;
 Mesh* g_pCubeMesh = nullptr;
 LitMaterial* g_pLitMaterial = nullptr;   // LitMaterialでも可
 Model* g_pMainModel = nullptr;
+//追加
+Model* g_pModel2 = nullptr;
 
 // 定数バッファ
 ID3D11Buffer* g_pConstantBuffer = nullptr;
@@ -132,6 +134,9 @@ bool InitDevice()
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel->SetPosition(0.0f, 0.0f, 0.0f);
+    //Model2
+	g_pModel2 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
+	g_pModel2->SetPosition(0.0f, -1.0f, 5.0f);
 
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
@@ -191,6 +196,8 @@ void Render()
 	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
     g_pMainModel->Draw(pContext, g_pConstantBuffer);
+	//Model2
+	g_pModel2->Draw(pContext, g_pConstantBuffer);
 
     g_pGraphics->EndScene();
 }

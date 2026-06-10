@@ -139,7 +139,8 @@ void Graphics::BeginScene(float r, float g, float b, float a)
 {
     float clearColor[4] = { r, g, b, a };
     m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
-    m_pImmediateContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    m_pImmediateContext->ClearDepthStencilView(m_pDepthStencilView, 
+        D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Graphics::EndScene()
