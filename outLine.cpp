@@ -13,6 +13,7 @@ OutLine::~OutLine() {
 		m_pOutlineStencilState->Release();
 		m_pOutlineStencilState = nullptr;
 	}
+	m_pOutlineMaterial = nullptr; // マテリアルは外部で管理されているので、ここではリリースしない
 }
 
 bool OutLine::createStencilState(ID3D11Device* pDevice, ID3D11DeviceContext* context) {
@@ -70,7 +71,7 @@ void OutLine::DrawOutline(ID3D11DeviceContext* pContext, Model* pModel, ID3D11Bu
     // === Pass 2 ===
     pContext->OMSetDepthStencilState(m_pOutlineStencilState, 1);
     pModel->SetScale(1.2f, 1.2f, 1.2f);
-    pModel->DrawWithOutLine(pContext, pCB);
+    pModel->DrawWithOutLine(pContext, pCB,m_pOutlineMaterial);
 
     // === 後片付け ===
     pModel->SetScale(1.0f, 1.0f, 1.0f);

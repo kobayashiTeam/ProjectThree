@@ -147,7 +147,6 @@ bool InitDevice()
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel->SetPosition(0.0f, 0.0f, 0.0f);
-	g_pMainModel->SetOutLineMaterial(g_pOutlineMaterial); // アウトライン用マテリアルをセット
     //Model2
 	g_pModel2 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
 	g_pModel2->SetPosition(0.0f, -1.0f, 5.0f);
