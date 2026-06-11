@@ -26,11 +26,12 @@ Camera* g_pCamera = nullptr;
 #include "mesh.h"
 #include "material.h"
 #include "litMaterial.h"
+#include"outLineMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
 LitMaterial* g_pLitMaterial = nullptr; 
-LitMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
+OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 Model* g_pMainModel = nullptr;
 //追加
 Model* g_pModel2 = nullptr;
@@ -137,7 +138,7 @@ bool InitDevice()
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(0.8f, 0.6f, 0.2f, 1.0f);
     //outlienMaterial
-	g_pOutlineMaterial = new LitMaterial();
+	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, pOutlineShader, checker, 2, 2))
 		return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
@@ -146,6 +147,7 @@ bool InitDevice()
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel->SetPosition(0.0f, 0.0f, 0.0f);
+	g_pMainModel->SetOutLineMaterial(g_pOutlineMaterial); // アウトライン用マテリアルをセット
     //Model2
 	g_pModel2 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
 	g_pModel2->SetPosition(0.0f, -1.0f, 5.0f);

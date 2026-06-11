@@ -2,6 +2,7 @@
 #include "mesh.h"
 #include "material.h"
 #include"litMaterial.h"
+#include"outLineMaterial.h"
 
 // 従来のコンストラクタ：単一のパーツとしてリストに1個だけ登録する（これで立方体も動く！）
 Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
@@ -49,6 +50,7 @@ Model::~Model()
         m_pObjectBuffer->Release();
         m_pObjectBuffer = nullptr;
     }
+	m_pOutLineMaterial = nullptr; // アウトラインマテリアルは外部管理なのでリリースしない
 }
 
 DirectX::XMMATRIX Model::GetWorldMatrix() const
@@ -76,16 +78,54 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
         // 1. マテリアルの適用
         part.pMaterial->Bind(pContext);
 
-        // ★★★ ここを追加：Pixel Shaderのオーバーライド
-        if (m_pOverrideMaterial)
-        {
-			m_pOverrideMaterial->Bind(pContext);
-        }
+   //     // ★★★ ここを追加：Pixel Shaderのオーバーライド
+   //     if (m_pOverrideMaterial)
+   //     {
+			//m_pOverrideMaterial->Bind(pContext);
+   //     }
 
         // 2. ★超重要：このパーツ専用の行列を計算
         // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
         DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, 
            GetWorldMatrix());
+
+        //バッファは初期化時に生成されている。今はデータを作る
+        Model::PerObjectCB objCB;
+        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX用に転置
+
+        // 3. 定数バッファをパーツごとに書き換えてスロット1にバインド
+        pContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
+        pContext->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
+
+        // 4. メッシュの描画
+        part.pMesh->Render(pContext);
+    }
+}
+
+void Model::DrawWithOutLine(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer) {
+
+    // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回
+    pContext->VSSetConstantBuffers(0, 1, &pFrameBuffer);
+    pContext->PSSetConstantBuffers(0, 1, &pFrameBuffer);
+
+    // モデルが持つすべてのパーツをループ描画
+    for (const auto& part : m_Parts)
+    {
+        if (!part.pMesh || !part.pMaterial) continue;
+
+        // 1. マテリアルの適用
+        part.pMaterial->Bind(pContext);
+
+        // ★★★ ここを追加：Pixel Shaderのオーバーライド
+        if (m_pOutLineMaterial)
+        {
+            m_pOutLineMaterial->Bind(pContext);
+        }
+
+        // 2. ★超重要：このパーツ専用の行列を計算
+        // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
+        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
+            GetWorldMatrix());
 
         //バッファは初期化時に生成されている。今はデータを作る
         Model::PerObjectCB objCB;

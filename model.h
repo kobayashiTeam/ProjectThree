@@ -9,6 +9,7 @@ class Mesh;
 class Material;
 class Shader;
 class LitMaterial;
+class OutLineMaterial;
 
 class Model
 {
@@ -18,7 +19,7 @@ public:
         DirectX::XMMATRIX mModel;
     };
     //追加
-    LitMaterial* m_pOverrideMaterial = nullptr;   // ← 新規追加
+    OutLineMaterial* m_pOutLineMaterial = nullptr;   // ← 新規追加
 
 private:
     // ↓【変更】単一のポインタ保持から、描画すべきパーツのリスト保持に拡張
@@ -51,8 +52,9 @@ public:
 
     //テスト
     // アウトライン描画用に一時的にPixel Shaderを差し替える
-    void SetMaterialOverride(LitMaterial* pMat) { m_pOverrideMaterial = pMat; }
-
+    void SetOutLineMaterial(OutLineMaterial* pMat) { m_pOutLineMaterial = pMat; }
     // オーバーライドを解除
-    void ResetMaterialOverride() { m_pOverrideMaterial = nullptr; }
+    void ResetMaterialOverride() { m_pOutLineMaterial = nullptr; }
+    //アウトライン専用描画メソッド
+	void DrawWithOutLine(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer);
 };

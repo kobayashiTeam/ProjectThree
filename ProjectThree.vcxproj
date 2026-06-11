@@ -152,6 +152,7 @@
     <ClCompile Include="model.cpp" />
     <ClCompile Include="modelResource.cpp" />
     <ClCompile Include="outLine.cpp" />
+    <ClCompile Include="outLineMaterial.cpp" />
     <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="modelResource.h" />
     <ClInclude Include="outLine.h" />
+    <ClInclude Include="outLineMaterial.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="vertex.h" />
