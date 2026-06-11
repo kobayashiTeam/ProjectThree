@@ -34,7 +34,6 @@ private:
     //ƒeƒXƒg
 public:
 	ID3D11DepthStencilState* m_pDefaultStencilState = nullptr;
-    ID3D11DepthStencilState* m_pNormalStencilState = nullptr;
-	ID3D11DepthStencilState* m_pOutlineStencilState = nullptr;
+    
 
 };
