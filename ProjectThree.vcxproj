@@ -154,6 +154,7 @@
     <ClCompile Include="modelResource.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
+    <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
@@ -197,11 +198,13 @@
     <ClInclude Include="graphicsCommon.h" />
     <ClInclude Include="litMaterial.h" />
     <ClInclude Include="material.h" />
+    <ClInclude Include="mathUtils.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="modelResource.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
+    <ClInclude Include="renderQueue.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="unLitMaterial.h" />

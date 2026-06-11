@@ -23,6 +23,7 @@ Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = 0;
     pDevice->CreateBuffer(&cbd, nullptr, &m_pObjectBuffer);
+
 }
 
 // 新設コンストラクタ：ModelResourceが読み込んだパーツ群をまるごとコピーする

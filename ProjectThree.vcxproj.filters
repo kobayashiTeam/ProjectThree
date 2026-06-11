@@ -60,6 +60,9 @@
     <ClCompile Include="unLitMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
+    <ClCompile Include="renderQueue.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader.hlsl">
@@ -120,6 +123,12 @@
     </ClInclude>
     <ClInclude Include="unLitMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="renderQueue.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="mathUtils.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

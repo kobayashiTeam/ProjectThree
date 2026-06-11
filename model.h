@@ -29,6 +29,7 @@ private:
     DirectX::XMFLOAT3 m_Scale;
 
     ID3D11Buffer* m_pObjectBuffer = nullptr;
+    bool m_isTransparent = false;
 
 public:
     // ★従来の「単一メッシュ用」コンストラクタ（立方体などの互換性を残すため）
@@ -52,4 +53,8 @@ public:
     //アウトライン専用描画メソッド
 	void DrawWithOutLine(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer,
         OutLineMaterial* m_pOutLineMaterial = nullptr);
+    //transparent関連
+    // 後から変更もできるようにしておく（演出用）
+    void SetTransparent(bool enable) { m_isTransparent = enable; }
+    bool IsTransparent() const { return m_isTransparent; }
 };

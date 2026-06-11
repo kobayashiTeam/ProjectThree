@@ -51,6 +51,13 @@ float g_Time = 0.0f;
 BlendState* g_pAlphaBlendState = nullptr;
 BlendState* g_pOpaqueBlendState = nullptr;
 
+//レンダーキュー
+#include"renderQueue.h"
+RenderQueue* g_pRenderQueue = nullptr;
+
+//計算にまつわるutilityクラスもinclude
+#include"mathUtils.h"
+
 // 関数宣言
 bool InitDevice();
 void CleanupDevice();
@@ -163,6 +170,7 @@ bool InitDevice()
     //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
+    g_pMainModel2->SetTransparent(true);
 
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
@@ -191,6 +199,11 @@ bool InitDevice()
 	g_pOpaqueBlendState = new BlendState();
 	if(!g_pOpaqueBlendState->Initialize(pDevice, BlendState::Mode::None))
         return false;
+
+	//レンダーキュー
+	g_pRenderQueue = new RenderQueue();
+	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::Opaque, g_pOpaqueBlendState);
+	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);
 
     return true;
 }
@@ -238,12 +251,26 @@ void Render()
 	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
  	//g_pOutLine->DrawOutline(pContext, g_pMainModel, g_pConstantBuffer);
-    //不透明なものから描画
-	g_pOpaqueBlendState->Bind(pContext);
-	g_pMainModel->Draw(pContext,g_pConstantBuffer);
-	//半透明なものを描画
-	g_pAlphaBlendState->Bind(pContext);
-	g_pMainModel2->Draw(pContext, g_pConstantBuffer);
+    // 
+    //カメラから各オブジェクトまでの距離を計算してからレンダーキューに登録
+    // 1. カメラの座標を一度変数（l-value: 左辺値）として受ける
+    DirectX::XMFLOAT4 camPos = g_pCamera->GetEyePosition();
+    // 2. モデルの座標も一度変数として受ける
+    DirectX::XMFLOAT3 model1Pos = g_pMainModel->GetPosition();
+    DirectX::XMFLOAT3 model2Pos = g_pMainModel2->GetPosition();
+    float depth1 = MyEngine::ComputeDistance(
+        DirectX::XMLoadFloat4(&camPos), // 変数なので & が使える！
+        DirectX::XMLoadFloat3(&model1Pos)
+    );
+	g_pRenderQueue->Submit(g_pMainModel, depth1, RenderQueue::BlendType::Opaque);
+
+    float depth2 = MyEngine::ComputeDistance(
+        DirectX::XMLoadFloat4(&camPos),
+        DirectX::XMLoadFloat3(&model2Pos)
+    );
+	g_pRenderQueue->Submit(g_pMainModel2, depth2, RenderQueue::BlendType::AlphaBlend);
+	//レンダーキュー実行
+	g_pRenderQueue->Execute(pContext, g_pConstantBuffer);
 
     // 後処理（元のStateに戻す）
     pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);
