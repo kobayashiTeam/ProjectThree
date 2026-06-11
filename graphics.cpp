@@ -36,18 +36,18 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     HRESULT hr = D3D11CreateDeviceAndSwapChain(
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
         featureLevels, 1, D3D11_SDK_VERSION, &sd,
-        &m_pSwapChain, &m_pd3dDevice, &featureLevel, &m_pImmediateContext
+        &m_swapChain, &m_device, &featureLevel, &m_context
     );
     if (FAILED(hr)) return false;
 
     // 2. レンダーターゲットビューの作成
     ID3D11Texture2D* pBackBuffer = nullptr;
     //getBufferが情報取得だけじゃなくて、pBackBufferにいれたのか？
-    hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
     if (FAILED(hr)) return false;
     //これがカラーバッファーのことか？ここに最終的に出力されたものが表示されるのか？
     //正しい。インデックス0にPSなどの処理後の出力先にここに送られる。
-    hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pRenderTargetView);
+    hr = m_device->CreateRenderTargetView(pBackBuffer, nullptr, &m_renderTargetView);
     pBackBuffer->Release();
     if (FAILED(hr)) return false;
 
@@ -63,7 +63,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     descDepth.Usage = D3D11_USAGE_DEFAULT;
     descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-    hr = m_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &m_pDepthStencil);
+    hr = m_device->CreateTexture2D(&descDepth, nullptr, &m_depthStencilBuffer);
     if (FAILED(hr)) return false;
 
     // 4. 深度ステンシルステートの作成（OpenGLの glEnable(GL_DEPTH_TEST) 相当）
@@ -73,7 +73,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
 
-    hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
+    hr = m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &descDSV, &m_depthStencilView);
     if (FAILED(hr)) return false;
 
     // 3. 深度ステンシルステート（説明書）の作成
@@ -84,7 +84,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
     dsDesc.StencilEnable = FALSE;
 
-    hr = m_pd3dDevice->CreateDepthStencilState(&dsDesc, &m_pDefaultStencilState);
+    hr = m_device->CreateDepthStencilState(&dsDesc, &m_defaultDepthStencilState);
     if (FAILED(hr)) return false; // 失敗時の安全弁
 
     // ==========================================
@@ -92,10 +92,10 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     // ==========================================
 
     // 4. レンダーターゲットと深度バッファ（窓口）をセット
-    m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+    m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView.Get());
 
     // 5. 深度テストのルール（説明書）をセット
-    m_pImmediateContext->OMSetDepthStencilState(m_pDefaultStencilState, 0);
+    m_context->OMSetDepthStencilState(m_defaultDepthStencilState.Get(), 0);
 
     // 4. ラスタライザーステート（背面カリング）の作成
     D3D11_RASTERIZER_DESC dr = {};
@@ -103,10 +103,10 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     dr.CullMode = D3D11_CULL_BACK;
     dr.FrontCounterClockwise = FALSE;
 
-    hr = m_pd3dDevice->CreateRasterizerState(&dr, &m_pRasterizerState);
+    hr = m_device->CreateRasterizerState(&dr, &m_rasterizerState);
     if (FAILED(hr)) return false;
 
-    m_pImmediateContext->RSSetState(m_pRasterizerState);
+    m_context->RSSetState(m_rasterizerState.Get());
 
     // 5. ビューポートの設定
     //これもなんだっけ？描画出力先を細かい部分で描画したりするんだっけ？
@@ -118,31 +118,32 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     vp.MaxDepth = 1.0f;
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
-    m_pImmediateContext->RSSetViewports(1, &vp);
+    m_context->RSSetViewports(1, &vp);
 
     return true;
 }
 
 void Graphics::Finalize()
 {
-    if (m_pRasterizerState) { m_pRasterizerState->Release();  m_pRasterizerState = nullptr; }
-    if (m_pDepthStencilView) { m_pDepthStencilView->Release(); m_pDepthStencilView = nullptr; }
-    if (m_pDepthStencil) { m_pDepthStencil->Release();     m_pDepthStencil = nullptr; }
-    if (m_pRenderTargetView) { m_pRenderTargetView->Release(); m_pRenderTargetView = nullptr; }
-    if (m_pSwapChain) { m_pSwapChain->Release();        m_pSwapChain = nullptr; }
-    if (m_pImmediateContext) { m_pImmediateContext->Release(); m_pImmediateContext = nullptr; }
-    if (m_pd3dDevice) { m_pd3dDevice->Release();        m_pd3dDevice = nullptr; }
+    if (m_rasterizerState) { m_rasterizerState->Release();  m_rasterizerState = nullptr; }
+    if (m_depthStencilView) { m_depthStencilView->Release(); m_depthStencilView = nullptr; }
+    if (m_depthStencilBuffer) { m_depthStencilBuffer->Release();     m_depthStencilBuffer = nullptr; }
+    if (m_renderTargetView) { m_renderTargetView->Release(); m_renderTargetView = nullptr; }
+    if (m_swapChain) { m_swapChain->Release();       m_swapChain = nullptr; }
+    if (m_context) { m_context->Release(); m_context = nullptr; }
+    if (m_device) { m_device->Release();        m_device = nullptr; }
 }
 
 void Graphics::BeginScene(float r, float g, float b, float a)
 {
+    OutputDebugString(L"BeginScene called\n");
     float clearColor[4] = { r, g, b, a };
-    m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
-    m_pImmediateContext->ClearDepthStencilView(m_pDepthStencilView, 
+    m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor);
+    m_context->ClearDepthStencilView(m_depthStencilView.Get(),
         D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Graphics::EndScene()
 {
-    m_pSwapChain->Present(1, 0);
+    m_swapChain->Present(1, 0);
 }

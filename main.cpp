@@ -4,6 +4,8 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <cmath>
+#include <wrl/client.h> // ComPtr のために必要
+template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -141,7 +143,7 @@ bool InitDevice()
     if (!pLitShader||!pOutlineShader||!pUnLitShader) return false;
 
     // Mesh作成（Cube）
-    g_pCubeMesh = Mesh::CreateCube(pDevice,1);
+    g_pCubeMesh = Mesh::CreateCube(pDevice, 1);
 
     // Material
     //litMaterial
@@ -228,8 +230,8 @@ void UpdateScene()
 // 描画
 void Render()
 {
-    ID3D11DeviceContext* pContext = g_pGraphics->GetContext();
-    ID3D11Device* pDevice = g_pGraphics->GetDevice();
+    ID3D11DeviceContext* pContext = g_pGraphics->GetContext();   // ComPtrで受け取らない！
+    ID3D11Device* pDevice = g_pGraphics->GetDevice();            // 生ポインタで受け取るのが無難
     g_pGraphics->BeginScene(0.1f, 0.12f, 0.15f, 1.0f);
 
     UpdateScene();
@@ -273,7 +275,7 @@ void Render()
 	g_pRenderQueue->Execute(pContext, g_pConstantBuffer);
 
     // 後処理（元のStateに戻す）
-    pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);
+    pContext->OMSetDepthStencilState(g_pGraphics->GetDefaultDepthStencilState(), 0);
 
     g_pGraphics->EndScene();
 }
