@@ -1,10 +1,6 @@
 // Graphics.h
 #pragma once
 #include <d3d11.h>
-#include <wrl/client.h>
-
-template<typename T>
-using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class Graphics
 {
@@ -12,26 +8,33 @@ public:
     Graphics();
     ~Graphics();
 
+    // 初期化と解放
     bool Initialize(HWND hWnd, int width, int height);
-    void Finalize();           // 後で実装
+    void Finalize();
+
+    // フレームの開始と終了（描画ループ用）
     void BeginScene(float r, float g, float b, float a);
     void EndScene();
 
-    ID3D11Device* GetDevice() const { return m_device.Get(); }
-    ID3D11DeviceContext* GetContext() const { return m_context.Get(); }
-
-    // 一時的に公開メソッドを追加（後でRendererに移す）
-    ID3D11DepthStencilState* GetDefaultDepthStencilState() const {
-        return m_defaultDepthStencilState.Get();
-    }
+    // 他のクラスからDirectXオブジェクトを安全に利用するためのゲッター
+    ID3D11Device* GetDevice() const { return m_pd3dDevice; }
+    ID3D11DeviceContext* GetContext() const { return m_pImmediateContext; }
 
 private:
-    ComPtr<ID3D11Device> m_device;
-    ComPtr<ID3D11DeviceContext> m_context;
-    ComPtr<IDXGISwapChain> m_swapChain;
-    ComPtr<ID3D11RenderTargetView> m_renderTargetView;
-    ComPtr<ID3D11Texture2D> m_depthStencilBuffer;
-    ComPtr<ID3D11DepthStencilView> m_depthStencilView;
-    ComPtr<ID3D11DepthStencilState> m_defaultDepthStencilState;
-    ComPtr<ID3D11RasterizerState> m_rasterizerState;
+    ID3D11Device* m_pd3dDevice = nullptr;
+    ID3D11DeviceContext* m_pImmediateContext = nullptr;
+    IDXGISwapChain* m_pSwapChain = nullptr;
+    ID3D11RenderTargetView* m_pRenderTargetView = nullptr;
+    //描画領域と被るようなオブジェクトは大体texture2dの型？
+    ID3D11Texture2D* m_pDepthStencil = nullptr;
+    ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
+    //ステートって何だろう？
+    ID3D11RasterizerState* m_pRasterizerState = nullptr;
+
+    //テスト
+public:
+	ID3D11DepthStencilState* m_pDefaultStencilState = nullptr;
+    ID3D11DepthStencilState* m_pNormalStencilState = nullptr;
+	ID3D11DepthStencilState* m_pOutlineStencilState = nullptr;
+
 };
