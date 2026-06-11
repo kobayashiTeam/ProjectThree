@@ -26,15 +26,17 @@ Camera* g_pCamera = nullptr;
 #include "mesh.h"
 #include "material.h"
 #include "litMaterial.h"
+#include"unLitMaterial.h"
 #include"outLineMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
 LitMaterial* g_pLitMaterial = nullptr; 
+UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 Model* g_pMainModel = nullptr;
 //追加
-Model* g_pModel2 = nullptr;
+Model* g_pMainModel2 = nullptr;
 
 // 定数バッファ
 ID3D11Buffer* g_pConstantBuffer = nullptr;
@@ -44,6 +46,10 @@ ID3D11Buffer* g_pConstantBuffer = nullptr;
 OutLine* g_pOutLine = nullptr;
 
 float g_Time = 0.0f;
+
+#include"blendState.h"
+BlendState* g_pAlphaBlendState = nullptr;
+BlendState* g_pOpaqueBlendState = nullptr;
 
 // 関数宣言
 bool InitDevice();
@@ -124,19 +130,26 @@ bool InitDevice()
     g_pShaderManager = new ShaderManager();
     Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
     Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
-    if (!pLitShader||!pOutlineShader) return false;
+	Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
+    if (!pLitShader||!pOutlineShader||!pUnLitShader) return false;
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
 
     // Material
     //litMaterial
-    g_pLitMaterial = new LitMaterial();  // materialは実用できない。litにのみmBufferをもつ。
+    g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     if (!g_pLitMaterial->Initialize(pDevice, pLitShader, checker, 2, 2))
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
-    g_pLitMaterial->SetMaterialColor(0.8f, 0.6f, 0.2f, 1.0f);
+    g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
+	//unLitMaterial
+	g_pUnLitMaterial = new UnLitMaterial();
+	if (!g_pUnLitMaterial->Initialize(pDevice, pUnLitShader, checker, 2, 2))
+		return false;
+	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
+	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.1f); // 緑がかった色で描画
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, pOutlineShader, checker, 2, 2))
@@ -146,10 +159,10 @@ bool InitDevice()
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-    g_pMainModel->SetPosition(0.0f, 0.0f, 0.0f);
+    g_pMainModel->SetPosition(0.0f, -1.0f, 5.0f);
     //Model2
-	g_pModel2 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-	g_pModel2->SetPosition(0.0f, -1.0f, 5.0f);
+	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
+	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
 
     // --- 定数バッファの作成 ---
     D3D11_BUFFER_DESC cbd = {};
@@ -168,6 +181,16 @@ bool InitDevice()
 	g_pOutLine = new OutLine();
 	g_pOutLine->createStencilState(pDevice, g_pGraphics->GetContext());
     g_pOutLine->setMaterial(g_pOutlineMaterial);
+
+    //ブレンドステート
+    //半透明
+	g_pAlphaBlendState = new BlendState();
+    if(!g_pAlphaBlendState->Initialize(pDevice, BlendState::Mode::Alpha))
+        return false;
+    //不透明
+	g_pOpaqueBlendState = new BlendState();
+	if(!g_pOpaqueBlendState->Initialize(pDevice, BlendState::Mode::None))
+        return false;
 
     return true;
 }
@@ -214,7 +237,13 @@ void Render()
 	pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
 	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
- 	g_pOutLine->DrawOutline(pContext, g_pMainModel, g_pConstantBuffer);
+ 	//g_pOutLine->DrawOutline(pContext, g_pMainModel, g_pConstantBuffer);
+    //不透明なものから描画
+	g_pOpaqueBlendState->Bind(pContext);
+	g_pMainModel->Draw(pContext,g_pConstantBuffer);
+	//半透明なものを描画
+	g_pAlphaBlendState->Bind(pContext);
+	g_pMainModel2->Draw(pContext, g_pConstantBuffer);
 
     // 後処理（元のStateに戻す）
     pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);

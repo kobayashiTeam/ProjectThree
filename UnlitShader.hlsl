@@ -20,6 +20,10 @@ cbuffer PerObjectBuffer : register(b1)
 
 // スロット2：マテリアル単位（将来、電球の色をマテリアルごとに変えたい場合用）
 // cbuffer PerMaterialBuffer : register(b2) { };
+cbuffer PerMaterialBuffer : register(b2)
+{
+    float4 vMaterialColor; // C++側の構造体と完全一致させる
+};
 
 // ---------------------------------------------------------
 // 入出力構造体
@@ -67,8 +71,10 @@ float4 PS(PS_INPUT input) : SV_Target
 {
     // テクスチャと頂点カラーを掛け合わせる（白テクスチャなら純白になります）
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
+    // ★オブジェクトの色に、マテリアル固有の色（vMaterialColor）も掛け合わせる！
+    float4 objectColor = texColor * input.Color * vMaterialColor;
     
     // もし完全に「定数バッファに依存しない純白」にしたい場合は、
     // シンプルに return float4(1.0f, 1.0f, 1.0f, 1.0f); でもOKです。
-    return texColor * input.Color;
+    return objectColor; //texColor * input.Color
 }

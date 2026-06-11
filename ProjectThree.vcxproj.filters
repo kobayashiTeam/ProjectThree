@@ -54,6 +54,12 @@
     <ClCompile Include="outLineMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
+    <ClCompile Include="blendState.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="unLitMaterial.cpp">
+      <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader.hlsl">
@@ -62,7 +68,7 @@
     <FxCompile Include="LitShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="UnlitShader.hlsl">
+    <FxCompile Include="UnLitShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="OutlineShader.hlsl">
@@ -107,6 +113,12 @@
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
     <ClInclude Include="outLineMaterial.h">
+      <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="blendState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="unLitMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
   </ItemGroup>
