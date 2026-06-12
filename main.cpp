@@ -60,15 +60,15 @@ RenderQueue* g_pRenderQueue = nullptr;
 
 //ラスタライザーステート
 #include"rasterizerStates.h"
-RasterizerStates* g_pRasterizerState = nullptr;
+//RasterizerStates* g_pRasterizerState = nullptr;
 
 //深度ステンシルステート
 #include"depthStencilStates.h"
-DepthStencilStates* g_pDepthStencilState = nullptr;
+//DepthStencilStates* g_pDepthStencilState = nullptr;
 
 //ブレンステート
 #include"blendStates.h"
-BlendStates* g_pBlendStates = nullptr;
+//BlendStates* g_pBlendStates = nullptr;
 
 //レンダラークラス
 #include"renderer.h"
@@ -222,25 +222,25 @@ bool InitDevice()
 	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);
 
     //ラスタライザーステート
-	g_pRasterizerState = new RasterizerStates();
-	if (!g_pRasterizerState->Initialize(pDevice))
-		return false;
-    //完全独立化の前にここで一応contextにセットしてみる
-	g_pRasterizerState->Bind(g_pGraphics->GetContext(), RasterizerStates::CullMode::Back);
+	//g_pRasterizerState = new RasterizerStates();
+	//if (!g_pRasterizerState->Initialize(pDevice))
+	//	return false;
+ //   //完全独立化の前にここで一応contextにセットしてみる
+	//g_pRasterizerState->Bind(g_pGraphics->GetContext(), RasterizerStates::CullMode::Back);
 
     //深度ステンシルステート
-	g_pDepthStencilState = new DepthStencilStates();
-	if (!g_pDepthStencilState->Initialize(pDevice))
-		return false;
-	//ここで一応DepthTestモードをセットしてみる
-	g_pDepthStencilState->Bind(g_pGraphics->GetContext(), DepthStencilStates::Mode::DepthTest);
+	//g_pDepthStencilState = new DepthStencilStates();
+	//if (!g_pDepthStencilState->Initialize(pDevice))
+	//	return false;
+	////ここで一応DepthTestモードをセットしてみる
+	//g_pDepthStencilState->Bind(g_pGraphics->GetContext(), DepthStencilStates::Mode::DepthTest);
 
 	//ブレンドステート
-	g_pBlendStates = new BlendStates();
-	if (!g_pBlendStates->Initialize(pDevice))
-		return false;
-	//ここで一応Alphaモードをセットしてみる
-	g_pBlendStates->Bind(g_pGraphics->GetContext(), BlendStates::Mode::Alpha);
+	//g_pBlendStates = new BlendStates();
+	//if (!g_pBlendStates->Initialize(pDevice))
+	//	return false;
+	////ここで一応Alphaモードをセットしてみる
+	//g_pBlendStates->Bind(g_pGraphics->GetContext(), BlendStates::Mode::Alpha);
 
 	//レンダラー
 	g_pRenderer = new Renderer();
