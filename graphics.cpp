@@ -97,17 +97,6 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     // 5. 深度テストのルール（説明書）をセット
     m_pImmediateContext->OMSetDepthStencilState(m_pDefaultStencilState, 0);
 
-    // 4. ラスタライザーステート（背面カリング）の作成
-    D3D11_RASTERIZER_DESC dr = {};
-    dr.FillMode = D3D11_FILL_SOLID;
-    dr.CullMode = D3D11_CULL_BACK;
-    dr.FrontCounterClockwise = FALSE;
-
-    hr = m_pd3dDevice->CreateRasterizerState(&dr, &m_pRasterizerState);
-    if (FAILED(hr)) return false;
-
-    m_pImmediateContext->RSSetState(m_pRasterizerState);
-
     // 5. ビューポートの設定
     //これもなんだっけ？描画出力先を細かい部分で描画したりするんだっけ？
     //width,heightを1.2にすると出力が左上に限定された。ミニマップなどに使えそう

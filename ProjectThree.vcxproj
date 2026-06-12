@@ -154,6 +154,7 @@
     <ClCompile Include="modelResource.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
+    <ClCompile Include="rasterizerState.cpp" />
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
@@ -204,6 +205,7 @@
     <ClInclude Include="modelResource.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
+    <ClInclude Include="rasterizerState.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />

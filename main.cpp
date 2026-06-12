@@ -58,6 +58,10 @@ RenderQueue* g_pRenderQueue = nullptr;
 //計算にまつわるutilityクラスもinclude
 #include"mathUtils.h"
 
+//ラスタライザーステート
+#include"rasterizerState.h"
+RasterizerState* g_pRasterizerState = nullptr;
+
 // 関数宣言
 bool InitDevice();
 void CleanupDevice();
@@ -204,6 +208,13 @@ bool InitDevice()
 	g_pRenderQueue = new RenderQueue();
 	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::Opaque, g_pOpaqueBlendState);
 	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);
+
+    //ラスタライザーステート
+	g_pRasterizerState = new RasterizerState();
+	if (!g_pRasterizerState->Initialize(pDevice, RasterizerState::CullMode::Back))
+		return false;
+    //完全独立化の前にここで一応contextにセットしてみる
+	g_pRasterizerState->Bind(g_pGraphics->GetContext());
 
     return true;
 }
