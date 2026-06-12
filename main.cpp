@@ -70,6 +70,10 @@ DepthStencilStates* g_pDepthStencilState = nullptr;
 #include"blendStates.h"
 BlendStates* g_pBlendStates = nullptr;
 
+//レンダラークラス
+#include"renderer.h"
+Renderer* g_pRenderer = nullptr;
+
 // 関数宣言
 bool InitDevice();
 void CleanupDevice();
@@ -237,6 +241,10 @@ bool InitDevice()
 		return false;
 	//ここで一応Alphaモードをセットしてみる
 	g_pBlendStates->Bind(g_pGraphics->GetContext(), BlendStates::Mode::Alpha);
+
+	//レンダラー
+	g_pRenderer = new Renderer();
+	g_pRenderer->Initialize(g_pGraphics);
 
     return true;
 }
