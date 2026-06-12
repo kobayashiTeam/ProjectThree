@@ -19,6 +19,12 @@
     <Filter Include="ヘッダー ファイル\material">
       <UniqueIdentifier>{28db7f35-1263-4317-9b77-3a731985f207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\states">
+      <UniqueIdentifier>{25949cad-ae07-4c99-886e-5919d33d6c8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\states">
+      <UniqueIdentifier>{fd4a1b62-256a-4f37-a8d0-d0f4e0b600a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -63,14 +69,14 @@
     <ClCompile Include="renderQueue.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="rasterizerStates.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="blendStates.cpp">
+      <Filter>ソース ファイル\states</Filter>
     </ClCompile>
     <ClCompile Include="depthStencilStates.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\states</Filter>
     </ClCompile>
-    <ClCompile Include="blendStates.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="rasterizerStates.cpp">
+      <Filter>ソース ファイル\states</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -139,14 +145,14 @@
     <ClInclude Include="mathUtils.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="rasterizerStates.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="blendStates.h">
+      <Filter>ヘッダー ファイル\states</Filter>
     </ClInclude>
     <ClInclude Include="depthStencilStates.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\states</Filter>
     </ClInclude>
-    <ClInclude Include="blendStates.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="rasterizerStates.h">
+      <Filter>ヘッダー ファイル\states</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
