@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="blendState.cpp" />
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="depthStencilStates.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="litMaterial.cpp" />
     <ClCompile Include="main.cpp" />
@@ -154,7 +155,7 @@
     <ClCompile Include="modelResource.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
-    <ClCompile Include="rasterizerState.cpp" />
+    <ClCompile Include="rasterizerStates.cpp" />
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
@@ -195,6 +196,7 @@
   <ItemGroup>
     <ClInclude Include="blendState.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="depthStencilStates.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="graphicsCommon.h" />
     <ClInclude Include="litMaterial.h" />
@@ -205,7 +207,7 @@
     <ClInclude Include="modelResource.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
-    <ClInclude Include="rasterizerState.h" />
+    <ClInclude Include="rasterizerStates.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />

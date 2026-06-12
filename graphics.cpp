@@ -76,26 +76,12 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
     if (FAILED(hr)) return false;
 
-    // 3. 深度ステンシルステート（説明書）の作成
-    //普通のステート
-    D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-    dsDesc.DepthEnable = TRUE;
-    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-    dsDesc.StencilEnable = FALSE;
-
-    hr = m_pd3dDevice->CreateDepthStencilState(&dsDesc, &m_pDefaultStencilState);
-    if (FAILED(hr)) return false; // 失敗時の安全弁
-
     // ==========================================
     // 後半：準備できたモノをまとめてパイプラインに連結（セット）する
     // ==========================================
 
     // 4. レンダーターゲットと深度バッファ（窓口）をセット
     m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
-
-    // 5. 深度テストのルール（説明書）をセット
-    m_pImmediateContext->OMSetDepthStencilState(m_pDefaultStencilState, 0);
 
     // 5. ビューポートの設定
     //これもなんだっけ？描画出力先を細かい部分で描画したりするんだっけ？

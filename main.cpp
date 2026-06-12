@@ -59,8 +59,12 @@ RenderQueue* g_pRenderQueue = nullptr;
 #include"mathUtils.h"
 
 //ラスタライザーステート
-#include"rasterizerState.h"
-RasterizerState* g_pRasterizerState = nullptr;
+#include"rasterizerStates.h"
+RasterizerStates* g_pRasterizerState = nullptr;
+
+//深度ステンシルステート
+#include"depthStencilStates.h"
+DepthStencilStates* g_pDepthStencilState = nullptr;
 
 // 関数宣言
 bool InitDevice();
@@ -210,11 +214,18 @@ bool InitDevice()
 	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);
 
     //ラスタライザーステート
-	g_pRasterizerState = new RasterizerState();
-	if (!g_pRasterizerState->Initialize(pDevice, RasterizerState::CullMode::Back))
+	g_pRasterizerState = new RasterizerStates();
+	if (!g_pRasterizerState->Initialize(pDevice))
 		return false;
     //完全独立化の前にここで一応contextにセットしてみる
-	g_pRasterizerState->Bind(g_pGraphics->GetContext());
+	g_pRasterizerState->Bind(g_pGraphics->GetContext(), RasterizerStates::CullMode::Back);
+
+    //深度ステンシルステート
+	g_pDepthStencilState = new DepthStencilStates();
+	if (!g_pDepthStencilState->Initialize(pDevice))
+		return false;
+	//ここで一応DepthTestモードをセットしてみる
+	g_pDepthStencilState->Bind(g_pGraphics->GetContext(), DepthStencilStates::Mode::DepthTest);
 
     return true;
 }
