@@ -66,6 +66,10 @@ RasterizerStates* g_pRasterizerState = nullptr;
 #include"depthStencilStates.h"
 DepthStencilStates* g_pDepthStencilState = nullptr;
 
+//ブレンステート
+#include"blendStates.h"
+BlendStates* g_pBlendStates = nullptr;
+
 // 関数宣言
 bool InitDevice();
 void CleanupDevice();
@@ -226,6 +230,13 @@ bool InitDevice()
 		return false;
 	//ここで一応DepthTestモードをセットしてみる
 	g_pDepthStencilState->Bind(g_pGraphics->GetContext(), DepthStencilStates::Mode::DepthTest);
+
+	//ブレンドステート
+	g_pBlendStates = new BlendStates();
+	if (!g_pBlendStates->Initialize(pDevice))
+		return false;
+	//ここで一応Alphaモードをセットしてみる
+	g_pBlendStates->Bind(g_pGraphics->GetContext(), BlendStates::Mode::Alpha);
 
     return true;
 }

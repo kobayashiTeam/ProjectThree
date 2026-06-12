@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="blendState.cpp" />
+    <ClCompile Include="blendStates.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="depthStencilStates.cpp" />
     <ClCompile Include="graphics.cpp" />
@@ -195,6 +196,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blendState.h" />
+    <ClInclude Include="blendStates.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="depthStencilStates.h" />
     <ClInclude Include="graphics.h" />
