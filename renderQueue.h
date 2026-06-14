@@ -23,10 +23,6 @@ private:
 
 public:
 	RenderQueue() = default;
-    // ① 初期化時（またはメイン側でステートを作った時）に、ポインタの参照を登録しておく
-    /*void RegisterBlendState(BlendMode mode, BlendState* pState) {
-        m_pBlendStates[static_cast<int>(mode)] = pState;
-    }*/
 
     // ② 登録時は、どのブレンドタイプで描画したいかを指定してキューに入れる
     void Submit(Model* pModel, float depth, BlendMode mode) {

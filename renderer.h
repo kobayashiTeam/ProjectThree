@@ -7,23 +7,19 @@
 #pragma comment(lib, "d3d11.lib")
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
+//実体宣言
+#include"renderQueue.h"
+
+//前方宣言
 class Graphics;
 class Camera;
 class Model;
 class DepthStencilStates;
 class BlendStates;
-class RenderQueue;
 
 class Renderer
 {
 public:
-    enum class RenderPass
-    {
-        Opaque,
-        Transparent,
-        Outline,
-    };
-    //OutLineはどうしよう？
 
     Renderer() = default;
     ~Renderer();
@@ -34,7 +30,7 @@ public:
     void EndFrame();
 
     // 距離計算を含めてモデルを適切なパスに登録する
-    void Submit(Model* model, RenderPass pass);
+    void Submit(Model* model, RenderPass pass,BlendMode mode);
     void Execute();
 
     // ステート制御
@@ -53,7 +49,8 @@ private:
     RasterizerStates* m_rasterStates = nullptr;
     DepthStencilStates* m_dsStates = nullptr;
     BlendStates* m_blendStates = nullptr;
-    RenderQueue* m_renderQueue = nullptr;
+    // レンダーパスの数だけ、個別のRenderQueueを持つ
+    RenderQueue m_renderQueues[static_cast<int>(RenderPass::Count)];
 
     ComPtr<ID3D11Buffer> m_perFrameCB;
 };

@@ -60,19 +60,19 @@ RenderQueue* g_pRenderQueue = nullptr;
 
 //ラスタライザーステート
 #include"rasterizerStates.h"
-//RasterizerStates* g_pRasterizerState = nullptr;
 
 //深度ステンシルステート
 #include"depthStencilStates.h"
-//DepthStencilStates* g_pDepthStencilState = nullptr;
 
 //ブレンステート
 #include"blendStates.h"
-//BlendStates* g_pBlendStates = nullptr;
 
 //レンダラークラス
 #include"renderer.h"
 Renderer* g_pRenderer = nullptr;
+
+//共用クラス
+#include"graphicsCommon.h"
 
 // 関数宣言
 bool InitDevice();
@@ -188,16 +188,6 @@ bool InitDevice()
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
 
-    // --- 定数バッファの作成 ---
-    D3D11_BUFFER_DESC cbd = {};
-    cbd.Usage = D3D11_USAGE_DEFAULT;
-    cbd.ByteWidth = sizeof(PerFrameCB);
-    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    cbd.CPUAccessFlags = 0;
-
-    hr = pDevice->CreateBuffer(&cbd, nullptr, &g_pConstantBuffer);
-    if (FAILED(hr)) return false;
-
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
 
@@ -206,43 +196,7 @@ bool InitDevice()
 	g_pOutLine->createStencilState(pDevice, g_pGraphics->GetContext());
     g_pOutLine->setMaterial(g_pOutlineMaterial);
 
-    //ブレンドステート
-    //半透明
-	g_pAlphaBlendState = new BlendState();
-    if(!g_pAlphaBlendState->Initialize(pDevice, BlendState::Mode::Alpha))
-        return false;
-    //不透明
-	g_pOpaqueBlendState = new BlendState();
-	if(!g_pOpaqueBlendState->Initialize(pDevice, BlendState::Mode::None))
-        return false;
-
-	//レンダーキュー
-	g_pRenderQueue = new RenderQueue();
-	/*g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::Opaque, g_pOpaqueBlendState);
-	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);*/
-
-    //ラスタライザーステート
-	//g_pRasterizerState = new RasterizerStates();
-	//if (!g_pRasterizerState->Initialize(pDevice))
-	//	return false;
- //   //完全独立化の前にここで一応contextにセットしてみる
-	//g_pRasterizerState->Bind(g_pGraphics->GetContext(), RasterizerStates::CullMode::Back);
-
-    //深度ステンシルステート
-	//g_pDepthStencilState = new DepthStencilStates();
-	//if (!g_pDepthStencilState->Initialize(pDevice))
-	//	return false;
-	////ここで一応DepthTestモードをセットしてみる
-	//g_pDepthStencilState->Bind(g_pGraphics->GetContext(), DepthStencilStates::Mode::DepthTest);
-
-	//ブレンドステート
-	//g_pBlendStates = new BlendStates();
-	//if (!g_pBlendStates->Initialize(pDevice))
-	//	return false;
-	////ここで一応Alphaモードをセットしてみる
-	//g_pBlendStates->Bind(g_pGraphics->GetContext(), BlendStates::Mode::Alpha);
-
-	//レンダラー
+ 	//レンダラー
 	g_pRenderer = new Renderer();
 	g_pRenderer->Initialize(g_pGraphics);
 
@@ -276,8 +230,8 @@ void Render()
     g_pRenderer->BeginFrame(g_pCamera, 0.1f, 0.12f, 0.15f, 1.0f);
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
-    g_pRenderer->Submit(g_pMainModel, Renderer::RenderPass::Opaque);
-    g_pRenderer->Submit(g_pMainModel2, Renderer::RenderPass::Transparent);
+    g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
+    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();

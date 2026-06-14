@@ -7,7 +7,6 @@
 #include "blendStates.h"
 #include "mathUtils.h" // ComputeDistance 用
 #include <DirectXMath.h>
-#include"graphicsCommon.h"
 
 Renderer::~Renderer()
 {
@@ -15,7 +14,7 @@ Renderer::~Renderer()
     delete m_rasterStates;
     delete m_dsStates;
     delete m_blendStates;
-    delete m_renderQueue;
+    //delete m_renderQueue;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -34,10 +33,8 @@ bool Renderer::Initialize(Graphics* graphics)
     m_blendStates = new BlendStates();
     if (!m_blendStates->Initialize(pDevice)) return false;
 
-    m_renderQueue = new RenderQueue();
-    // ここで内部的にBlendStateをRenderQueueに登録するなどの初期化を行う
-    // （※既存のコードの仕様に合わせて登録してください）
-	
+    //m_renderQueue = new RenderQueue();
+    
 
     // 2. 定数バッファの作成
     D3D11_BUFFER_DESC cbd = {};
@@ -84,32 +81,23 @@ void Renderer::UpdatePerFrameConstantBuffer()
     pContext->VSSetConstantBuffers(0, 1, cbArray);
 }
 
-void Renderer::Submit(Model* model, RenderPass pass)
+void Renderer::Submit(Model* model, RenderPass pass, BlendMode mode)
 {
     if (!model || !m_currentCamera) return;
 
-    // カメラとモデルの距離を計算（左辺値の一時変数を作成して安全に渡す）
+    // 距離計算
     DirectX::XMFLOAT4 camPos = m_currentCamera->GetEyePosition();
     DirectX::XMFLOAT3 modelPos = model->GetPosition();
+    float depth = MyEngine::ComputeDistance(DirectX::XMLoadFloat4(&camPos), DirectX::XMLoadFloat3(&modelPos));
 
-    float depth = MyEngine::ComputeDistance(
-        DirectX::XMLoadFloat4(&camPos),
-        DirectX::XMLoadFloat3(&modelPos)
-    );
+    // パスのインデックスを取得
+    int passIdx = static_cast<int>(pass);
 
-    // パスに応じてRenderQueueのブレンドタイプを切り替えて登録
-    // ※ 既存のRenderQueueの仕様に準拠させています
-    if (pass == RenderPass::Opaque)
+    // ★ if文で分岐しなくても、すべてのパスで共通の処理に一元化できます！
+    if (passIdx >= 0 && passIdx < static_cast<int>(RenderPass::Count))
     {
-        m_renderQueue->Submit(model, depth, BlendMode::Opaque);
-    }
-    else if (pass == RenderPass::Transparent)
-    {
-        m_renderQueue->Submit(model, depth, BlendMode::AlphaBlend);
-    }
-    else if (pass == RenderPass::Outline)
-    {
-        // アウトラインパス固有の処理（必要に応じてRenderQueueに積むか、別管理）
+        // 引数で入ってきた mode をそのままQueueのSubmitに渡す
+        m_renderQueues[passIdx].Submit(model, depth, mode);
     }
 }
 
@@ -117,13 +105,29 @@ void Renderer::Execute()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
-    // 基本ステートをデフォルトバインド（不透明・デプステストあり）
-    m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
-    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
-    //m_blendStates->Bind(pContext, BlendStates::Mode::None);
+    int opaqueIdx = static_cast<int>(RenderPass::Opaque);
+    int outlineIdx = static_cast<int>(RenderPass::Outline);
+    int transparentIdx = static_cast<int>(RenderPass::Transparent);
 
-    // キューの実行（内部でブレンドステートを切り替えながら描画される）
-    m_renderQueue->Execute(pContext, m_perFrameCB.Get(),m_blendStates);
+    // ─── 工程1: 不透明パス ───
+    m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
+    m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+
+    // ─── 工程2: アウトラインパス ───
+    //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
+    //    this->BeginStencilOutlinePass(); // ステンシル等の特殊ステートON
+
+    //    // アウトラインパスのキューを実行
+    //    m_renderQueues[outlineIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+
+    //    this->EndStencilOutlinePass();  // ステートを戻す
+    //}
+
+    // ─── 工程3: 半透明パス ───
+    m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 必要ならデプス書き込みOFFのステートなど
+    m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 }
 
 void Renderer::EndFrame()
@@ -131,7 +135,7 @@ void Renderer::EndFrame()
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
     // 後処理：デフォルトのステンシルステートなどに戻す
-    pContext->OMSetDepthStencilState(m_graphics->m_pDefaultStencilState, 0);
+    m_dsStates->Bind(pContext,DepthStencilStates::Mode::DepthTest);
 
     m_graphics->EndScene();
     m_currentCamera = nullptr;
