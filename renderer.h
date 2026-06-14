@@ -2,6 +2,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include "rasterizerStates.h"
+#include "graphicsCommon.h"
 
 #pragma comment(lib, "d3d11.lib")
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -22,6 +23,7 @@ public:
         Transparent,
         Outline,
     };
+    //OutLineÇÕÇ«Ç§ÇµÇÊÇ§ÅH
 
     Renderer() = default;
     ~Renderer();

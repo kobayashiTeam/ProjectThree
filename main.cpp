@@ -218,8 +218,8 @@ bool InitDevice()
 
 	//レンダーキュー
 	g_pRenderQueue = new RenderQueue();
-	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::Opaque, g_pOpaqueBlendState);
-	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);
+	/*g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::Opaque, g_pOpaqueBlendState);
+	g_pRenderQueue->RegisterBlendState(RenderQueue::BlendType::AlphaBlend, g_pAlphaBlendState);*/
 
     //ラスタライザーステート
 	//g_pRasterizerState = new RasterizerStates();
@@ -269,54 +269,21 @@ void UpdateScene()
 // 描画
 void Render()
 {
-    ID3D11DeviceContext* pContext = g_pGraphics->GetContext();
-    ID3D11Device* pDevice = g_pGraphics->GetDevice();
-    g_pGraphics->BeginScene(0.1f, 0.12f, 0.15f, 1.0f);
-
+    // 1. シーン全体の更新
     UpdateScene();
 
-    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // 2. 描画開始（クリア処理や定数バッファのセットを内部で自動化）
+    g_pRenderer->BeginFrame(g_pCamera, 0.1f, 0.12f, 0.15f, 1.0f);
 
-    // ここでConstant Buffer更新（PerFrameCB）
-    // パラメータの詰め込み
-    PerFrameCB frameParams;
-    // ↓★★★ これらが抜けているため、行列がゴミデータ（あるいは0）になっています！
-    frameParams.matView = DirectX::XMMatrixTranspose(g_pCamera->GetViewMatrix());
-    frameParams.matProjection = DirectX::XMMatrixTranspose(g_pCamera->GetProjectionMatrix());
-    XMStoreFloat4(&frameParams.vLightPos, XMVectorSet(0.0f, 3.0f, 0.0f, 1.0f));
-    frameParams.vLightColor = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    frameParams.vEyePos = g_pCamera->GetEyePosition();
-    frameParams.vAttenuation = DirectX::XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
-    
-	pContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &frameParams, 0, 0);
-	pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
+    g_pRenderer->Submit(g_pMainModel, Renderer::RenderPass::Opaque);
+    g_pRenderer->Submit(g_pMainModel2, Renderer::RenderPass::Transparent);
 
- 	//g_pOutLine->DrawOutline(pContext, g_pMainModel, g_pConstantBuffer);
-    // 
-    //カメラから各オブジェクトまでの距離を計算してからレンダーキューに登録
-    // 1. カメラの座標を一度変数（l-value: 左辺値）として受ける
-    DirectX::XMFLOAT4 camPos = g_pCamera->GetEyePosition();
-    // 2. モデルの座標も一度変数として受ける
-    DirectX::XMFLOAT3 model1Pos = g_pMainModel->GetPosition();
-    DirectX::XMFLOAT3 model2Pos = g_pMainModel2->GetPosition();
-    float depth1 = MyEngine::ComputeDistance(
-        DirectX::XMLoadFloat4(&camPos), // 変数なので & が使える！
-        DirectX::XMLoadFloat3(&model1Pos)
-    );
-	g_pRenderQueue->Submit(g_pMainModel, depth1, RenderQueue::BlendType::Opaque);
+    // 4. レンダーキューの実行（適切なステートで一括描画）
+    g_pRenderer->Execute();
 
-    float depth2 = MyEngine::ComputeDistance(
-        DirectX::XMLoadFloat4(&camPos),
-        DirectX::XMLoadFloat3(&model2Pos)
-    );
-	g_pRenderQueue->Submit(g_pMainModel2, depth2, RenderQueue::BlendType::AlphaBlend);
-	//レンダーキュー実行
-	g_pRenderQueue->Execute(pContext, g_pConstantBuffer);
-
-    // 後処理（元のStateに戻す）
-    pContext->OMSetDepthStencilState(g_pGraphics->m_pDefaultStencilState, 0);
-
-    g_pGraphics->EndScene();
+    // 5. 描画終了（ポスト処理と表示）
+    g_pRenderer->EndFrame();
 }
 
 void CleanupDevice()

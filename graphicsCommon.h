@@ -12,14 +12,19 @@ struct PerFrameCB
     DirectX::XMFLOAT4 vAttenuation;
 };
 
-// スロット1用（オブジェクトごと）
-//struct PerObjectCB
-//{
-//    DirectX::XMMATRIX matModel;
-//};
-
-// スロット2用（マテリアルごと・将来用）
-struct PerMaterialCB
+//ブレンドタイプの共通参照enum
+enum class BlendMode
 {
-    // 例：XMFLOAT4 vSpecularColor; など（今回は空でも、一旦作らなくてもOK）
+	Opaque,       // 不透明（None）
+	AlphaBlend,   // 半透明
+	Additive,     // 加算合成（エフェクト用）
+	Count         // バッファの数（自動的に 3 になる）
+};
+
+// 描画の工程（ゲームのレンダリングステップ）
+enum class RenderPass {
+    Opaque,       // 1. 通常の不透明オブジェクト
+    Outline,      // 2. 特殊処理：アウトライン
+    Transparent,  // 3. 半透明オブジェクト
+    Count
 };

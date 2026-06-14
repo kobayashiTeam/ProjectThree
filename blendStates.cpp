@@ -49,16 +49,16 @@ bool BlendStates::Initialize(ID3D11Device* device)
     return true;
 }
 
-void BlendStates::Bind(ID3D11DeviceContext* context,Mode mode) {
+void BlendStates::Bind(ID3D11DeviceContext* context,BlendMode mode) {
 	//代入されたモードに応じて適切なステートをバインド
 	switch (mode) {
-	case Mode::None:
+	case BlendMode::Opaque:
 		context->OMSetBlendState(m_noneState.Get(), nullptr, 0xffffffff);
 		break;
-	case Mode::Alpha:
+	case BlendMode::AlphaBlend:
 		context->OMSetBlendState(m_alphaState.Get(), nullptr, 0xffffffff);
 		break;
-	case Mode::Additive:
+	case BlendMode::Additive:
 		context->OMSetBlendState(m_additiveState.Get(), nullptr, 0xffffffff);
 		break;
 	}

@@ -37,6 +37,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_renderQueue = new RenderQueue();
     // ここで内部的にBlendStateをRenderQueueに登録するなどの初期化を行う
     // （※既存のコードの仕様に合わせて登録してください）
+	
 
     // 2. 定数バッファの作成
     D3D11_BUFFER_DESC cbd = {};
@@ -100,11 +101,11 @@ void Renderer::Submit(Model* model, RenderPass pass)
     // ※ 既存のRenderQueueの仕様に準拠させています
     if (pass == RenderPass::Opaque)
     {
-        m_renderQueue->Submit(model, depth, RenderQueue::BlendType::Opaque);
+        m_renderQueue->Submit(model, depth, BlendMode::Opaque);
     }
     else if (pass == RenderPass::Transparent)
     {
-        m_renderQueue->Submit(model, depth, RenderQueue::BlendType::AlphaBlend);
+        m_renderQueue->Submit(model, depth, BlendMode::AlphaBlend);
     }
     else if (pass == RenderPass::Outline)
     {
@@ -119,10 +120,10 @@ void Renderer::Execute()
     // 基本ステートをデフォルトバインド（不透明・デプステストあり）
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
-    m_blendStates->Bind(pContext, BlendStates::Mode::None);
+    //m_blendStates->Bind(pContext, BlendStates::Mode::None);
 
     // キューの実行（内部でブレンドステートを切り替えながら描画される）
-    m_renderQueue->Execute(pContext, m_perFrameCB.Get());
+    m_renderQueue->Execute(pContext, m_perFrameCB.Get(),m_blendStates);
 }
 
 void Renderer::EndFrame()
