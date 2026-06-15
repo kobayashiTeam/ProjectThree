@@ -7,6 +7,8 @@
 #include "blendStates.h"
 #include "mathUtils.h" // ComputeDistance 用
 #include <DirectXMath.h>
+#include"mesh.h"
+#include"ScreenBlitMaterial.h"
 
 Renderer::~Renderer()
 {
@@ -47,7 +49,7 @@ bool Renderer::Initialize(Graphics* graphics)
 
 	// 3. オフスクリーンレンダーターゲットの初期化（テスト）
 	m_offscreenRT = new RenderTarget();
-	if (!m_offscreenRT->Initialize(pDevice, 800, 600)) {
+	if (!m_offscreenRT->Initialize(pDevice, 1280, 720)) {
 		return false;
 	}
 
@@ -147,6 +149,11 @@ void Renderer::Execute()
     // 【新設】3. 出力先を「デフォルト（画面）」に戻してポストプロセス適用
     // ==========================================
     m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
+    // ★重要：最終描画はブレンドを「OFF（Opaqueモード）」にする！
+    // 画面全体に上書きするだけなので、これ以前のAlpha値を完全に無視させます。
+    m_blendStates->Bind(pContext, BlendMode::Opaque);
+    m_finalRenderMat->BindScreenBlit(pContext,m_offscreenRT);
+    m_finalRenderMesh->Render(pContext);
 
 }
 
@@ -174,4 +181,20 @@ void Renderer::BeginStencilOutlinePass()
 void Renderer::EndStencilOutlinePass()
 {
     // ステンシルマスクを元に戻す処理をここに記述
+}
+
+bool Renderer::createFinalRenderQuad(Shader* screenBlitShader) {
+    
+    ID3D11Device* pDevice = m_graphics->GetDevice();
+    if (!pDevice)return false;
+    m_finalRenderMesh = Mesh::CreateQuad(pDevice);//mesh
+    if (!m_finalRenderMesh)return false;
+    m_finalRenderMat = new ScreenBlitMaterial();
+    m_finalRenderMat->initializeScreenBlit(pDevice,screenBlitShader);//material
+    if (!m_finalRenderSahder || !m_finalRenderMat)return false;
+
+    m_finalRenderQuad = new Model(pDevice,m_finalRenderMesh,m_finalRenderMat);
+    if (!m_finalRenderQuad)return false;
+
+    return true;
 }

@@ -1,5 +1,7 @@
-// screenBlit.hlsl
+// ScreenBlit.hlsl
 // オフスクリーンTextureをバックバッファにそのまま描き写す（初学者向け単純コピー）
+//inputLauoutは本来最低限のものでいいが、shader側の実装の都合で全シェーダ共通の
+//layoutをつかわなければいけない。ここは仕方なく埋める
 
 struct VS_INPUT
 {
@@ -13,7 +15,7 @@ struct VS_OUTPUT
     float2 TexCoord : TEXCOORD0;
 };
 
-VS_OUTPUT VS_FinalQuad(VS_INPUT input)
+VS_OUTPUT VS(VS_INPUT input)
 {
     VS_OUTPUT output;
     output.Position = float4(input.Position, 1.0);
@@ -24,7 +26,7 @@ VS_OUTPUT VS_FinalQuad(VS_INPUT input)
 Texture2D sceneTexture : register(t0); // オフスクリーンから来たTexture
 SamplerState linearSampler : register(s0);
 
-float4 PS_FinalCopy(VS_OUTPUT input) : SV_TARGET
+float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
     

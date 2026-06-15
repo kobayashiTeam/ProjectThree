@@ -162,6 +162,7 @@
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="renderTarget.cpp" />
+    <ClCompile Include="screenBlitMaterial.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
@@ -181,7 +182,7 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="screenBlit.hlsl">
+    <FxCompile Include="ScreenBlit.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -226,6 +227,7 @@
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="renderTarget.h" />
+    <ClInclude Include="screenBlitMaterial.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="unLitMaterial.h" />

@@ -84,6 +84,9 @@
     <ClCompile Include="renderTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="screenBlitMaterial.cpp">
+      <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader.hlsl">
@@ -98,7 +101,7 @@
     <FxCompile Include="OutlineShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="screenBlit.hlsl">
+    <FxCompile Include="ScreenBlit.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
@@ -168,6 +171,9 @@
     </ClInclude>
     <ClInclude Include="renderTarget.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="screenBlitMaterial.h">
+      <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

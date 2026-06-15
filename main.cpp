@@ -153,7 +153,8 @@ bool InitDevice()
     Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
     Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
 	Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
-    if (!pLitShader||!pOutlineShader||!pUnLitShader) return false;
+    Shader* pScreenBlitShader = g_pShaderManager->GetOrCreate(pDevice,L"ScreenBlit.hlsl");
+    if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader) return false;
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
@@ -171,7 +172,7 @@ bool InitDevice()
 	if (!g_pUnLitMaterial->Initialize(pDevice, pUnLitShader, checker, 2, 2))
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
-	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.1f); // 緑がかった色で描画
+	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, pOutlineShader, checker, 2, 2))
@@ -198,6 +199,7 @@ bool InitDevice()
  	//レンダラー
 	g_pRenderer = new Renderer();
 	g_pRenderer->Initialize(g_pGraphics);
+    g_pRenderer->createFinalRenderQuad(pScreenBlitShader);
 
     return true;
 }

@@ -23,6 +23,7 @@ public:
     // 静的ヘルパー関数
     static Mesh* CreateCube(ID3D11Device* pDevice, float size = 1.0f);
     static Mesh* CreatePlane(ID3D11Device* pDevice, float width = 10.0f, float depth = 10.0f);
+    static Mesh* CreateQuad(ID3D11Device* pDevice, float size = 2.0f);
 
 private:
     ID3D11Buffer* m_pVertexBuffer; // 頂点バッファ

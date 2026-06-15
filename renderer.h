@@ -17,6 +17,7 @@ class Camera;
 class Model;
 class DepthStencilStates;
 class BlendStates;
+class ScreenBlitMaterial;
 
 class Renderer
 {
@@ -39,6 +40,9 @@ public:
     void BeginStencilOutlinePass();
     void EndStencilOutlinePass();
 
+    //test
+    bool createFinalRenderQuad(Shader* screenBlitShader);
+
 private:
     void UpdatePerFrameConstantBuffer();
 
@@ -60,6 +64,8 @@ private:
 
     //ポストプロセス後に描画するQuadのmodel
     Model* m_finalRenderQuad = nullptr;
-    Material* m_finalRenderMat = nullptr;
+    ScreenBlitMaterial* m_finalRenderMat = nullptr;
+    Mesh* m_finalRenderMesh = nullptr;
+    Shader* m_finalRenderSahder = nullptr;
 
 };
