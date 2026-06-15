@@ -47,10 +47,6 @@ OutLine* g_pOutLine = nullptr;
 
 float g_Time = 0.0f;
 
-#include"blendState.h"
-BlendState* g_pAlphaBlendState = nullptr;
-BlendState* g_pOpaqueBlendState = nullptr;
-
 //レンダーキュー
 #include"renderQueue.h"
 
