@@ -100,7 +100,6 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
 
 void Graphics::Finalize()
 {
-    if (m_pRasterizerState) { m_pRasterizerState->Release();  m_pRasterizerState = nullptr; }
     if (m_pDepthStencilView) { m_pDepthStencilView->Release(); m_pDepthStencilView = nullptr; }
     if (m_pDepthStencil) { m_pDepthStencil->Release();     m_pDepthStencil = nullptr; }
     if (m_pRenderTargetView) { m_pRenderTargetView->Release(); m_pRenderTargetView = nullptr; }

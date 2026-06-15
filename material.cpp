@@ -64,6 +64,8 @@ void Material::Bind(ID3D11DeviceContext* pContext)
     if (m_pShader) m_pShader->Bind(pContext);
 
     // テクスチャとサンプラーをバインド (以前のコードのまま)
+    //どんなシェーダを使うかは知らないが、リソース情報をセットする
+    //本当はmaterialを派生させてクラスごとにbindさせる内容を変える
     pContext->PSSetShaderResources(0, 1, &m_pTextureRV);
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 }
