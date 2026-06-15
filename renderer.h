@@ -3,6 +3,7 @@
 #include <wrl/client.h>
 #include "rasterizerStates.h"
 #include "graphicsCommon.h"
+#include"renderTarget.h"
 
 #pragma comment(lib, "d3d11.lib")
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -53,4 +54,12 @@ private:
     RenderQueue m_renderQueues[static_cast<int>(RenderPass::Count)];
 
     ComPtr<ID3D11Buffer> m_perFrameCB;
+
+    //テスト：オフスクリーンレンダーターゲット
+	RenderTarget* m_offscreenRT=nullptr;
+
+    //ポストプロセス後に描画するQuadのmodel
+    Model* m_finalRenderQuad = nullptr;
+    Material* m_finalRenderMat = nullptr;
+
 };

@@ -20,6 +20,9 @@ public:
     ID3D11Device* GetDevice() const { return m_pd3dDevice; }
     ID3D11DeviceContext* GetContext() const { return m_pImmediateContext; }
 
+    //ƒeƒXƒg
+	void bindDefaultRenderTarget();
+
 private:
     ID3D11Device* m_pd3dDevice = nullptr;
     ID3D11DeviceContext* m_pImmediateContext = nullptr;

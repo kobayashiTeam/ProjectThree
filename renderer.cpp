@@ -45,6 +45,12 @@ bool Renderer::Initialize(Graphics* graphics)
     HRESULT hr = pDevice->CreateBuffer(&cbd, nullptr, m_perFrameCB.GetAddressOf());
     if (FAILED(hr)) return false;
 
+	// 3. オフスクリーンレンダーターゲットの初期化（テスト）
+	m_offscreenRT = new RenderTarget();
+	if (!m_offscreenRT->Initialize(pDevice, 800, 600)) {
+		return false;
+	}
+
     return true;
 }
 
@@ -105,6 +111,14 @@ void Renderer::Execute()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
+    // ==========================================
+    // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
+    // ==========================================
+    m_offscreenRT->Clear(pContext);
+    m_offscreenRT->Bind(pContext); // ※前回統合した自作のレンダーターゲット
+
+	//2. 各パスのキューを、適切なステートをセットしてから実行する
+
     int opaqueIdx = static_cast<int>(RenderPass::Opaque);
     int outlineIdx = static_cast<int>(RenderPass::Outline);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
@@ -128,6 +142,12 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 必要ならデプス書き込みOFFのステートなど
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+
+    // ==========================================
+    // 【新設】3. 出力先を「デフォルト（画面）」に戻してポストプロセス適用
+    // ==========================================
+    m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
+
 }
 
 void Renderer::EndFrame()

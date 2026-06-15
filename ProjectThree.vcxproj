@@ -143,7 +143,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="blendState.cpp" />
+    <ClCompile Include="blendState.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="blendStates.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="depthStencilStates.cpp" />
@@ -159,6 +161,7 @@
     <ClCompile Include="rasterizerStates.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="renderQueue.cpp" />
+    <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
@@ -172,6 +175,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="OutlineShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="screenBlit.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -196,7 +206,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="blendState.h" />
+    <ClInclude Include="blendState.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="blendStates.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="depthStencilStates.h" />
@@ -213,6 +225,7 @@
     <ClInclude Include="rasterizerStates.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
+    <ClInclude Include="renderTarget.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="unLitMaterial.h" />

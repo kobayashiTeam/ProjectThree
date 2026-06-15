@@ -120,3 +120,8 @@ void Graphics::EndScene()
 {
     m_pSwapChain->Present(1, 0);
 }
+
+void Graphics::bindDefaultRenderTarget()
+{
+	m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+}

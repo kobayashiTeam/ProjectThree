@@ -53,7 +53,6 @@ BlendState* g_pOpaqueBlendState = nullptr;
 
 //レンダーキュー
 #include"renderQueue.h"
-RenderQueue* g_pRenderQueue = nullptr;
 
 //計算にまつわるutilityクラスもinclude
 #include"mathUtils.h"
