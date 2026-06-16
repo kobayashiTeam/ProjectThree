@@ -155,6 +155,7 @@
     <ClCompile Include="modelResource.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
+    <ClCompile Include="postProcess.cpp" />
     <ClCompile Include="rasterizerStates.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="renderQueue.cpp" />
@@ -215,13 +216,16 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="modelResource.h" />
+    <ClInclude Include="monochromePostProcess.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
+    <ClInclude Include="postProcess.h" />
     <ClInclude Include="rasterizerStates.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="renderTarget.h" />
     <ClInclude Include="screenBlitMaterial.h" />
+    <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="unLitMaterial.h" />

@@ -18,6 +18,7 @@ class Model;
 class DepthStencilStates;
 class BlendStates;
 class ScreenBlitMaterial;
+class ScreenBlitPostProcess;
 
 class Renderer
 {
@@ -67,5 +68,7 @@ private:
     ScreenBlitMaterial* m_finalRenderMat = nullptr;
     Mesh* m_finalRenderMesh = nullptr;
     Shader* m_finalRenderSahder = nullptr;
+    //test:postProcessƒNƒ‰ƒX
+    ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;
 
 };

@@ -9,6 +9,7 @@
 #include <DirectXMath.h>
 #include"mesh.h"
 #include"ScreenBlitMaterial.h"
+#include"screenBlitPostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -154,7 +155,8 @@ void Renderer::Execute()
     m_blendStates->Bind(pContext, BlendMode::Opaque);
     //matにも規定クラスにsrvがあるが、ここではrendererが持っているsrvを
     //contextから設定している。ここに本来material用の派生クラスとしての煩雑さがある
-    m_finalRenderMat->BindScreenBlit(pContext,m_offscreenRT);
+    //m_finalRenderMat->BindScreenBlit(pContext,m_offscreenRT);
+    m_finalRenderScreenBlitPostProcess->Render(pContext,m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
 
 }
@@ -193,10 +195,14 @@ bool Renderer::createFinalRenderQuad(Shader* screenBlitShader) {
     if (!m_finalRenderMesh)return false;
     m_finalRenderMat = new ScreenBlitMaterial();
     m_finalRenderMat->initializeScreenBlit(pDevice,screenBlitShader);//material
-    if (!m_finalRenderSahder || !m_finalRenderMat)return false;
+    if (!m_finalRenderMat)return false;
 
-    m_finalRenderQuad = new Model(pDevice,m_finalRenderMesh,m_finalRenderMat);
-    if (!m_finalRenderQuad)return false;
+    /*m_finalRenderQuad = new Model(pDevice,m_finalRenderMesh,m_finalRenderMat);
+    if (!m_finalRenderQuad)return false;*/
+
+    //test:postprocess
+    m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
+    m_finalRenderScreenBlitPostProcess->Initialize(pDevice,screenBlitShader);
 
     return true;
 }

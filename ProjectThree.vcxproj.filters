@@ -25,6 +25,12 @@
     <Filter Include="ソース ファイル\states">
       <UniqueIdentifier>{fd4a1b62-256a-4f37-a8d0-d0f4e0b600a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\postProcess">
+      <UniqueIdentifier>{c687ad72-64cc-421b-82af-4756854a4110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\postProcess">
+      <UniqueIdentifier>{e335f01a-1916-479d-9f8f-870d65cd0b9c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -83,6 +89,9 @@
     </ClCompile>
     <ClCompile Include="screenBlitMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
+    <ClCompile Include="postProcess.cpp">
+      <Filter>ソース ファイル\postProcess</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +177,15 @@
     </ClInclude>
     <ClInclude Include="screenBlitMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="postProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="monochromePostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="screenBlitPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
