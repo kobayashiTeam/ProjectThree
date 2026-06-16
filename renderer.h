@@ -26,6 +26,7 @@ class SepiaPostProcess;
 class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
 class VignettePostProcess;
+class SkyBox;
 
 class Renderer
 {
@@ -87,5 +88,8 @@ private:
     SimpleBoxBlurPostProcess* m_finalRenderSimpleBoxBluer = nullptr;
     SharpenPostProcess* m_finalRenderSharpenPostProcess = nullptr;
     VignettePostProcess* m_finalRenderVignettePostProcess = nullptr;
+
+    //テスト：スカイボックスオブジェクト
+    SkyBox* m_pSkyBox = nullptr;
 
 };

@@ -22,6 +22,15 @@ bool DepthStencilStates::Initialize(ID3D11Device* device) {
 	hr=device->CreateDepthStencilState(&noneDesc, m_pNoneState.GetAddressOf());
 	if (FAILED(hr))return false;
 	
+	// DepthLessEqual (スカイボックス用：書き込みなし、判定は以下)
+	D3D11_DEPTH_STENCIL_DESC skyboxDesc = {};
+	skyboxDesc.DepthEnable = TRUE;
+	skyboxDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // 空の向こうに物は描画されないので書き込み不要
+	skyboxDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;     // ★1.0で並んだときにパスさせるために必須
+
+	hr = device->CreateDepthStencilState(&skyboxDesc, m_pDepthLessEqualState.GetAddressOf());
+	if (FAILED(hr)) return false;
+
 	return true;
 }
 
@@ -37,6 +46,8 @@ void DepthStencilStates::Bind(ID3D11DeviceContext* pContext,Mode mode) {
 	case Mode::None:
 		pContext->OMSetDepthStencilState(m_pNoneState.Get(), 0);
 		break;
+	case Mode::DepthLessEqual:
+		pContext->OMSetDepthStencilState(m_pDepthLessEqualState.Get(),0);
 	}
 	return;
 }

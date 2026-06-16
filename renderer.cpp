@@ -16,6 +16,7 @@
 #include"simpleBoxBlurPostProcess.h"
 #include"sharpenPostProcess.h"
 #include"vignettePostProcess.h"
+#include"skyBox.h"
 
 
 Renderer::~Renderer()
@@ -83,7 +84,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderInversionPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Inversion));
     //テスト：効果オフ
-    //m_finalRenderInversionPostProcess->SetActive(false);
+    m_finalRenderInversionPostProcess->SetActive(false);
     //sepia
     m_finalRenderSepiaPostProcess = new SepiaPostProcess();
     m_finalRenderSepiaPostProcess->Initialize(pDevice,
@@ -121,6 +122,10 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //最終描画用のquadをここで生成
     this->createFinalRenderQuad();
+
+    //スカイボックスの初期化
+    m_pSkyBox = new SkyBox();
+    m_pSkyBox->Initialize(pDevice,L"assets/skybox/dawn.dds");
 
     return true;
 }
@@ -198,6 +203,18 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
     m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+
+    // ─── 【ここ！！】スカイボックスの描画 ───
+    // ─── 【新設】スカイボックスの描画 ───
+    if (m_pSkyBox) {
+        // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Front);       // 内側を見せるため前面カリング
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
+
+        // 描画実行
+        m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
+    }
+
 
     // ─── 工程2: アウトラインパス ───
     //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利

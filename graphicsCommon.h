@@ -41,5 +41,7 @@ enum class ShaderID {
     SimpleBoxBlur,
     Sharpen,
     Vignette,
+    //skybox
+    SkyBox,
     Count
 };
