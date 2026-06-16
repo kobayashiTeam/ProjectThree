@@ -2,27 +2,92 @@
 // DirectXTKのDDSローダーをインクルード（導入方法は後述）
 #include <directxtk/DDSTextureLoader.h> 
 #include"shaderManager.h"
+#include <directxtk/WICTextureLoader.h>  // 追加
+#include <array>                          // 追加
 
-bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& texturePath) {
+
+bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>& facePaths) {
     HRESULT hr = S_OK;
 
     // ==========================================
-    // 1. DDSキューブマップテクスチャの読み込み
+    // 1. 6枚のPNGからキューブマップを作る
     // ==========================================
-    // DirectXTKの関数を使えば、これだけで6面分のデータを
-    // 自動的にキューブマップ構造（SRV）として生成してくれます。
-    hr = DirectX::CreateDDSTextureFromFile(
-        device,
-        texturePath.c_str(),
-        nullptr,               // ID3D11Resource** (今回は不要なのでnullptr)
-        m_cubeMapSRV.GetAddressOf() // ここに生成されたSRVが格納される
-    );
 
-    if (FAILED(hr)) {
-        // 読み込み失敗（パスが間違っている、ファイルが壊れているなど）
-        OutputDebugStringA("Failed to load Skybox DDS texture.\n");
-        return false;
+    // ① 各面のテクスチャを一時的に読み込む
+    ID3D11Texture2D* faceTex[6] = {};
+    UINT width = 0, height = 0;
+
+    for (int i = 0; i < 6; i++) {
+        ID3D11Resource* res = nullptr;
+        hr = DirectX::CreateWICTextureFromFileEx(
+            device,
+            facePaths[i].c_str(),
+            0,
+            D3D11_USAGE_STAGING,           // CPUからコピーできるよう staging で読む
+            0,
+            D3D11_CPU_ACCESS_READ,
+            0,
+            DirectX::WIC_LOADER_DEFAULT,
+            &res,
+            nullptr
+        );
+        if (FAILED(hr)) {
+            OutputDebugStringA("Failed to load skybox face texture.\n");
+            return false;
+        }
+        res->QueryInterface(&faceTex[i]);
+        res->Release();
+
+        // 1枚目からサイズを取得
+        if (i == 0) {
+            D3D11_TEXTURE2D_DESC d{};
+            faceTex[i]->GetDesc(&d);
+            width = d.Width;
+            height = d.Height;
+        }
     }
+
+    // ② キューブマップ用のTexture2Dを作る
+    D3D11_TEXTURE2D_DESC cubeDesc{};
+    cubeDesc.Width = width;
+    cubeDesc.Height = height;
+    cubeDesc.MipLevels = 1;
+    cubeDesc.ArraySize = 6;                          // 6面
+    cubeDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    cubeDesc.SampleDesc.Count = 1;
+    cubeDesc.Usage = D3D11_USAGE_DEFAULT;
+    cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE; // ★キューブマップフラグ
+
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> cubeTex;
+    hr = device->CreateTexture2D(&cubeDesc, nullptr, cubeTex.GetAddressOf());
+    if (FAILED(hr)) return false;
+
+    // ③ 各面のデータをキューブマップにコピー
+    ID3D11DeviceContext* ctx = nullptr;
+    device->GetImmediateContext(&ctx);
+
+    for (int i = 0; i < 6; i++) {
+        UINT subresource = D3D11CalcSubresource(0, i, 1); // ミップ0, 面i
+        ctx->CopySubresourceRegion(
+            cubeTex.Get(), subresource, 0, 0, 0,
+            faceTex[i], 0, nullptr
+        );
+        faceTex[i]->Release();
+    }
+    ctx->Release();
+
+    // ④ SRVを作る
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.TextureCube.MostDetailedMip = 0;
+    srvDesc.TextureCube.MipLevels = 1;
+
+    hr = device->CreateShaderResourceView(
+        cubeTex.Get(), &srvDesc, m_cubeMapSRV.GetAddressOf()
+    );
+    if (FAILED(hr)) return false;
 
 
     // ==========================================
@@ -47,7 +112,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& texturePath) {
     // ==========================================
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
-    float size = 500.0f;
+    float size = 2.0f;
     //SkyboxVertex vertices[] = {
     //    // 前面 (Z = 0.5)
     //    { { -0.5f,  0.5f,  0.5f }, {}, {}, {} }, // 左上
