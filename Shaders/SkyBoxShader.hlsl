@@ -3,7 +3,7 @@
 // =========================================================================
 
 // 頂点シェーダーに送る定数バッファ (スロット0)
-cbuffer PerObjectBuffer : register(b1)
+cbuffer PerObjectBuffer : register(b0)
 {
     matrix g_ViewProjection; // ★平行移動成分を除去した View行列 × Projection行列
 };
@@ -39,8 +39,8 @@ VS_OUTPUT VS(VS_INPUT input)
     output.texCoord = input.position;
     
     // 座標を変換 (w = 1.0 として扱う)
-    float4 pos = mul(float4(input.position, 1.0f), g_ViewProjection);
-    //float4 pos = mul(g_ViewProjection, float4(input.position, 1.0f));
+    //float4 pos = mul(float4(input.position, 1.0f), g_ViewProjection);
+    float4 pos = mul(g_ViewProjection, float4(input.position, 1.0f));
     
     // ★【パースペクティブ・トリック】
     // Z成分をW成分に置き換える。これにより画面空間へ変換された際、

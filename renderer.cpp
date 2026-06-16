@@ -44,8 +44,6 @@ bool Renderer::Initialize(Graphics* graphics)
     m_blendStates = new BlendStates();
     if (!m_blendStates->Initialize(pDevice)) return false;
 
-    //m_renderQueue = new RenderQueue();//クラスで直接配列定義しているのでもう生成しなくていい
-    
 
     // 2. 定数バッファの作成
     D3D11_BUFFER_DESC cbd = {};

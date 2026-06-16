@@ -194,7 +194,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
 
     // 頂点シェーダーに定数バッファをセット（スロット1）//一応１にしてみる
     ID3D11Buffer* cbPtr = m_constantBuffer.Get();
-    context->VSSetConstantBuffers(1, 1, &cbPtr);
+    context->VSSetConstantBuffers(0, 1, &cbPtr);//第一引数がslot
 
     // ピクセルシェーダーにキューブマップテクスチャ（SRV）とサンプラーをセット（スロット0）
     ID3D11ShaderResourceView* srvPtr = m_cubeMapSRV.Get();

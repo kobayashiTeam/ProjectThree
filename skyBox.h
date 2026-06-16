@@ -28,25 +28,13 @@ public:
     ~SkyBox() = default;
 
     // コピー禁止・ムーブ許可（リソース二重解放防止の堅牢な設計）
-    SkyBox(const SkyBox&) = delete;
+    /*SkyBox(const SkyBox&) = delete;
     SkyBox& operator=(const SkyBox&) = delete;
     SkyBox(SkyBox&&) noexcept = default;
-    SkyBox& operator=(SkyBox&&) noexcept = default;
+    SkyBox& operator=(SkyBox&&) noexcept = default;*/
 
-    /// <summary>
-    /// スカイボックスの初期化（バッファ、シェーダー、各種ステートの生成）
-    /// </summary>
-    /// <param name="device">D3D11デバイスへのポインタ</param>
-    /// <param name="texturePath">DDS形式のキューブマップテクスチャへのパス</param>
-    /// <returns>初期化に成功したらtrue</returns>
     bool Initialize(ID3D11Device* device, const std::wstring& texturePath);
 
-    /// <summary>
-    /// スカイボックスの描画実行
-    /// </summary>
-    /// <param name="context">D3D11デバイスコンテキストへのポインタ</param>
-    /// <param name="viewMatrix">現在のカメラのビュー行列</param>
-    /// <param name="projectionMatrix">現在のカメラのプロジェクション行列</param>
     void Draw(ID3D11DeviceContext* context,
         const DirectX::XMMATRIX& viewMatrix,
         const DirectX::XMMATRIX& projectionMatrix);
