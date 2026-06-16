@@ -145,13 +145,15 @@ bool InitDevice()
     ID3D11Device* pDevice = g_pGraphics->GetDevice();
 
     // Shader Manager
-    g_pShaderManager = new ShaderManager();
-    Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
-    Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
-	Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
-    Shader* pScreenBlitShader = g_pShaderManager->GetOrCreate(pDevice,L"ScreenBlit.hlsl");
-    Shader* pMonochromaticShader = g_pShaderManager->GetOrCreate(pDevice, L"Monochromatic.hlsl");
-    if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader||!pMonochromaticShader) 
+ //   g_pShaderManager = new ShaderManager();
+ //   Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
+ //   Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
+	//Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
+ //   Shader* pScreenBlitShader = g_pShaderManager->GetOrCreate(pDevice,L"ScreenBlit.hlsl");
+ //   Shader* pMonochromaticShader = g_pShaderManager->GetOrCreate(pDevice, L"Monochromatic.hlsl");
+ //   if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader||!pMonochromaticShader) 
+ //       return false;
+    if (!ShaderManager::GetInstance().LoadAllShaders(pDevice))
         return false;
 
     // Mesh作成（Cube）
@@ -161,19 +163,22 @@ bool InitDevice()
     //litMaterial
     g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
-    if (!g_pLitMaterial->Initialize(pDevice, pLitShader, checker, 2, 2))
+    if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
+        , checker, 2, 2))//lit
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
-	if (!g_pUnLitMaterial->Initialize(pDevice, pUnLitShader, checker, 2, 2))
+	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::UnLit), 
+        checker, 2, 2))//unlit
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
-	if (!g_pOutlineMaterial->Initialize(pDevice, pOutlineShader, checker, 2, 2))
+	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Outline), 
+        checker, 2, 2))//outline
 		return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
@@ -197,7 +202,8 @@ bool InitDevice()
  	//レンダラー
 	g_pRenderer = new Renderer();
 	g_pRenderer->Initialize(g_pGraphics);
-    g_pRenderer->createFinalRenderQuad(pScreenBlitShader);
+    g_pRenderer->createFinalRenderQuad();
+    //screenBlit
 
     return true;
 }
@@ -244,7 +250,7 @@ void CleanupDevice()
     if (g_pMainModel) { delete g_pMainModel;     g_pMainModel = nullptr; }
     if (g_pLitMaterial) { delete g_pLitMaterial;   g_pLitMaterial = nullptr; }
     if (g_pCubeMesh) { delete g_pCubeMesh;      g_pCubeMesh = nullptr; }
-    if (g_pShaderManager) { delete g_pShaderManager; g_pShaderManager = nullptr; }
+    //if (g_pShaderManager) { delete g_pShaderManager; g_pShaderManager = nullptr; }
     if (g_pCamera) { delete g_pCamera;        g_pCamera = nullptr; }
     if (g_pGraphics) { delete g_pGraphics;      g_pGraphics = nullptr; }
 }

@@ -42,7 +42,7 @@ public:
     void EndStencilOutlinePass();
 
     //test
-    bool createFinalRenderQuad(Shader* screenBlitShader);
+    bool createFinalRenderQuad();
 
 private:
     void UpdatePerFrameConstantBuffer();

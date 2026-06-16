@@ -90,12 +90,15 @@
     <ClCompile Include="postProcess.cpp">
       <Filter>ソース ファイル\postProcess</Filter>
     </ClCompile>
+    <ClCompile Include="LitShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Monochromatic.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="LitShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="UnLitShader.hlsl">

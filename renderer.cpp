@@ -9,6 +9,7 @@
 #include <DirectXMath.h>
 #include"mesh.h"
 #include"screenBlitPostProcess.h"
+#include"shaderManager.h"
 
 Renderer::~Renderer()
 {
@@ -186,7 +187,7 @@ void Renderer::EndStencilOutlinePass()
     // ステンシルマスクを元に戻す処理をここに記述
 }
 
-bool Renderer::createFinalRenderQuad(Shader* screenBlitShader) {
+bool Renderer::createFinalRenderQuad() {
     
     ID3D11Device* pDevice = m_graphics->GetDevice();
     if (!pDevice)return false;
@@ -198,7 +199,8 @@ bool Renderer::createFinalRenderQuad(Shader* screenBlitShader) {
 
     //test:postprocess
     m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
-    m_finalRenderScreenBlitPostProcess->Initialize(pDevice,screenBlitShader);
+    m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
 
     return true;
 }

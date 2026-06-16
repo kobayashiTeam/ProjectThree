@@ -1,50 +1,50 @@
 // ShaderManager.h
 #pragma once
-#include <map>
-#include <string>
+#include <unordered_map>
+#include "graphicsCommon.h"
 #include "shader.h"
 
 class ShaderManager {
 private:
-    // キー：ファイル名, 値：シェーダープログラムのポインタ
-    std::map<std::wstring, Shader*> m_ShaderMap;
+    std::unordered_map<ShaderID, Shader*> m_shaders;
+
+    // シングルトンのお作法
+    ShaderManager() = default;
+    ~ShaderManager() { /* 全シェーダーの delete 処理 */ }
 
 public:
-    ShaderManager() = default;
-    ~ShaderManager() { Cleanup(); }
-
-    // シェーダーを取得（なければ新規作成してキャッシュに登録）
-    Shader* GetOrCreate(ID3D11Device* pDevice, const wchar_t* fileName)
-    {
-        std::wstring key(fileName);
-
-        // 既にリストにあるか検索
-        auto it = m_ShaderMap.find(key);
-        if (it != m_ShaderMap.end())
-        {
-            // 発見！既存の参照（ポインタ）を貸し出す
-            return it->second;
-        }
-
-        // なければ新しく作る
-        Shader* pNewShader = new Shader();
-        if (!pNewShader->Create(pDevice, fileName, fileName)) // VS, PS ともに同じファイルの場合
-        {
-            delete pNewShader;
-            return nullptr;
-        }
-
-        // リスト（Dictionary）に登録して貸し出す
-        m_ShaderMap[key] = pNewShader;
-        return pNewShader;
+    static ShaderManager& GetInstance() {
+        static ShaderManager instance;
+        return instance;
     }
 
-    void Cleanup()
-    {
-        for (auto& pair : m_ShaderMap)
-        {
-            delete pair.second; // 実体の解放
+    // 初期化時に、ゲームで使う全シェーダーを一括コンパイルしてしまう
+    bool LoadAllShaders(ID3D11Device* pDevice) {
+        // 対応表に基づいて一気に生成（内部で GetOrCreate を呼ぶ）
+        if (!GetOrCreate(pDevice, ShaderID::Lit, L"Shaders/LitShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::Outline, L"Shaders/OutlineShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::Monochromatic, L"Shaders/Monochromatic.hlsl")) return false;
+        return true;
+    }
+
+    // Enum を指定して安全にシェーダーを取り出す
+    Shader* GetShader(ShaderID id) {
+        auto it = m_shaders.find(id);
+        if (it != m_shaders.end()) return it->second;
+        return nullptr;
+    }
+
+private:
+    bool GetOrCreate(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+        // 既存のコンパイル・生成ロジック
+        Shader* pShader = new Shader();
+        if (!pShader->Create(pDevice, filename, filename)) { // VS/PSが同ファイル想定
+            delete pShader;
+            return false;
         }
-        m_ShaderMap.clear();
+        m_shaders[id] = pShader;
+        return true;
     }
 };

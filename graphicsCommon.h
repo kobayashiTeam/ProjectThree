@@ -28,3 +28,13 @@ enum class RenderPass {
     Transparent,  // 3. 半透明オブジェクト
     Count
 };
+
+enum class ShaderID {
+    Lit,
+    Outline,
+    UnLit,
+    ScreenBlit,
+    Monochromatic,
+    // 今後増えるエフェクト（Scanline, Vignetteなど）をここに追加していくだけ！
+    Count
+};
