@@ -38,5 +38,6 @@ enum class ShaderID {
     // 今後増えるエフェクト（Scanline, Vignetteなど）をここに追加していくだけ！
     Inversion,
     Sepia,
+    SimpleBoxBlur,
     Count
 };

@@ -23,6 +23,7 @@ class MonochromePostProcess;
 class PostProcess;
 class InversionPostProcess;
 class SepiaPostProcess;
+class SimpleBoxBlurPostProcess;
 
 class Renderer
 {
@@ -81,6 +82,6 @@ private:
     MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome
     InversionPostProcess* m_finalRenderInversionPostProcess = nullptr;//inversion
     SepiaPostProcess* m_finalRenderSepiaPostProcess = nullptr;
-
+    SimpleBoxBlurPostProcess* m_finalRenderSimpleBoxBluer = nullptr;
 
 };

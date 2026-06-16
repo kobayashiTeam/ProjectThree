@@ -13,6 +13,7 @@
 #include"monochromePostProcess.h"
 #include"inversionPostProcess.h"
 #include"sepiaPostProcess.h"
+#include"simpleBoxBlurPostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -86,12 +87,17 @@ bool Renderer::Initialize(Graphics* graphics)
         ShaderManager::GetInstance().GetShader(ShaderID::Sepia));
     //テスト：効果オフ
     m_finalRenderSepiaPostProcess->SetActive(false);
+    //simpleBoxBlur
+    m_finalRenderSimpleBoxBluer = new SimpleBoxBlurPostProcess();
+    m_finalRenderSimpleBoxBluer->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::SimpleBoxBlur));
 
     //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
         // ※ 最終転写用のBlitは「画面に出力する特殊枠」にするため、ここには入れません
     m_postProcessChain.push_back(m_finalRenderMonochromePostProcess);
     m_postProcessChain.push_back(m_finalRenderInversionPostProcess);
     m_postProcessChain.push_back(m_finalRenderSepiaPostProcess);
+    m_postProcessChain.push_back(m_finalRenderSimpleBoxBluer);
 
     //最終描画用のquadをここで生成
     this->createFinalRenderQuad();
