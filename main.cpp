@@ -150,7 +150,9 @@ bool InitDevice()
     Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
 	Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
     Shader* pScreenBlitShader = g_pShaderManager->GetOrCreate(pDevice,L"ScreenBlit.hlsl");
-    if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader) return false;
+    Shader* pMonochromaticShader = g_pShaderManager->GetOrCreate(pDevice, L"Monochromatic.hlsl");
+    if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader||!pMonochromaticShader) 
+        return false;
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
