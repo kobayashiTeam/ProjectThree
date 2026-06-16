@@ -37,5 +37,6 @@ enum class ShaderID {
     Monochromatic,
     // 今後増えるエフェクト（Scanline, Vignetteなど）をここに追加していくだけ！
     Inversion,
+    Sepia,
     Count
 };

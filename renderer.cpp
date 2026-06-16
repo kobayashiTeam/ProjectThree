@@ -12,6 +12,7 @@
 #include"shaderManager.h"
 #include"monochromePostProcess.h"
 #include"inversionPostProcess.h"
+#include"sepiaPostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -71,17 +72,26 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderMonochromePostProcess = new MonochromePostProcess();
     m_finalRenderMonochromePostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
-    //テスト：効果オフにしてみる
+    //テスト：効果オフ
     m_finalRenderMonochromePostProcess->SetActive(false);
     //Inversion
     m_finalRenderInversionPostProcess = new InversionPostProcess();
     m_finalRenderInversionPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Inversion));
+    //テスト：効果オフ
+    m_finalRenderInversionPostProcess->SetActive(false);
+    //sepia
+    m_finalRenderSepiaPostProcess = new SepiaPostProcess();
+    m_finalRenderSepiaPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Sepia));
+    //テスト：効果オフ
+    m_finalRenderSepiaPostProcess->SetActive(false);
 
     //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
         // ※ 最終転写用のBlitは「画面に出力する特殊枠」にするため、ここには入れません
     m_postProcessChain.push_back(m_finalRenderMonochromePostProcess);
     m_postProcessChain.push_back(m_finalRenderInversionPostProcess);
+    m_postProcessChain.push_back(m_finalRenderSepiaPostProcess);
 
     //最終描画用のquadをここで生成
     this->createFinalRenderQuad();

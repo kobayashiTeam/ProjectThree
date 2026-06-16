@@ -22,6 +22,7 @@ class ScreenBlitPostProcess;
 class MonochromePostProcess;
 class PostProcess;
 class InversionPostProcess;
+class SepiaPostProcess;
 
 class Renderer
 {
@@ -79,6 +80,7 @@ private:
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
     MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome
     InversionPostProcess* m_finalRenderInversionPostProcess = nullptr;//inversion
+    SepiaPostProcess* m_finalRenderSepiaPostProcess = nullptr;
 
 
 };

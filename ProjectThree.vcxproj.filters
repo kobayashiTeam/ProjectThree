@@ -111,6 +111,9 @@
     <ClCompile Include="Shaders\InversionShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\SepiaShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -186,6 +189,9 @@
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
     <ClInclude Include="inversionPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="sepiaPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
   </ItemGroup>
