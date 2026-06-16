@@ -144,15 +144,6 @@ bool InitDevice()
     HRESULT hr;
     ID3D11Device* pDevice = g_pGraphics->GetDevice();
 
-    // Shader Manager
- //   g_pShaderManager = new ShaderManager();
- //   Shader* pLitShader = g_pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");//Shadersフォルダに入れるのもいいか
- //   Shader* pOutlineShader = g_pShaderManager->GetOrCreate(pDevice, L"OutlineShader.hlsl");
-	//Shader* pUnLitShader = g_pShaderManager->GetOrCreate(pDevice, L"UnLitShader.hlsl");
- //   Shader* pScreenBlitShader = g_pShaderManager->GetOrCreate(pDevice,L"ScreenBlit.hlsl");
- //   Shader* pMonochromaticShader = g_pShaderManager->GetOrCreate(pDevice, L"Monochromatic.hlsl");
- //   if (!pLitShader||!pOutlineShader||!pUnLitShader||!pScreenBlitShader||!pMonochromaticShader) 
- //       return false;
     if (!ShaderManager::GetInstance().LoadAllShaders(pDevice))
         return false;
 

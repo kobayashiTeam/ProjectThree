@@ -19,6 +19,7 @@ class DepthStencilStates;
 class BlendStates;
 class ScreenBlitMaterial;
 class ScreenBlitPostProcess;
+class MonochromePostProcess;
 
 class Renderer
 {
@@ -69,6 +70,7 @@ private:
     Mesh* m_finalRenderMesh = nullptr;
     Shader* m_finalRenderSahder = nullptr;
     //test:postProcessƒNƒ‰ƒX
-    ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;
+    ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
+    MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome
 
 };

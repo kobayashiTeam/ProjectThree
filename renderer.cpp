@@ -10,6 +10,7 @@
 #include"mesh.h"
 #include"screenBlitPostProcess.h"
 #include"shaderManager.h"
+#include"monochromePostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -153,10 +154,8 @@ void Renderer::Execute()
     // ★重要：最終描画はブレンドを「OFF（Opaqueモード）」にする！
     // 画面全体に上書きするだけなので、これ以前のAlpha値を完全に無視させます。
     m_blendStates->Bind(pContext, BlendMode::Opaque);
-    //matにも規定クラスにsrvがあるが、ここではrendererが持っているsrvを
-    //contextから設定している。ここに本来material用の派生クラスとしての煩雑さがある
-    //m_finalRenderMat->BindScreenBlit(pContext,m_offscreenRT);
-    m_finalRenderScreenBlitPostProcess->Render(pContext,m_offscreenRT);
+    //m_finalRenderScreenBlitPostProcess->Render(pContext,m_offscreenRT);
+    m_finalRenderMonochromePostProcess->Render(pContext,m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
 
 }
@@ -198,9 +197,14 @@ bool Renderer::createFinalRenderQuad() {
     if (!m_finalRenderQuad)return false;*/
 
     //test:postprocess
+    //simpleBlit
     m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
     m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
+    //monochrome
+    m_finalRenderMonochromePostProcess = new MonochromePostProcess();
+    m_finalRenderMonochromePostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
 
     return true;
 }
