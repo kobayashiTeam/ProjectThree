@@ -15,6 +15,8 @@
 #include"sepiaPostProcess.h"
 #include"simpleBoxBlurPostProcess.h"
 #include"sharpenPostProcess.h"
+#include"vignettePostProcess.h"
+
 
 Renderer::~Renderer()
 {
@@ -81,7 +83,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderInversionPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Inversion));
     //テスト：効果オフ
-    m_finalRenderInversionPostProcess->SetActive(false);
+    //m_finalRenderInversionPostProcess->SetActive(false);
     //sepia
     m_finalRenderSepiaPostProcess = new SepiaPostProcess();
     m_finalRenderSepiaPostProcess->Initialize(pDevice,
@@ -98,7 +100,14 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderSharpenPostProcess = new SharpenPostProcess();
     m_finalRenderSharpenPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Sharpen));
+    //テスト：効果オフ
     m_finalRenderSharpenPostProcess->SetActive(false);
+    //vignette
+    m_finalRenderVignettePostProcess = new VignettePostProcess();
+    m_finalRenderVignettePostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Vignette));
+    //テスト：効果オフ
+    m_finalRenderVignettePostProcess->SetActive(false);
 
 
     //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
@@ -107,6 +116,8 @@ bool Renderer::Initialize(Graphics* graphics)
     m_postProcessChain.push_back(m_finalRenderInversionPostProcess);
     m_postProcessChain.push_back(m_finalRenderSepiaPostProcess);
     m_postProcessChain.push_back(m_finalRenderSimpleBoxBluer);
+    m_postProcessChain.push_back(m_finalRenderSharpenPostProcess);
+    m_postProcessChain.push_back(m_finalRenderVignettePostProcess);
 
     //最終描画用のquadをここで生成
     this->createFinalRenderQuad();

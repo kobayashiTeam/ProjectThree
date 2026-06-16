@@ -25,6 +25,7 @@ class InversionPostProcess;
 class SepiaPostProcess;
 class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
+class VignettePostProcess;
 
 class Renderer
 {
@@ -85,5 +86,6 @@ private:
     SepiaPostProcess* m_finalRenderSepiaPostProcess = nullptr;
     SimpleBoxBlurPostProcess* m_finalRenderSimpleBoxBluer = nullptr;
     SharpenPostProcess* m_finalRenderSharpenPostProcess = nullptr;
+    VignettePostProcess* m_finalRenderVignettePostProcess = nullptr;
 
 };

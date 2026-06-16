@@ -40,5 +40,6 @@ enum class ShaderID {
     Sepia,
     SimpleBoxBlur,
     Sharpen,
+    Vignette,
     Count
 };
