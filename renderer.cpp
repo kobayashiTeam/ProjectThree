@@ -152,6 +152,8 @@ void Renderer::Execute()
     // ★重要：最終描画はブレンドを「OFF（Opaqueモード）」にする！
     // 画面全体に上書きするだけなので、これ以前のAlpha値を完全に無視させます。
     m_blendStates->Bind(pContext, BlendMode::Opaque);
+    //matにも規定クラスにsrvがあるが、ここではrendererが持っているsrvを
+    //contextから設定している。ここに本来material用の派生クラスとしての煩雑さがある
     m_finalRenderMat->BindScreenBlit(pContext,m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
 
