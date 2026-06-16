@@ -9,6 +9,7 @@ class PostProcess {
 protected:
     Shader* m_pShader;         // 使用するポストプロセス用シェーダー
     ID3D11SamplerState* m_pSamplerLinear;  // ポストプロセス用のサンプラー（基本はCLAMP）
+    bool m_isActive = true; // ★【追加】このエフェクトを今適用するかどうか
 
 public:
     PostProcess() : m_pShader(nullptr), m_pSamplerLinear(nullptr) {}
@@ -51,4 +52,8 @@ public:
         m_pShader = nullptr; // 管理権はシェーダーマネージャーにあるため参照を切るだけ
         if (m_pSamplerLinear) { m_pSamplerLinear->Release(); m_pSamplerLinear = nullptr; }
     }
+
+    // ★【追加】有効・無効の切り替えアクセサ
+    void SetActive(bool active) { m_isActive = active; }
+    bool IsActive() const { return m_isActive; }
 };

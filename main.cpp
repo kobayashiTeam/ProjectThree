@@ -193,9 +193,7 @@ bool InitDevice()
  	//レンダラー
 	g_pRenderer = new Renderer();
 	g_pRenderer->Initialize(g_pGraphics);
-    g_pRenderer->createFinalRenderQuad();
-    //screenBlit
-
+    
     return true;
 }
 

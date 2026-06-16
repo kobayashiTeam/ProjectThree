@@ -20,6 +20,8 @@ class BlendStates;
 class ScreenBlitMaterial;
 class ScreenBlitPostProcess;
 class MonochromePostProcess;
+class PostProcess;
+class InversionPostProcess;
 
 class Renderer
 {
@@ -63,6 +65,10 @@ private:
 
     //テスト：オフスクリーンレンダーターゲット
 	RenderTarget* m_offscreenRT=nullptr;
+    RenderTarget* m_tmpRT = nullptr;//ピンポン設計にするためにもう一枚
+    // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
+    std::vector<PostProcess*> m_postProcessChain;
+
 
     //ポストプロセス後に描画するQuadのmodel
     Model* m_finalRenderQuad = nullptr;
@@ -72,5 +78,7 @@ private:
     //test:postProcessクラス
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
     MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome
+    InversionPostProcess* m_finalRenderInversionPostProcess = nullptr;//inversion
+
 
 };

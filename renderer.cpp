@@ -11,6 +11,7 @@
 #include"screenBlitPostProcess.h"
 #include"shaderManager.h"
 #include"monochromePostProcess.h"
+#include"inversionPostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -37,7 +38,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_blendStates = new BlendStates();
     if (!m_blendStates->Initialize(pDevice)) return false;
 
-    //m_renderQueue = new RenderQueue();
+    //m_renderQueue = new RenderQueue();//クラスで直接配列定義しているのでもう生成しなくていい
     
 
     // 2. 定数バッファの作成
@@ -54,6 +55,36 @@ bool Renderer::Initialize(Graphics* graphics)
 	if (!m_offscreenRT->Initialize(pDevice, 1280, 720)) {
 		return false;
 	}
+
+    //4.オフスクリーンレンダー２号の初期化（２号というか２枚で十分）
+    m_tmpRT = new RenderTarget();
+    if (!m_tmpRT->Initialize(pDevice, 1280, 720)) {
+        return false;
+    }
+
+    //テスト:ポストプロセス
+    //simpleBlit
+    m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
+    m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
+    //monochrome
+    m_finalRenderMonochromePostProcess = new MonochromePostProcess();
+    m_finalRenderMonochromePostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
+    //テスト：効果オフにしてみる
+    m_finalRenderMonochromePostProcess->SetActive(false);
+    //Inversion
+    m_finalRenderInversionPostProcess = new InversionPostProcess();
+    m_finalRenderInversionPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Inversion));
+
+    //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
+        // ※ 最終転写用のBlitは「画面に出力する特殊枠」にするため、ここには入れません
+    m_postProcessChain.push_back(m_finalRenderMonochromePostProcess);
+    m_postProcessChain.push_back(m_finalRenderInversionPostProcess);
+
+    //最終描画用のquadをここで生成
+    this->createFinalRenderQuad();
 
     return true;
 }
@@ -148,16 +179,41 @@ void Renderer::Execute()
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 
     // ==========================================
-    // 【新設】3. 出力先を「デフォルト（画面）」に戻してポストプロセス適用
+    // 【新設】3. ポストプロセス・ピンポン・パイプライン
+    // ==========================================
+    // 現在の「入力（読む）」と「出力（書く）」の追跡用ポインタ
+    RenderTarget* pCurrentInput = m_offscreenRT; // 3Dシーンが描き込まれている
+    RenderTarget* pCurrentOutput = m_tmpRT;      // まだ空っぽの作業机
+
+    // 登録されたエフェクトを先頭から全自動で実行
+    for (PostProcess* effect : m_postProcessChain)
+    {
+        // 無効化されているエフェクト（例: 今は狂気度が低いからモノクロOFFなど）はスキップ
+        if (!effect->IsActive()) continue;
+
+        // 出力先をバインドしてクリア
+        pCurrentOutput->Clear(pContext);
+        pCurrentOutput->Bind(pContext);
+
+        // 描画（入力テクスチャを渡して、Quadを描画）
+        effect->Render(pContext, pCurrentInput);
+        m_finalRenderMesh->Render(pContext);
+
+        // 自動でピンポン（入力と出力を入れ替える）
+        std::swap(pCurrentInput, pCurrentOutput);
+    }
+
+    // ==========================================
+    // 4. 出力先を「デフォルト（画面）」に戻して最終転写
     // ==========================================
     m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
-    // ★重要：最終描画はブレンドを「OFF（Opaqueモード）」にする！
-    // 画面全体に上書きするだけなので、これ以前のAlpha値を完全に無視させます。
     m_blendStates->Bind(pContext, BlendMode::Opaque);
-    //m_finalRenderScreenBlitPostProcess->Render(pContext,m_offscreenRT);
-    m_finalRenderMonochromePostProcess->Render(pContext,m_offscreenRT);
-    m_finalRenderMesh->Render(pContext);
 
+    // ★重要：最後に残った「最新の絵が入っているバッファ」は pCurrentInput に入っています。
+    // それを画面に素通り（ScreenBlit）で貼り付けます。
+    m_finalRenderScreenBlitPostProcess->Render(pContext, pCurrentInput);
+    m_finalRenderMesh->Render(pContext);
+    
 }
 
 void Renderer::EndFrame()
@@ -192,19 +248,6 @@ bool Renderer::createFinalRenderQuad() {
     if (!pDevice)return false;
     m_finalRenderMesh = Mesh::CreateQuad(pDevice);//mesh
     if (!m_finalRenderMesh)return false;
-
-    /*m_finalRenderQuad = new Model(pDevice,m_finalRenderMesh,m_finalRenderMat);
-    if (!m_finalRenderQuad)return false;*/
-
-    //test:postprocess
-    //simpleBlit
-    m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
-    m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
-    //monochrome
-    m_finalRenderMonochromePostProcess = new MonochromePostProcess();
-    m_finalRenderMonochromePostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
 
     return true;
 }

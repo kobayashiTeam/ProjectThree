@@ -36,5 +36,6 @@ enum class ShaderID {
     ScreenBlit,
     Monochromatic,
     // 今後増えるエフェクト（Scanline, Vignetteなど）をここに追加していくだけ！
+    Inversion,
     Count
 };

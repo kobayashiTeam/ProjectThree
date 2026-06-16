@@ -93,6 +93,24 @@
     <ClCompile Include="Shaders\LitShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\Monochromatic.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\OutlineShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\ScreenBlit.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\Shader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\UnLitShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\InversionShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -167,22 +185,8 @@
     <ClInclude Include="screenBlitPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\Monochromatic.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\OutlineShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\ScreenBlit.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\Shader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\UnLitShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
+    <ClInclude Include="inversionPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
