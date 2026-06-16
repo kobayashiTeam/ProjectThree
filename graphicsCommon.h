@@ -39,5 +39,6 @@ enum class ShaderID {
     Inversion,
     Sepia,
     SimpleBoxBlur,
+    Sharpen,
     Count
 };

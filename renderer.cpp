@@ -14,6 +14,7 @@
 #include"inversionPostProcess.h"
 #include"sepiaPostProcess.h"
 #include"simpleBoxBlurPostProcess.h"
+#include"sharpenPostProcess.h"
 
 Renderer::~Renderer()
 {
@@ -91,6 +92,14 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderSimpleBoxBluer = new SimpleBoxBlurPostProcess();
     m_finalRenderSimpleBoxBluer->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::SimpleBoxBlur));
+    //テスト：効果オフ
+    m_finalRenderSimpleBoxBluer->SetActive(false);
+    //sharpen
+    m_finalRenderSharpenPostProcess = new SharpenPostProcess();
+    m_finalRenderSharpenPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Sharpen));
+    m_finalRenderSharpenPostProcess->SetActive(false);
+
 
     //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
         // ※ 最終転写用のBlitは「画面に出力する特殊枠」にするため、ここには入れません

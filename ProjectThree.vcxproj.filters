@@ -117,6 +117,9 @@
     <ClCompile Include="Shaders\SimpleBoxBlurShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\SharpenShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -198,6 +201,9 @@
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
     <ClInclude Include="simpleBoxBlurPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="sharpenPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
   </ItemGroup>
