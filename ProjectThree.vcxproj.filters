@@ -87,9 +87,6 @@
     <ClCompile Include="renderTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="screenBlitMaterial.cpp">
-      <Filter>ソース ファイル\material</Filter>
-    </ClCompile>
     <ClCompile Include="postProcess.cpp">
       <Filter>ソース ファイル\postProcess</Filter>
     </ClCompile>
@@ -174,9 +171,6 @@
     </ClInclude>
     <ClInclude Include="renderTarget.h">
       <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="screenBlitMaterial.h">
-      <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
     <ClInclude Include="postProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>

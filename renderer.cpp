@@ -8,7 +8,6 @@
 #include "mathUtils.h" // ComputeDistance —p
 #include <DirectXMath.h>
 #include"mesh.h"
-#include"ScreenBlitMaterial.h"
 #include"screenBlitPostProcess.h"
 
 Renderer::~Renderer()
@@ -193,9 +192,6 @@ bool Renderer::createFinalRenderQuad(Shader* screenBlitShader) {
     if (!pDevice)return false;
     m_finalRenderMesh = Mesh::CreateQuad(pDevice);//mesh
     if (!m_finalRenderMesh)return false;
-    m_finalRenderMat = new ScreenBlitMaterial();
-    m_finalRenderMat->initializeScreenBlit(pDevice,screenBlitShader);//material
-    if (!m_finalRenderMat)return false;
 
     /*m_finalRenderQuad = new Model(pDevice,m_finalRenderMesh,m_finalRenderMat);
     if (!m_finalRenderQuad)return false;*/

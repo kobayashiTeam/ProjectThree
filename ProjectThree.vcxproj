@@ -160,7 +160,6 @@
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="renderTarget.cpp" />
-    <ClCompile Include="screenBlitMaterial.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
@@ -224,7 +223,6 @@
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="renderTarget.h" />
-    <ClInclude Include="screenBlitMaterial.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
