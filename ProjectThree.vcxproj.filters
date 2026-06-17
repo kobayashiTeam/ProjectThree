@@ -129,6 +129,9 @@
     <ClCompile Include="Shaders\SkyBoxShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="main2.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
