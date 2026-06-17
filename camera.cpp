@@ -12,7 +12,7 @@ Camera::Camera(float width, float height)
     //引数内のような視錐台を仮定したとき、台内にある頂点をスクリーンに投影する
     //行列を作る関数。
     m_projection = 
-        XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), width / height, 0.01f, 100.0f);
+        XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), width / height, 0.01f, 1000.0f);//100
     m_eyePos = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 

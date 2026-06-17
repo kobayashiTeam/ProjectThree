@@ -223,7 +223,6 @@ void Renderer::Execute()
         m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
     }
 
-
     // ─── 工程2: アウトラインパス ───
     //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
     //    this->BeginStencilOutlinePass(); // ステンシル等の特殊ステートON

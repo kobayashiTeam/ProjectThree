@@ -112,7 +112,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
-    float size = 1000.0f;
+    float size = 500.0f;
     SkyboxVertex vertices[] = {
         // 前面 (Z = 0.5)
         { { -size,  size,  size }, {}, {}, {} }, // 左上

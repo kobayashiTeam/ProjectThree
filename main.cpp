@@ -205,7 +205,7 @@ void UpdateScene()
 
     // カメラ（自由に動かしたい場合は後でInput対応）
     XMVECTOR eye = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);//0,2,-5
-    XMVECTOR at = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);//up0,10,0にすると謎の赤い模様が見える
+    XMVECTOR at = XMVectorSet(3.0f, 1.0f, 1.0f, 0.0f);//up0,10,0にすると謎の赤い模様が見える
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_pCamera->Update(eye, at, up);
 

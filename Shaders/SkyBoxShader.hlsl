@@ -36,10 +36,9 @@ VS_OUTPUT VS(VS_INPUT input)
     VS_OUTPUT output;
     
     // 立方体のローカル頂点座標を、そのままキューブマップのサンプリングベクトルとして使用
-    output.texCoord = input.position;
+    output.texCoord = normalize(input.position);
     
     // 座標を変換 (w = 1.0 として扱う)
-    //float4 pos = mul(float4(input.position, 1.0f), g_ViewProjection);
     float4 pos = mul(g_ViewProjection, float4(input.position, 1.0f));
     
     // ★【パースペクティブ・トリック】
