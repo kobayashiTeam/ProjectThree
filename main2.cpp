@@ -360,10 +360,10 @@ HRESULT InitDevice()
     // ----------------------------------------------------------------------------------
     // スカイボックスのトレイリング(内側表示)のため、1x1x1の標準的な立方体
     Vertex vertices[] = {
-        { XMFLOAT3(-1.0f,  1.0f, -1.0f) }, { XMFLOAT3(1.0f,  1.0f, -1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f) }, { XMFLOAT3(-1.0f, -1.0f, -1.0f) },
-        { XMFLOAT3(-1.0f,  1.0f,  1.0f) }, { XMFLOAT3(1.0f,  1.0f,  1.0f) },
-        { XMFLOAT3(1.0f, -1.0f,  1.0f) }, { XMFLOAT3(-1.0f, -1.0f,  1.0f) },
+        { XMFLOAT3(-1.0f,  1.0f, -1.0f) }, { XMFLOAT3(1.0f,  1.0f, -1.0f) },//左上手前、右上手前0,1
+        { XMFLOAT3(1.0f, -1.0f, -1.0f) }, { XMFLOAT3(-1.0f, -1.0f, -1.0f) },//右下手前、左下手前2,3
+        { XMFLOAT3(-1.0f,  1.0f,  1.0f) }, { XMFLOAT3(1.0f,  1.0f,  1.0f) },//左上奥、右上奥4,5
+        { XMFLOAT3(1.0f, -1.0f,  1.0f) }, { XMFLOAT3(-1.0f, -1.0f,  1.0f) },//右下奥、左下奥6,7
     };
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
