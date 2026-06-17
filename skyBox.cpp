@@ -4,6 +4,7 @@
 #include"shaderManager.h"
 #include <directxtk/WICTextureLoader.h>  // 追加
 #include <array>                          // 追加
+#include <filesystem>
 
 
 bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>& facePaths) {
@@ -12,12 +13,23 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
     // 1. 6枚のPNGからキューブマップを作る
     // ==========================================
+    OutputDebugStringW(L"SkyBox file not found\n");
 
     // ① 各面のテクスチャを一時的に読み込む
     ID3D11Texture2D* faceTex[6] = {};
     UINT width = 0, height = 0;
 
     for (int i = 0; i < 6; i++) {
+
+        if (!std::filesystem::exists(facePaths[i]))
+        {
+            std::wstring msg =
+                L"SkyBox file not found : " + facePaths[i] + L"\n";
+
+            OutputDebugStringW(msg.c_str());
+            return false;
+        }
+
         ID3D11Resource* res = nullptr;
         hr = DirectX::CreateWICTextureFromFileEx(
             device,
@@ -96,9 +108,9 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // キューブマップをサンプリング（補間）するための設定です。
     D3D11_SAMPLER_DESC samplerDesc{};
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // 線形補間（綺麗に見せる）
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;    // 範囲外はループ（基本はみ出さないが安全のため）
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;    // キューブマップはW軸（3次元）も必要
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // 範囲外はループ（基本はみ出さないが安全のため）
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;    // キューブマップはW軸（3次元）も必要
     samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     samplerDesc.MinLOD = 0;
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
@@ -112,39 +124,48 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
-    float size = 500.0f;
+    float size = 30.0f;
     SkyboxVertex vertices[] = {
         // 前面 (Z = 0.5)
-        { { -size,  size,  size }, {}, {}, {} }, // 左上
-        { {  size,  size,  size }, {}, {}, {} }, // 右上
-        { {  size, -size,  size }, {}, {}, {} }, // 右下
-        { { -size, -size,  size }, {}, {}, {} }, // 左下
+        { { -size,  size,  size }, {}, {}, {} }, // 左上奥
+        { {  size,  size,  size }, {}, {}, {} }, // 右上奥
+        { {  size, -size,  size }, {}, {}, {} }, // 右下奥
+        { { -size, -size,  size }, {}, {}, {} }, // 左下奥
         // 背面 (Z = -0.5)
-        { { -size,  size, -size }, {}, {}, {} }, // 左上
-        { {  size,  size, -size }, {}, {}, {} }, // 右上
-        { {  size, -size, -size }, {}, {}, {} }, // 右下
-        { { -size, -size, -size }, {}, {}, {} }  // 左下
+        { { -size,  size, -size }, {}, {}, {} }, // 左上手前
+        { {  size,  size, -size }, {}, {}, {} }, // 右上手前
+        { {  size, -size, -size }, {}, {}, {} }, // 右下手前
+        { { -size, -size, -size }, {}, {}, {} }  // 左下手前
     };
 
     // ==========================================
     // 4. インデックスデータ (内側から見た三角形の定義)
     // ==========================================
-    // ★ここがポイントです：内側から見たときに「時計回り」になるように、
+     //★ここがポイントです：内側から見たときに「時計回り」になるように、
     // インデックスの並び（面の向き）を定義しています。
     uint16_t indices[] = {
-        // 前面
-        0, 1, 2,  0, 2, 3,
-        // 背面 (通常とは逆順にして内側を向ける)
-        5, 4, 7,  5, 7, 6,
-        // 左面
-        4, 0, 3,  4, 3, 7,
-        // 右面
-        1, 5, 6,  1, 6, 2,
-        // 上面
-        4, 5, 1,  4, 1, 0,
-        // 下面
-        3, 2, 6,  3, 6, 7
+        // 前面 (+Z)
+        0, 1, 2,  2, 3, 0,
+        // 背面 (-Z)
+        5, 4, 7,  7, 6, 5,
+        // 左面 (-X)
+        4, 0, 3,  3, 7, 4,
+        // 右面 (+X)
+        1, 5, 6,  6, 2, 1,
+        // 上面 (+Y)
+        4, 5, 1,  1, 0, 4,
+        // 下面 (-Y)
+        3, 2, 6,  6, 7, 3
     };
+    //// -X面（頂点4,0,3,7）
+    //uint16_t indices[] = {
+    //4, 5, 6,  4, 6, 7,  // -Z面
+    //1, 0, 3,  1, 3, 2,  // +Z面
+    //5, 1, 2,  5, 2, 6,  // +X面
+    //0, 4, 7,  0, 7, 3,  // -X面
+    //0, 1, 5,  0, 5, 4,  // +Y面
+    //7, 6, 2,  7, 2, 3   // -Y面
+    //};
 
     // 頂点バッファの生成
     D3D11_BUFFER_DESC vbd{};
@@ -190,6 +211,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
 
     return true;
 }
+
 
 
 void SkyBox::Draw(ID3D11DeviceContext* context,
@@ -247,7 +269,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
 
     // 頂点シェーダーに定数バッファをセット（スロット1）//一応１にしてみる
     ID3D11Buffer* cbPtr = m_constantBuffer.Get();
-    context->VSSetConstantBuffers(0, 1, &cbPtr);//第一引数がslot
+    context->VSSetConstantBuffers(3, 1, &cbPtr);//第一引数がslot
 
     // ピクセルシェーダーにキューブマップテクスチャ（SRV）とサンプラーをセット（スロット0）
     ID3D11ShaderResourceView* srvPtr = m_cubeMapSRV.Get();
@@ -258,5 +280,125 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // =========================================================================
     // 4. 描画実行（インデックス数は立方体の 36）
     // =========================================================================
-    context->DrawIndexed(36, 0, 0);
+    context->DrawIndexed(36, 0, 0);//36
+}
+
+
+
+// 引数を 6枚の配列 から 1枚のパス(ddsPath) に変更します
+bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& ddsPath) {
+    HRESULT hr = S_OK;
+
+    // ==========================================
+    // 1. DDSファイルからキューブマップ（SRV）を直接生成する
+    // ==========================================
+    // DirectXTK のおかげで、テクスチャの生成から SRV の作成まで1関数で終わります。
+    // DDS内部に「キューブマップであること（D3D11_RESOURCE_MISC_TEXTURECUBE）」が
+    // 既に記録されているため、関数側がそれを自動判別して適切なSRVを作ってくれます。
+
+    hr = DirectX::CreateDDSTextureFromFile(
+        device,
+        ddsPath.c_str(),
+        nullptr,                    // テクスチャの生リソース(ID3D11Resource**)が不要ならnullptrでOK
+        m_cubeMapSRV.GetAddressOf() // 直接メンバのSRVに格納
+    );
+
+    if (FAILED(hr)) {
+        OutputDebugStringA("Failed to load skybox DDS texture.\n");
+        return false;
+    }
+
+
+    // ==========================================
+    // 2. サンプラーステートの生成
+    // ==========================================
+    D3D11_SAMPLER_DESC samplerDesc{};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // DDSにミップマップが含まれている場合も綺麗に補間されます
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
+    if (FAILED(hr)) return false;
+
+
+    // ==========================================
+    // 3. 立方体の頂点データ (位置情報のみ)
+    // ==========================================
+    float size = 500.0f;
+    SkyboxVertex vertices[] = {
+        // 前面 (Z = 0.5)
+        { { -size,  size,  size }, {}, {}, {} }, // 左上
+        { {  size,  size,  size }, {}, {}, {} }, // 右上
+        { {  size, -size,  size }, {}, {}, {} }, // 右下
+        { { -size, -size,  size }, {}, {}, {} }, // 左下
+        // 背面 (Z = -0.5)
+        { { -size,  size, -size }, {}, {}, {} }, // 左上
+        { {  size,  size, -size }, {}, {}, {} }, // 右上
+        { {  size, -size, -size }, {}, {}, {} }, // 右下
+        { { -size, -size, -size }, {}, {}, {} }  // 左下
+    };
+
+
+    // ==========================================
+    // 4. インデックスデータ (内側から見た三角形の定義)
+    // ==========================================
+    uint16_t indices[] = {
+        // 前面
+        0, 1, 2,  0, 2, 3,
+        // 背面
+        5, 4, 7,  5, 7, 6,
+        // 左面
+        4, 0, 3,  4, 3, 7,
+        // 右面
+        1, 5, 6,  1, 6, 2,
+        // 上面
+        4, 5, 1,  4, 1, 0,
+        // 下面
+        3, 2, 6,  3, 6, 7
+    };
+
+    // 頂点バッファの生成
+    D3D11_BUFFER_DESC vbd{};
+    vbd.Usage = D3D11_USAGE_DEFAULT;
+    vbd.ByteWidth = sizeof(vertices);
+    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA vinitData{};
+    vinitData.pSysMem = vertices;
+    hr = device->CreateBuffer(&vbd, &vinitData, &m_pVertexBuffer);
+    if (FAILED(hr)) return false;
+
+    // インデックスバッファの生成
+    D3D11_BUFFER_DESC ibd{};
+    ibd.Usage = D3D11_USAGE_DEFAULT;
+    ibd.ByteWidth = sizeof(indices);
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA iinitData{};
+    iinitData.pSysMem = indices;
+    hr = device->CreateBuffer(&ibd, &iinitData, &m_indexBuffer);
+    if (FAILED(hr)) return false;
+
+
+    // ==========================================
+    // 5. 行列転送用定数バッファ (Constant Buffer) の生成
+    // ==========================================
+    D3D11_BUFFER_DESC cbd{};
+    cbd.Usage = D3D11_USAGE_DYNAMIC;
+    cbd.ByteWidth = sizeof(DirectX::XMMATRIX);
+    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+    hr = device->CreateBuffer(&cbd, nullptr, m_constantBuffer.GetAddressOf());
+    if (FAILED(hr)) return false;
+
+    // ShaderManagerからスカイボックス用シェーダーの参照を貰う
+    m_shaderProgram = ShaderManager::GetInstance().GetShader(ShaderID::SkyBox);
+    if (!m_shaderProgram) return false;
+
+    return true;
 }

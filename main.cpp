@@ -192,7 +192,9 @@ bool InitDevice()
 
  	//レンダラー
 	g_pRenderer = new Renderer();
-	g_pRenderer->Initialize(g_pGraphics);
+    if (!g_pRenderer->Initialize(g_pGraphics)) {
+        return false;
+    }
     
     return true;
 }
@@ -205,7 +207,7 @@ void UpdateScene()
 
     // カメラ（自由に動かしたい場合は後でInput対応）
     XMVECTOR eye = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);//0,2,-5
-    XMVECTOR at = XMVectorSet(3.0f, 1.0f, 1.0f, 0.0f);//up0,10,0にすると謎の赤い模様が見える
+    XMVECTOR at = XMVectorSet( 0.0f, 0.0f, 100.0f, 0.0f);//up0,10,0にすると謎の赤い模様が見える
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_pCamera->Update(eye, at, up);
 
@@ -239,7 +241,6 @@ void CleanupDevice()
     if (g_pMainModel) { delete g_pMainModel;     g_pMainModel = nullptr; }
     if (g_pLitMaterial) { delete g_pLitMaterial;   g_pLitMaterial = nullptr; }
     if (g_pCubeMesh) { delete g_pCubeMesh;      g_pCubeMesh = nullptr; }
-    //if (g_pShaderManager) { delete g_pShaderManager; g_pShaderManager = nullptr; }
     if (g_pCamera) { delete g_pCamera;        g_pCamera = nullptr; }
     if (g_pGraphics) { delete g_pGraphics;      g_pGraphics = nullptr; }
 }

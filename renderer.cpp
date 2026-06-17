@@ -19,6 +19,7 @@
 #include"skyBox.h"
 #include<string>
 #include<array>
+#include <filesystem>
 
 
 Renderer::~Renderer()
@@ -125,15 +126,36 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //スカイボックスの初期化
     m_pSkyBox = new SkyBox();
+    //std::array<std::wstring, 6> skyboxFaces = {
+    //L"assets/skybox/vz_dawn_right.png",  // [0] +X
+    //L"assets/skybox/vz_dawn_left.png",   // [1] -X
+    //L"assets/skybox/vz_dawn_up.png",     // [2] +Y
+    //L"assets/skybox/vz_dawn_down.png",   // [3] -Y
+    //L"assets/skybox/vz_dawn_front.png",  // [4] +Z
+    //L"assets/skybox/vz_dawn_back.png",   // [5] -Z
+    //};
+
+    //std::array<std::wstring, 6> skyboxFaces = {
+    //L"assets/skybox/clearOcean/vz_clear_ocean_right.png",  // [0] +X
+    //L"assets/skybox/clearOcean/vz_clear_ocean_left.png",   // [1] -X
+    //L"assets/skybox/clearOcean/vz_clear_ocean_up.png",     // [2] +Y
+    //L"assets/skybox/clearOcean/vz_clear_ocean_down.png",   // [3] -Y
+    //L"assets/skybox/clearOcean/vz_clear_ocean_front.png",  // [4] +Z
+    //L"assets/skybox/clearOcean/vz_clear_ocean_back.png",   // [5] -Z//
+    //};
+
     std::array<std::wstring, 6> skyboxFaces = {
-    L"assets/skybox/vz_dawn_right.png",  // [0] +X
-    L"assets/skybox/vz_dawn_left.png",   // [1] -X
-    L"assets/skybox/vz_dawn_up.png",     // [2] +Y
-    L"assets/skybox/vz_dawn_down.png",   // [3] -Y
-    L"assets/skybox/vz_dawn_front.png",  // [4] +Z
-    L"assets/skybox/vz_dawn_back.png",   // [5] -Z
+    L"assets/skybox/red.png",  // [0] +X
+    L"assets/skybox/green.png",   // [1] -X
+    L"assets/skybox/blue.png",     // [2] +Y
+    L"assets/skybox/yellow.png",   // [3] -Y
+    L"assets/skybox/white.png",  // [4] +Z
+    L"assets/skybox/purple.png",   // [5] -Z//
     };
-    m_pSkyBox->Initialize(pDevice, skyboxFaces);
+    if (!m_pSkyBox->Initialize(pDevice, skyboxFaces)) {
+        return false;
+    }
+    //m_pSkyBox->Initialize(pDevice,L"assets/skybox/dawn.dds");
 
     return true;
 }
@@ -216,7 +238,7 @@ void Renderer::Execute()
     // ─── 【新設】スカイボックスの描画 ───
     if (m_pSkyBox) {
         // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Front);       // 内側を見せるため前面カリング
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
         m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
 
         // 描画実行

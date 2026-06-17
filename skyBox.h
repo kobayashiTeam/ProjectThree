@@ -34,6 +34,7 @@ public:
     SkyBox& operator=(SkyBox&&) noexcept = default;*/
 
     bool Initialize(ID3D11Device* device, const std::array<std::wstring, 6>& facePaths);
+    bool Initialize(ID3D11Device* device, const std::wstring& ddsPath);
 
     void Draw(ID3D11DeviceContext* context,
         const DirectX::XMMATRIX& viewMatrix,
