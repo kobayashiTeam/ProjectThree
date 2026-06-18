@@ -40,8 +40,6 @@ public:
         const DirectX::XMMATRIX& viewMatrix,
         const DirectX::XMMATRIX& projectionMatrix);
 
-    //test:シェーダは自前でつくる
-    bool createShader();
 
 private:
     // ComPtr のエイリアス（クラス内でも使いやすいように定義）

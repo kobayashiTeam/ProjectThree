@@ -44,23 +44,17 @@ SamplerState g_SamplerLinear : register(s0);
 // =========================================================================
 VS_OUTPUT VS(VS_INPUT input)
 {
-    VS_OUTPUT output;
+    VS_OUTPUT output = (VS_OUTPUT) 0;
     
-    // 立方体のローカル頂点座標を、そのままキューブマップのサンプリングベクトルとして使用
-    //output.texCoord = normalize(input.position);
-    output.texCoord = input.position;
+    // 頂点位置を変換
+    output.position = mul(float4(input.position, 1.0f), g_ViewProjection);
     
-    // 座標を変換 (w = 1.0 として扱う)
-    float4 pos = mul(g_ViewProjection, float4(input.position, 1.0f));
-    
-    // ★【パースペクティブ・トリック】
-    // Z成分をW成分に置き換える。これにより画面空間へ変換された際、
-    // 深度(Z/W)が必ず「1.0」(もっとも遠い奥) になる。
-    //output.position = pos.xyww;
-    //正しい
-    output.position = pos;
-// そして深度を最大にしたいなら
+    // 【重要】深度値を強制的に最奥(1.0)にするトリック
+    // ラスタライズ後の z/w が 1.0 になるよう、z に w を代入する
     output.position.z = output.position.w;
+    
+    // 立方体のローカル座標をそのままキューブマップのサンプリングベクトルとして使用
+    output.texCoord = input.position;
     
     return output;
 }

@@ -126,14 +126,14 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //スカイボックスの初期化
     m_pSkyBox = new SkyBox();
-    //std::array<std::wstring, 6> skyboxFaces = {
-    //L"assets/skybox/vz_dawn_right.png",  // [0] +X
-    //L"assets/skybox/vz_dawn_left.png",   // [1] -X
-    //L"assets/skybox/vz_dawn_up.png",     // [2] +Y
-    //L"assets/skybox/vz_dawn_down.png",   // [3] -Y
-    //L"assets/skybox/vz_dawn_front.png",  // [4] +Z
-    //L"assets/skybox/vz_dawn_back.png",   // [5] -Z
-    //};
+    std::array<std::wstring, 6> skyboxFaces = {
+    L"assets/skybox/vz_dawn_right.png",  // [0] +X
+    L"assets/skybox/vz_dawn_left.png",   // [1] -X
+    L"assets/skybox/vz_dawn_up.png",     // [2] +Y
+    L"assets/skybox/vz_dawn_down.png",   // [3] -Y
+    L"assets/skybox/vz_dawn_front.png",  // [4] +Z
+    L"assets/skybox/vz_dawn_back.png",   // [5] -Z
+    };
 
     //std::array<std::wstring, 6> skyboxFaces = {
     //L"assets/skybox/clearOcean/vz_clear_ocean_right.png",  // [0] +X
@@ -144,14 +144,15 @@ bool Renderer::Initialize(Graphics* graphics)
     //L"assets/skybox/clearOcean/vz_clear_ocean_back.png",   // [5] -Z//
     //};
 
-    std::array<std::wstring, 6> skyboxFaces = {
-    L"assets/skybox/red.png",  // [0] +X
-    L"assets/skybox/green.png",   // [1] -X
-    L"assets/skybox/blue.png",     // [2] +Y
-    L"assets/skybox/yellow.png",   // [3] -Y
-    L"assets/skybox/white.png",  // [4] +Z
-    L"assets/skybox/purple.png",   // [5] -Z//
-    };
+    //std::array<std::wstring, 6> skyboxFaces = {
+    //L"assets/skybox/red.png",  // [0] +X
+    //L"assets/skybox/green.png",   // [1] -X
+    //L"assets/skybox/blue.png",     // [2] +Y
+    //L"assets/skybox/yellow.png",   // [3] -Y
+    //L"assets/skybox/white.png",  // [4] +Z
+    //L"assets/skybox/purple.png",   // [5] -Z//
+    //};
+
     if (!m_pSkyBox->Initialize(pDevice, skyboxFaces)) {
         return false;
     }
