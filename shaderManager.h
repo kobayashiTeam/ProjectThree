@@ -80,9 +80,9 @@ private:
             layout = standardLayout;
             layoutCount = 4;
             break;
-        case ShaderID::SkyBox:
-            layout = posOnlyLayout;
-            layoutCount = 1;
+        case ShaderID::SkyBox://¡‰ñ‚Í‘S‘Î‰‚Å
+            layout = standardLayout;
+            layoutCount = 4;
             break;
         case ShaderID::ScreenBlit:
         case ShaderID::Monochromatic:
