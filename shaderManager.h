@@ -45,9 +45,62 @@ public:
 
 private:
     bool GetOrCreate(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
-        // 既存のコンパイル・生成ロジック
+
+        // IDごとにlayoutを定義
+        D3D11_INPUT_ELEMENT_DESC standardLayout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,             D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, sizeof(float) * 3,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 6,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, sizeof(float) * 10, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+        };
+
+        D3D11_INPUT_ELEMENT_DESC posOnlyLayout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+        };
+
+        D3D11_INPUT_ELEMENT_DESC screenBlitLayout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,            D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+        };
+
+        // IDで振り分け
+        const D3D11_INPUT_ELEMENT_DESC* layout = standardLayout;
+        UINT layoutCount = 4;
+
+        switch (id) {
+        case ShaderID::Lit:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::UnLit:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::Outline:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::SkyBox:
+            layout = posOnlyLayout;
+            layoutCount = 1;
+            break;
+        case ShaderID::ScreenBlit:
+        case ShaderID::Monochromatic:
+        case ShaderID::Inversion:
+        case ShaderID::Sepia:
+        case ShaderID::SimpleBoxBlur:
+        case ShaderID::Sharpen:
+        case ShaderID::Vignette:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
+        default:
+            // Lit, Outline, UnLit は standardLayout
+            break;
+        }
+
         Shader* pShader = new Shader();
-        if (!pShader->Create(pDevice, filename, filename)) { // VS/PSが同ファイル想定
+        if (!pShader->Create(pDevice, filename, filename, layout, layoutCount)) {
             delete pShader;
             return false;
         }

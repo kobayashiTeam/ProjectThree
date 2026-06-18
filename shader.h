@@ -14,7 +14,12 @@ public:
     ~Shader() { Cleanup(); }
 
     // 生成メソッド
-    bool Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wchar_t* psFileName);
+    bool Create(ID3D11Device* pDevice, 
+        const wchar_t* vsFileName, 
+        const wchar_t* psFileName,
+        const D3D11_INPUT_ELEMENT_DESC* layout,  // 追加
+        UINT layoutCount                          // 追加)
+        );
 
     // 利用（バインド）メソッド
     void Bind(ID3D11DeviceContext* pContext);
