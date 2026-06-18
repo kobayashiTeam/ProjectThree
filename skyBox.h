@@ -40,6 +40,9 @@ public:
         const DirectX::XMMATRIX& viewMatrix,
         const DirectX::XMMATRIX& projectionMatrix);
 
+    //test:シェーダは自前でつくる
+    bool createShader();
+
 private:
     // ComPtr のエイリアス（クラス内でも使いやすいように定義）
     template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -48,6 +51,8 @@ private:
     ID3D11Buffer* m_pVertexBuffer;
     ID3D11Buffer* m_indexBuffer;
     Shader* m_shaderProgram;
+    //自分でシェーダ作ったほうがよさそう
+
 
     // D3D11リソース & ステートオブジェクト
     ComPtr<ID3D11ShaderResourceView> m_cubeMapSRV;

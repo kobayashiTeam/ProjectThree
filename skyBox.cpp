@@ -125,17 +125,30 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
     float size = 100.0f;
+    //SkyboxVertex vertices[] = {
+    //    // 前面 (Z = 0.5)
+    //    { { -size,  size,  size }, {}, {}, {} }, // 左上奥
+    //    { {  size,  size,  size }, {}, {}, {} }, // 右上奥
+    //    { {  size, -size,  size }, {}, {}, {} }, // 右下奥
+    //    { { -size, -size,  size }, {}, {}, {} }, // 左下奥
+    //    // 背面 (Z = -0.5)
+    //    { { -size,  size, -size }, {}, {}, {} }, // 左上手前
+    //    { {  size,  size, -size }, {}, {}, {} }, // 右上手前
+    //    { {  size, -size, -size }, {}, {}, {} }, // 右下手前
+    //    { { -size, -size, -size }, {}, {}, {} }  // 左下手前
+    //};
+
     SkyboxVertex vertices[] = {
         // 前面 (Z = 0.5)
-        { { -size,  size,  size }, {}, {}, {} }, // 左上奥
-        { {  size,  size,  size }, {}, {}, {} }, // 右上奥
-        { {  size, -size,  size }, {}, {}, {} }, // 右下奥
-        { { -size, -size,  size }, {}, {}, {} }, // 左下奥
+        { { DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 左上奥
+        { { DirectX::XMFLOAT3(1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 右上奥
+        { { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 右下奥
+        { { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 左下奥
         // 背面 (Z = -0.5)
-        { { -size,  size, -size }, {}, {}, {} }, // 左上手前
-        { {  size,  size, -size }, {}, {}, {} }, // 右上手前
-        { {  size, -size, -size }, {}, {}, {} }, // 右下手前
-        { { -size, -size, -size }, {}, {}, {} }  // 左下手前
+        {  { DirectX::XMFLOAT3(-1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 左上手前
+        { { DirectX::XMFLOAT3(1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 右上手前
+        { { DirectX::XMFLOAT3(1.0f, -1.0f,  1.0f) }, {}, {}, {} }, // 右下手前
+        { { DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f) }, {}, {}, {} }  // 左下手前
     };
 
     // ==========================================
@@ -143,35 +156,29 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
      //★ここがポイントです：内側から見たときに「時計回り」になるように、
     // インデックスの並び（面の向き）を定義しています。
-    uint16_t indices[] = {
-        // 右 (+X)
-        5, 1, 2,  2, 6, 5,
-        // 左 (-X)
-         0, 4, 7,  7, 3, 0,
-        // 上面 (Y)
-        4, 5, 1,  1, 0, 4,
-        // 下面 (-Y)
-        3, 2, 6,  6, 7, 3,
-        //奥面 (+Z)
-        0, 1, 2,  2, 3, 0,
-        // 手前面 (-Z)
-        4, 5, 6,  6, 7, 4
-    };
-
     //uint16_t indices[] = {
     //    // 右 (+X)
-    //    1, 5, 6,  6, 2, 1,
+    //    5, 1, 2,  2, 6, 5,
     //    // 左 (-X)
-    //     4, 0, 3,  3, 7, 4,
-    //     // 上面 (Y)
-    //     4, 5, 1,  1, 0, 4,
-    //     // 下面 (-Y)
-    //     3, 2, 6,  6, 7, 3,
-    //     //奥面 (+Z)
-    //     0, 1, 2,  2, 3, 0,
-    //     // 手前面 (-Z)
-    //     5, 4, 7,  7, 6, 5
+    //     0, 4, 7,  7, 3, 0,
+    //    // 上面 (Y)
+    //    4, 5, 1,  1, 0, 4,
+    //    // 下面 (-Y)
+    //    3, 2, 6,  6, 7, 3,
+    //    //奥面 (+Z)
+    //    0, 1, 2,  2, 3, 0,
+    //    // 手前面 (-Z)
+    //    4, 5, 6,  6, 7, 4
     //};
+
+    WORD indices[] = {
+        0, 1, 2,  2, 3, 0, // 前
+        4, 5, 1,  1, 0, 4, // 上
+        3, 2, 6,  6, 7, 3, // 下
+        1, 5, 6,  6, 2, 1, // 右
+        4, 0, 3,  3, 7, 4, // 左
+        5, 4, 7,  7, 6, 5  // 後
+    };
     
 
     // 頂点バッファの生成
@@ -406,6 +413,11 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& ddsPath) {
     // ShaderManagerからスカイボックス用シェーダーの参照を貰う
     m_shaderProgram = ShaderManager::GetInstance().GetShader(ShaderID::SkyBox);
     if (!m_shaderProgram) return false;
+
+    return true;
+}
+
+bool SkyBox::createShader() {
 
     return true;
 }

@@ -69,6 +69,13 @@ Renderer* g_pRenderer = nullptr;
 //共用クラス
 #include"graphicsCommon.h"
 
+//input関連
+// WndProcの上あたりに追加
+bool g_keyLeft = false;
+bool g_keyRight = false;
+bool g_keyUp = false;
+bool g_keyDown = false;
+
 // 関数宣言
 bool InitDevice();
 void CleanupDevice();
@@ -80,6 +87,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+        // WndProc内に追加
+    case WM_KEYDOWN:
+        if (wParam == VK_LEFT)  g_keyLeft = true;
+        if (wParam == VK_RIGHT) g_keyRight = true;
+        if (wParam == VK_UP)    g_keyUp = true;
+        if (wParam == VK_DOWN)  g_keyDown = true;
+        return 0;
+    case WM_KEYUP:
+        if (wParam == VK_LEFT)  g_keyLeft = false;
+        if (wParam == VK_RIGHT) g_keyRight = false;
+        if (wParam == VK_UP)    g_keyUp = false;
+        if (wParam == VK_DOWN)  g_keyDown = false;
+        return 0;
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -205,11 +225,18 @@ void UpdateScene()
 {
     g_Time += 0.016f;  // ≈60FPS
 
-    // カメラ（自由に動かしたい場合は後でInput対応）
-    XMVECTOR eye = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);//0,2,-5
-    XMVECTOR at = XMVectorSet( 10.0f, 0.0f, 0.0f, 0.0f);//up0,10,0にすると謎の赤い模様が見える
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    g_pCamera->Update(eye, at, up);
+    // UpdateScene内のカメラ部分を置き換え
+    const float rotSpeed = 0.02f;
+    float deltaYaw = 0.0f;
+    float deltaPitch = 0.0f;
+    if (g_keyLeft)  deltaYaw += rotSpeed;
+    if (g_keyRight) deltaYaw -= rotSpeed;
+    if (g_keyUp)    deltaPitch += rotSpeed;
+    if (g_keyDown)  deltaPitch -= rotSpeed;
+
+    g_pCamera->UpdateDirection(deltaYaw, deltaPitch);
+
+    // 以前の eye/at/up 渡しの3行は削除
 
     // モデル回転
     g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);

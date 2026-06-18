@@ -155,7 +155,6 @@ bool Renderer::Initialize(Graphics* graphics)
     if (!m_pSkyBox->Initialize(pDevice, skyboxFaces)) {
         return false;
     }
-    //m_pSkyBox->Initialize(pDevice,L"assets/skybox/dawn.dds");
 
     return true;
 }
@@ -238,7 +237,7 @@ void Renderer::Execute()
     // ─── 【新設】スカイボックスの描画 ───
     if (m_pSkyBox) {
         // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);       // 内側を見せるため前面カリング
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
         m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
 
         // 描画実行

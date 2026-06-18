@@ -14,6 +14,7 @@ public:
     DirectX::XMMATRIX GetViewMatrix() const { return m_view; }
     DirectX::XMMATRIX GetProjectionMatrix() const { return m_projection; }
     DirectX::XMFLOAT4 GetEyePosition() const { return m_eyePos; }
+    void UpdateDirection(float deltaYaw, float deltaPitch);
 
 private:
     DirectX::XMMATRIX m_view;
@@ -22,4 +23,8 @@ private:
 
     float m_windowWidth;
     float m_windowHeight;
+
+    // 追加
+    float m_yaw;// 左右（ラジアン）
+    float m_pitch;  // 上下（ラジアン）
 };
