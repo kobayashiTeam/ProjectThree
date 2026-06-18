@@ -85,15 +85,15 @@ private:
             layoutCount = 4;
             break;
         case ShaderID::ScreenBlit:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
         case ShaderID::Sepia:
         case ShaderID::SimpleBoxBlur:
         case ShaderID::Sharpen:
         case ShaderID::Vignette:
-            layout = screenBlitLayout;
-            layoutCount = 2;
-            break;
         default:
             // Lit, Outline, UnLit ‚Í standardLayout
             break;
