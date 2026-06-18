@@ -20,14 +20,7 @@ bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wcha
     //インデックスバッファ：meshがもつもの。頂点座標とセット
     //レイアウト：頂点バッファの解釈。頂点情報に含まれる
     //種々の属性をパースする
-    D3D11_INPUT_ELEMENT_DESC layout2[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 6, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 10, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-
+    
     hr = pDevice->CreateInputLayout(layout, layoutCount, pVSBlob->GetBufferPointer(), //第二引数4
         pVSBlob->GetBufferSize(), &m_pVertexLayout);//layout,layoutcount
     pVSBlob->Release();
