@@ -69,6 +69,10 @@ Renderer* g_pRenderer = nullptr;
 //共用クラス
 #include"graphicsCommon.h"
 
+//モデルリソース
+#include"ModelResource.h"
+ModelResource* modelResource = nullptr;
+
 //input関連
 // WndProcの上あたりに追加
 bool g_keyLeft = false;
@@ -201,6 +205,8 @@ bool InitDevice()
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
+    //oldCamera(modelResource)
+    modelResource->LoadFromFile(pDevice,nullptr,L"assets/oldCamera");
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
