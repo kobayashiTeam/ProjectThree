@@ -94,38 +94,6 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     std::vector<DirectX::XMFLOAT2> uvs;
     std::vector<DWORD> indices;
 
-    // --- 頂点データのコンバート ---
-    //for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-    //    SimpleVertex vertex = {};
-
-    //    // 座標 (X, Y, Z)
-    //    vertex.x = mesh->mVertices[i].x;//Pos.x
-    //    vertex.y = mesh->mVertices[i].y;
-    //    vertex.z = mesh->mVertices[i].z;
-
-    //    // 法線 (Normal)
-    //    if (mesh->HasNormals()) {
-    //        vertex.nx = mesh->mNormals[i].x;//Normak.x
-    //        vertex.ny = mesh->mNormals[i].y;
-    //        vertex.nz = mesh->mNormals[i].z;
-    //    }
-
-    //    // UV座標 (テクスチャ座標)
-    //    if (mesh->mTextureCoords[0]) {
-    //        vertex.u = mesh->mTextureCoords[0][i].x;//Tex.x
-    //        vertex.v = mesh->mTextureCoords[0][i].y;
-    //        // ※ aiProcess_ConvertToLeftHanded を指定していれば、V軸(Y)の反転（1.0f - y）は
-    //        // Assimpが自動でやってくれます！
-    //    }
-
-    //    // あなたの頂点構造体のカラー初期値などがあれば適宜設定
-    //    //vertex.Color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    //    vertex.r = 1.0f;
-    //    vertex.g = 1.0f;
-    //    vertex.b = 1.0f;
-
-    //    vertices.push_back(vertex);
-    //}
      // --- 頂点データのコンバート ---
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 
@@ -172,10 +140,6 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     }
 
     // 自前のMeshオブジェクトを生成
-   /* Mesh* newMesh = new Mesh();
-    newMesh->Create(
-        pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());*/
-        // Mesh生成（マルチストリーム版Createを呼ぶ）
     Mesh* newMesh = new Mesh();
     newMesh->Create(
         pDevice,

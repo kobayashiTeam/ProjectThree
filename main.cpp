@@ -37,6 +37,8 @@ OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用
 Model* g_pMainModel = nullptr;
 //追加
 Model* g_pMainModel2 = nullptr;
+//oldCamera(modelResource)用モデル
+Model* g_pOldCameraBagModel = nullptr;
 
 // 定数バッファ
 ID3D11Buffer* g_pConstantBuffer = nullptr;
@@ -206,7 +208,10 @@ bool InitDevice()
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
     //oldCamera(modelResource)
-    modelResource->LoadFromFile(pDevice,nullptr,L"assets/oldCamera");
+    modelResource = new ModelResource();
+    modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
+    g_pOldCameraBagModel = new Model(pDevice,modelResource);
+    g_pOldCameraBagModel->SetPosition(5.0f,0.0f,3.0f);
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
@@ -261,6 +266,7 @@ void Render()
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();
