@@ -125,18 +125,18 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
     float size = 100.0f;
-    SkyboxVertex vertices[] = {
-        // 前面 (Z = 0.5)
-        { { DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 左上手前
-        { { DirectX::XMFLOAT3(1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 右上手前
-        { { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 右下手前
-        { { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 左下手前
-        // 背面 (Z = -0.5)
-        {  { DirectX::XMFLOAT3(-1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 左上奥
-        { { DirectX::XMFLOAT3(1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 右上手奥
-        { { DirectX::XMFLOAT3(1.0f, -1.0f,  1.0f) }, {}, {}, {} }, // 右下手奥
-        { { DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f) }, {}, {}, {} }  // 左下手奥
-    };
+    //SkyboxVertex vertices[] = {
+    //    // 前面 (Z = 0.5)
+    //    { { DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 左上手前
+    //    { { DirectX::XMFLOAT3(1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 右上手前
+    //    { { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 右下手前
+    //    { { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 左下手前
+    //    // 背面 (Z = -0.5)
+    //    {  { DirectX::XMFLOAT3(-1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 左上奥
+    //    { { DirectX::XMFLOAT3(1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 右上手奥
+    //    { { DirectX::XMFLOAT3(1.0f, -1.0f,  1.0f) }, {}, {}, {} }, // 右下手奥
+    //    { { DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f) }, {}, {}, {} }  // 左下手奥
+    //};
 
     // 置き換え
     DirectX::XMFLOAT3 positions[] = {
@@ -176,7 +176,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     if (FAILED(hr)) return false;*/
     D3D11_BUFFER_DESC bd{};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * 8;
+    bd.ByteWidth = sizeof(positions);//sizeof(DirectX::XMFLOAT3) * 8
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA initData{};
@@ -224,7 +224,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     const DirectX::XMMATRIX& projectionMatrix)
 {
     // 完全に安全な描画を行うため、リソースの存在チェック
-    if (!m_pVertexBuffer || !m_indexBuffer || !m_shaderProgram || !m_cubeMapSRV) return;
+    if (!m_pPosBuffer || !m_indexBuffer || !m_shaderProgram || !m_cubeMapSRV) return;
 
     // =========================================================================
     // 1. 【核心】ビュー行列から平行移動成分（位置情報）を消し去る

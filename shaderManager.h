@@ -46,6 +46,11 @@ public:
 private:
     bool GetOrCreate(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
 
+        //mesh‚Í0:pos,1:normal:1,color:2,uv:3‚Ì‡”Ô‚ÅIAsetVertexBuffers“o˜^‚³‚ê‚é
+        //inputLauout‚à‘Î‰‚µ‚½”Ô†‚Å‚È‚¯‚ê‚Î‚È‚ç‚È‚¢
+        //mesh‚Å“o˜^‚³‚ê‚½î•ñ‚Ì‚¤‚¿AinputLayout(shader“à•”)‚ÅÀÛ‚Ég‚í‚ê‚Ä‚¢‚é‚à‚Ì‚ª
+        //draw‚ÉƒLƒƒƒbƒVƒ…ƒƒ‚ƒŠ‚É“o˜^‚³‚ê‚é
+
         // ID‚²‚Æ‚Élayout‚ğ’è‹`
         D3D11_INPUT_ELEMENT_DESC standardLayout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,             D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -60,7 +65,7 @@ private:
 
         D3D11_INPUT_ELEMENT_DESC screenBlitLayout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,            D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
         // ID‚ÅU‚è•ª‚¯
@@ -85,8 +90,8 @@ private:
             layoutCount = 1;
             break;
         case ShaderID::ScreenBlit:
-            layout = standardLayout;
-            layoutCount = 4;
+            layout = screenBlitLayout;
+            layoutCount = 2;
             break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:

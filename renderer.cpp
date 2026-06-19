@@ -245,6 +245,8 @@ void Renderer::Execute()
         m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
     }
 
+    //return;
+    
     // ─── 工程2: アウトラインパス ───
     //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
     //    this->BeginStencilOutlinePass(); // ステンシル等の特殊ステートON
@@ -260,6 +262,8 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 必要ならデプス書き込みOFFのステートなど
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 
+    //return;
+    
     // ==========================================
     // 【新設】3. ポストプロセス・ピンポン・パイプライン
     // ==========================================
@@ -284,6 +288,8 @@ void Renderer::Execute()
         // 自動でピンポン（入力と出力を入れ替える）
         std::swap(pCurrentInput, pCurrentOutput);
     }
+    
+    //return;
 
     // ==========================================
     // 4. 出力先を「デフォルト（画面）」に戻して最終転写
