@@ -84,40 +84,83 @@ void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device
 
 void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device* pDevice, 
     ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX transform) {
-    std::vector<SimpleVertex> vertices;
+    //std::vector<SimpleVertex> vertices;
+    //std::vector<DWORD> indices;
+    //test
+    // SimpleVertex一本槍をやめて属性別に分ける
+    std::vector<DirectX::XMFLOAT3> positions;
+    std::vector<DirectX::XMFLOAT3> normals;
+    std::vector<DirectX::XMFLOAT4> colors;
+    std::vector<DirectX::XMFLOAT2> uvs;
     std::vector<DWORD> indices;
 
     // --- 頂点データのコンバート ---
+    //for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+    //    SimpleVertex vertex = {};
+
+    //    // 座標 (X, Y, Z)
+    //    vertex.x = mesh->mVertices[i].x;//Pos.x
+    //    vertex.y = mesh->mVertices[i].y;
+    //    vertex.z = mesh->mVertices[i].z;
+
+    //    // 法線 (Normal)
+    //    if (mesh->HasNormals()) {
+    //        vertex.nx = mesh->mNormals[i].x;//Normak.x
+    //        vertex.ny = mesh->mNormals[i].y;
+    //        vertex.nz = mesh->mNormals[i].z;
+    //    }
+
+    //    // UV座標 (テクスチャ座標)
+    //    if (mesh->mTextureCoords[0]) {
+    //        vertex.u = mesh->mTextureCoords[0][i].x;//Tex.x
+    //        vertex.v = mesh->mTextureCoords[0][i].y;
+    //        // ※ aiProcess_ConvertToLeftHanded を指定していれば、V軸(Y)の反転（1.0f - y）は
+    //        // Assimpが自動でやってくれます！
+    //    }
+
+    //    // あなたの頂点構造体のカラー初期値などがあれば適宜設定
+    //    //vertex.Color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    //    vertex.r = 1.0f;
+    //    vertex.g = 1.0f;
+    //    vertex.b = 1.0f;
+
+    //    vertices.push_back(vertex);
+    //}
+     // --- 頂点データのコンバート ---
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        SimpleVertex vertex = {};
 
-        // 座標 (X, Y, Z)
-        vertex.x = mesh->mVertices[i].x;//Pos.x
-        vertex.y = mesh->mVertices[i].y;
-        vertex.z = mesh->mVertices[i].z;
+        // Position
+        positions.push_back({
+            mesh->mVertices[i].x,
+            mesh->mVertices[i].y,
+            mesh->mVertices[i].z
+            });
 
-        // 法線 (Normal)
+        // Normal
         if (mesh->HasNormals()) {
-            vertex.nx = mesh->mNormals[i].x;//Normak.x
-            vertex.ny = mesh->mNormals[i].y;
-            vertex.nz = mesh->mNormals[i].z;
+            normals.push_back({
+                mesh->mNormals[i].x,
+                mesh->mNormals[i].y,
+                mesh->mNormals[i].z
+                });
+        }
+        else {
+            normals.push_back({ 0.0f, 1.0f, 0.0f }); // フォールバック
         }
 
-        // UV座標 (テクスチャ座標)
+        // Color（デフォルト白）
+        colors.push_back({ 1.0f, 1.0f, 1.0f, 1.0f });
+
+        // UV
         if (mesh->mTextureCoords[0]) {
-            vertex.u = mesh->mTextureCoords[0][i].x;//Tex.x
-            vertex.v = mesh->mTextureCoords[0][i].y;
-            // ※ aiProcess_ConvertToLeftHanded を指定していれば、V軸(Y)の反転（1.0f - y）は
-            // Assimpが自動でやってくれます！
+            uvs.push_back({
+                mesh->mTextureCoords[0][i].x,
+                mesh->mTextureCoords[0][i].y
+                });
         }
-
-        // あなたの頂点構造体のカラー初期値などがあれば適宜設定
-        //vertex.Color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-        vertex.r = 1.0f;
-        vertex.g = 1.0f;
-        vertex.b = 1.0f;
-
-        vertices.push_back(vertex);
+        else {
+            uvs.push_back({ 0.0f, 0.0f }); // フォールバック
+        }
     }
 
     // --- インデックスデータのコンバート ---
@@ -129,9 +172,17 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     }
 
     // 自前のMeshオブジェクトを生成
+   /* Mesh* newMesh = new Mesh();
+    newMesh->Create(
+        pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());*/
+        // Mesh生成（マルチストリーム版Createを呼ぶ）
     Mesh* newMesh = new Mesh();
     newMesh->Create(
-        pDevice, vertices.data(), (UINT)vertices.size(), indices.data(), (UINT)indices.size());
+        pDevice,
+        positions.data(), normals.data(), colors.data(), uvs.data(),
+        (UINT)positions.size(),
+        indices.data(), (UINT)indices.size()
+    );
 
     m_ownedMeshes.push_back(newMesh);//出来上がったメッシュをメッシュコンテナに保存。描画で使う
 
