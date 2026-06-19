@@ -1,9 +1,10 @@
 #pragma once
 #include <d3d11.h>
 #include <vector>
+#include<DirectXMath.h>
 
 //ユーザヘッダファイル
-#include "vertex.h"
+//#include "vertex.h"
 
 class Mesh
 {
@@ -12,7 +13,15 @@ public:
     ~Mesh();
 
     // 頂点データとインデックスデータからバッファを生成する
-    bool Create(ID3D11Device* pDevice, const SimpleVertex* vertices, UINT vertexCount, const DWORD* indices, UINT indexCount);
+    bool Create(
+        ID3D11Device* pDevice,
+        const DirectX::XMFLOAT3* positions,
+        const DirectX::XMFLOAT3* normals,
+        const DirectX::XMFLOAT4* colors,
+        const DirectX::XMFLOAT2* uvs,
+        UINT vertexCount,
+        const DWORD* indices,
+        UINT indexCount);
 
     // パイプラインにバッファをセットして描画コマンドを発行する
     void Render(ID3D11DeviceContext* pImmediateContext);
@@ -33,6 +42,7 @@ private:
     //テスト：マルチストリーム
     // Multi-Stream後
     ID3D11Buffer* m_pPosBuffer=nullptr;
-    ID3D11Buffer* m_pNrmBuffer = nullptr;;
+    ID3D11Buffer* m_pNrmBuffer = nullptr;
+    ID3D11Buffer* m_pColorBuffer = nullptr;
     ID3D11Buffer* m_pUvBuffer = nullptr;
 };

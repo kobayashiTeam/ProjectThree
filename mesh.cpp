@@ -1,4 +1,5 @@
 ﻿#include "mesh.h"
+#include"vertex.h"
 
 Mesh::Mesh()
     : m_pVertexBuffer(nullptr)
@@ -12,53 +13,69 @@ Mesh::~Mesh()
     Cleanup();
 }
 
-bool Mesh::Create(ID3D11Device* pDevice, const SimpleVertex* vertices, 
-    UINT vertexCount, const DWORD* indices, UINT indexCount)
+bool Mesh::Create(
+    ID3D11Device* pDevice,
+    const DirectX::XMFLOAT3* positions,
+    const DirectX::XMFLOAT3* normals,
+    const DirectX::XMFLOAT4* colors,
+    const DirectX::XMFLOAT2* uvs,
+    UINT vertexCount,
+    const DWORD* indices,
+    UINT indexCount)
 {
-    //メッシュは最低限、頂点とインデックスのバッファがあればできるのだ
-    // 既存のバッファがあれば一度解放
     Cleanup();
-
     m_indexCount = indexCount;
 
-    // 1. 頂点バッファ（VBO）の作成
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * vertexCount;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem = vertices;
-    HRESULT hr = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);
-    if (FAILED(hr)) return false;
 
-    // 2. インデックスバッファ（IBO）の作成
+    // Position
+    bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
+    initData.pSysMem = positions;
+    if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pPosBuffer)))   return false;
+
+    // Normal
+    bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
+    initData.pSysMem = normals;
+    if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pNrmBuffer)))   return false;
+
+    // Color
+    bd.ByteWidth = sizeof(DirectX::XMFLOAT4) * vertexCount;
+    initData.pSysMem = colors;
+    if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pColorBuffer))) return false;
+
+    // UV
+    bd.ByteWidth = sizeof(DirectX::XMFLOAT2) * vertexCount;
+    initData.pSysMem = uvs;
+    if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pUvBuffer)))    return false;
+
+    // Index
     D3D11_BUFFER_DESC ibd = {};
     ibd.Usage = D3D11_USAGE_DEFAULT;
     ibd.ByteWidth = sizeof(DWORD) * indexCount;
     ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA initDataIndex = {};
-    initDataIndex.pSysMem = indices;
-    hr = pDevice->CreateBuffer(&ibd, &initDataIndex, &m_pIndexBuffer);
-    if (FAILED(hr)) return false;
+    initData.pSysMem = indices;
+    if (FAILED(pDevice->CreateBuffer(&ibd, &initData, &m_pIndexBuffer))) return false;
 
     return true;
 }
 
 void Mesh::Render(ID3D11DeviceContext* pImmediateContext)
 {
-    if (!m_pVertexBuffer || !m_pIndexBuffer) return;
+    if (!m_pPosBuffer || !m_pIndexBuffer) return;
 
-    // パイプラインに頂点バッファをセット
-    UINT stride = sizeof(SimpleVertex);
-    UINT offset = 0;
-    pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-
-    // インデックスバッファをセット
+    ID3D11Buffer* vbs[4] = { m_pPosBuffer, m_pNrmBuffer, m_pColorBuffer, m_pUvBuffer };
+    UINT strides[4] = { 
+        sizeof(DirectX::XMFLOAT3), 
+        sizeof(DirectX::XMFLOAT3), 
+        sizeof(DirectX::XMFLOAT4), 
+        sizeof(DirectX::XMFLOAT2) };
+    UINT offsets[4] = { 0, 0, 0, 0 };
+    pImmediateContext->IASetVertexBuffers(0, 4, vbs, strides, offsets);
     pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-    // 描画（トポロジーはメイン側で共通設定にしても良いですが、メッシュが自ら描画します）
     pImmediateContext->DrawIndexed(m_indexCount, 0, 0);
 }
 
@@ -70,34 +87,140 @@ void Mesh::Cleanup()
 }
 
 Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
-	// 8頂点の立方体(24頂点、4*6)
-    SimpleVertex vertices[] =
+
+    //float size = 0.5f;
+    DirectX::XMFLOAT3 positions[] =
     {
-        { -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
-        {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        { -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        {  0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
-        { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
-        { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
-        { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        { -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        { -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
-        {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  1.0f, 1.0f },
-        {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,1.0f,  0.0f, 1.0f },
+        {-0.5f,  0.5f, -0.5f},
+        { 0.5f,  0.5f, -0.5f},
+        { 0.5f, -0.5f, -0.5f},
+        {-0.5f, -0.5f, -0.5f},
+
+        { 0.5f,  0.5f,  0.5f},
+        {-0.5f,  0.5f,  0.5f},
+        {-0.5f, -0.5f,  0.5f},
+        { 0.5f, -0.5f,  0.5f},
+
+        {-0.5f,  0.5f,  0.5f},
+        { 0.5f,  0.5f,  0.5f},
+        { 0.5f,  0.5f, -0.5f},
+        {-0.5f,  0.5f, -0.5f},
+
+        {-0.5f, -0.5f, -0.5f},
+        { 0.5f, -0.5f, -0.5f},
+        { 0.5f, -0.5f,  0.5f},
+        {-0.5f, -0.5f,  0.5f},
+
+        {-0.5f,  0.5f,  0.5f},
+        {-0.5f,  0.5f, -0.5f},
+        {-0.5f, -0.5f, -0.5f},
+        {-0.5f, -0.5f,  0.5f},
+
+        { 0.5f,  0.5f, -0.5f},
+        { 0.5f,  0.5f,  0.5f},
+        { 0.5f, -0.5f,  0.5f},
+        { 0.5f, -0.5f, -0.5f}
     };
+
+    DirectX::XMFLOAT3 normals[] =
+    {
+        { 0.0f,  0.0f, -1.0f},
+        { 0.0f,  0.0f, -1.0f},
+        { 0.0f,  0.0f, -1.0f},
+        { 0.0f,  0.0f, -1.0f},
+
+        { 0.0f,  0.0f,  1.0f},
+        { 0.0f,  0.0f,  1.0f},
+        { 0.0f,  0.0f,  1.0f},
+        { 0.0f,  0.0f,  1.0f},
+
+        { 0.0f,  1.0f,  0.0f},
+        { 0.0f,  1.0f,  0.0f},
+        { 0.0f,  1.0f,  0.0f},
+        { 0.0f,  1.0f,  0.0f},
+
+        { 0.0f, -1.0f,  0.0f},
+        { 0.0f, -1.0f,  0.0f},
+        { 0.0f, -1.0f,  0.0f},
+        { 0.0f, -1.0f,  0.0f},
+
+        {-1.0f,  0.0f,  0.0f},
+        {-1.0f,  0.0f,  0.0f},
+        {-1.0f,  0.0f,  0.0f},
+        {-1.0f,  0.0f,  0.0f},
+
+        { 1.0f,  0.0f,  0.0f},
+        { 1.0f,  0.0f,  0.0f},
+        { 1.0f,  0.0f,  0.0f},
+        { 1.0f,  0.0f,  0.0f}
+    };
+
+    DirectX::XMFLOAT4 colors[24] =
+    {
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f},
+        {1.0f,1.0f,0.0f,1.0f}
+    };
+
+    DirectX::XMFLOAT2 uvs[] =
+    {
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f},
+
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f},
+
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f},
+
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f},
+
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f},
+
+        {0.0f,0.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+        {0.0f,1.0f}
+    };
+
 
     DWORD indices[] =
     {
@@ -109,11 +232,12 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
         20, 21, 22, 20, 22, 23
     };
 	Mesh* pMesh = new Mesh();
-	if (!pMesh->Create(pDevice, vertices, _countof(vertices), indices, _countof(indices)))
-	{
-		delete pMesh;
-		return nullptr;
-	}
+	
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,_countof(positions),indices,_countof(indices)))
+    {
+        delete pMesh;
+        return nullptr;
+    }
 	return pMesh;
 }
 
@@ -123,13 +247,37 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
 
     // 4頂点で構成される1枚の四角形（XY平面）
     // 構造体の並び：位置(x,y,z), 法線(x,y,z), カラー(r,g,b,a), UV(u,v) と仮定しています
-    SimpleVertex vertices[] =
+
+    DirectX::XMFLOAT3 positions[] =
     {
-        //    位置 (X, Y, Z)        |    法線 (X, Y, Z)     |        カラー (R, G, B, A)      |   UV (U, V)
-        { -half,  half, 0.0f,         0.0f, 0.0f, -1.0f,        1.0f, 1.0f, 1.0f, 1.0f,         0.0f, 0.0f }, // 0: 左上
-        {  half,  half, 0.0f,         0.0f, 0.0f, -1.0f,        1.0f, 1.0f, 1.0f, 1.0f,         1.0f, 0.0f }, // 1: 右上
-        {  half, -half, 0.0f,         0.0f, 0.0f, -1.0f,        1.0f, 1.0f, 1.0f, 1.0f,         1.0f, 1.0f }, // 2: 右下
-        { -half, -half, 0.0f,         0.0f, 0.0f, -1.0f,        1.0f, 1.0f, 1.0f, 1.0f,         0.0f, 1.0f }, // 3: 左下
+        { -half,  half, 0.0f }, // 左上
+        {  half,  half, 0.0f }, // 右上
+        {  half, -half, 0.0f }, // 右下
+        { -half, -half, 0.0f }  // 左下
+    };
+
+    DirectX::XMFLOAT3 normals[] =
+    {
+        { 0.0f, 0.0f, -1.0f },
+        { 0.0f, 0.0f, -1.0f },
+        { 0.0f, 0.0f, -1.0f },
+        { 0.0f, 0.0f, -1.0f }
+    };
+
+    DirectX::XMFLOAT4 colors[] =
+    {
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        { 1.0f, 1.0f, 1.0f, 1.0f }
+    };
+
+    DirectX::XMFLOAT2 uvs[] =
+    {
+        { 0.0f, 0.0f }, // 左上
+        { 1.0f, 0.0f }, // 右上
+        { 1.0f, 1.0f }, // 右下
+        { 0.0f, 1.0f }  // 左下
     };
 
     // 時計回りが表面（D3D11のデフォルト）となるようにインデックスを設定
@@ -140,7 +288,7 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     };
 
     Mesh* pMesh = new Mesh();
-    if (!pMesh->Create(pDevice, vertices, _countof(vertices), indices, _countof(indices)))
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,4,indices,6))
     {
         delete pMesh;
         return nullptr;

@@ -236,14 +236,14 @@ void Renderer::Execute()
 
     // ─── 【ここ！！】スカイボックスの描画 ───
     // ─── 【新設】スカイボックスの描画 ───
-    if (m_pSkyBox) {
-        // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
-        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
+    //if (m_pSkyBox) {
+    //    // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
+    //    m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
+    //    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
 
-        // 描画実行
-        m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
-    }
+    //    // 描画実行
+    //    m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
+    //}
 
     // ─── 工程2: アウトラインパス ───
     //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
