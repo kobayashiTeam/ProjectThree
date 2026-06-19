@@ -29,4 +29,10 @@ private:
     ID3D11Buffer* m_pVertexBuffer; // 頂点バッファ
     ID3D11Buffer* m_pIndexBuffer;  // インデックスバッファ
     UINT m_indexCount;             // インデックスの数（DrawIndexedで使用）
+
+    //テスト：マルチストリーム
+    // Multi-Stream後
+    ID3D11Buffer* m_pPosBuffer=nullptr;
+    ID3D11Buffer* m_pNrmBuffer = nullptr;;
+    ID3D11Buffer* m_pUvBuffer = nullptr;
 };
