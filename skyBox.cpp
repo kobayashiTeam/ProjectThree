@@ -138,6 +138,18 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
         { { DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f) }, {}, {}, {} }  // 左下手奥
     };
 
+    // 置き換え
+    DirectX::XMFLOAT3 positions[] = {
+        {-1.0f,  1.0f, -1.0f},
+        { 1.0f,  1.0f, -1.0f},
+        { 1.0f, -1.0f, -1.0f},
+        {-1.0f, -1.0f, -1.0f},
+        {-1.0f,  1.0f,  1.0f},
+        { 1.0f,  1.0f,  1.0f},
+        { 1.0f, -1.0f,  1.0f},
+        {-1.0f, -1.0f,  1.0f},
+    };
+
     // ==========================================
     // 4. インデックスデータ (内側から見た三角形の定義)
     // ==========================================
@@ -153,7 +165,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     
 
     // 頂点バッファの生成
-    D3D11_BUFFER_DESC vbd{};
+    /*D3D11_BUFFER_DESC vbd{};
     vbd.Usage = D3D11_USAGE_DEFAULT;
     vbd.ByteWidth = sizeof(vertices);
     vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -161,7 +173,15 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     D3D11_SUBRESOURCE_DATA vinitData{};
     vinitData.pSysMem = vertices;
     hr = device->CreateBuffer(&vbd, &vinitData, &m_pVertexBuffer);
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) return false;*/
+    D3D11_BUFFER_DESC bd{};
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * 8;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA initData{};
+    initData.pSysMem = positions;
+    device->CreateBuffer(&bd, &initData, &m_pPosBuffer);
 
     // インデックスバッファの生成
     D3D11_BUFFER_DESC ibd{};
@@ -242,9 +262,9 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // 3. パイプラインへのリソース・シェーダーのバインド
     // =========================================================================
     // 頂点バッファとインデックスバッファのセット
-    UINT stride = sizeof(SkyboxVertex);
+    UINT stride = sizeof(DirectX::XMFLOAT3);
     UINT offset = 0;
-    context->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+    context->IASetVertexBuffers(0, 1, &m_pPosBuffer, &stride, &offset);
     context->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

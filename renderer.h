@@ -76,10 +76,10 @@ private:
 
 
     //ポストプロセス後に描画するQuadのmodel
-    Model* m_finalRenderQuad = nullptr;
+    //Model* m_finalRenderQuad = nullptr;
     ScreenBlitMaterial* m_finalRenderMat = nullptr;
     Mesh* m_finalRenderMesh = nullptr;
-    Shader* m_finalRenderSahder = nullptr;
+    Shader* m_finalRenderShader = nullptr;
     //test:postProcessクラス
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
     MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome

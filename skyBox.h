@@ -49,7 +49,12 @@ private:
     ID3D11Buffer* m_pVertexBuffer;
     ID3D11Buffer* m_indexBuffer;
     Shader* m_shaderProgram;
-    //自分でシェーダ作ったほうがよさそう
+    //multiBuffer
+    // Multi-Stream後
+    ID3D11Buffer* m_pPosBuffer = nullptr;
+    ID3D11Buffer* m_pNrmBuffer = nullptr;
+    ID3D11Buffer* m_pColorBuffer = nullptr;
+    ID3D11Buffer* m_pUvBuffer = nullptr;
 
 
     // D3D11リソース & ステートオブジェクト

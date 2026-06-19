@@ -288,7 +288,7 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     };
 
     Mesh* pMesh = new Mesh();
-    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,4,indices,6))
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,_countof(positions), indices, _countof(indices)))
     {
         delete pMesh;
         return nullptr;

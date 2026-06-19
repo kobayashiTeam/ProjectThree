@@ -23,9 +23,9 @@ cbuffer PerObjectBuffer : register(b3)
 struct VS_INPUT
 {
     float3 position : POSITION;
-    float3 normal : NORMAL; // 追加（使わないが宣言だけする）
-    float4 color : COLOR; // 追加
-    float2 texcoord : TEXCOORD0; // 追加
+    //float3 normal : NORMAL; // 追加（使わないが宣言だけする）
+    //float4 color : COLOR; // 追加
+    //float2 texcoord : TEXCOORD0; // 追加
 };
 
 // 頂点シェーダーからピクセルシェーダーへの出力構造

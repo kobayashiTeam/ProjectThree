@@ -81,8 +81,8 @@ private:
             layoutCount = 4;
             break;
         case ShaderID::SkyBox://¡‰ñ‚Í‘S‘Î‰‚Å
-            layout = standardLayout;
-            layoutCount = 4;
+            layout = posOnlyLayout;
+            layoutCount = 1;
             break;
         case ShaderID::ScreenBlit:
             layout = standardLayout;
