@@ -150,6 +150,9 @@
     <ClCompile Include="Shaders\PassThroughGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\NormalViz.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">

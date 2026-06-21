@@ -34,8 +34,9 @@ enum class ShaderID {
     Outline,
     UnLit,
     ScreenBlit,
+    NormalViz,
+    // postProcess
     Monochromatic,
-    // 今後増えるエフェクト（Scanline, Vignetteなど）をここに追加していくだけ！
     Inversion,
     Sepia,
     SimpleBoxBlur,
@@ -45,7 +46,7 @@ enum class ShaderID {
     SkyBox,
     Count,
     //geometry
-    NormalViz,
+    NormalVizGS,
     PassThrough,
     Move
 };
