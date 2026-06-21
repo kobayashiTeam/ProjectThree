@@ -75,6 +75,10 @@ Renderer* g_pRenderer = nullptr;
 #include"ModelResource.h"
 ModelResource* modelResource = nullptr;
 
+//ジオメトリクラス
+#include"moveGSEffect.h"
+MoveGSEffect* moveGSEffect = nullptr;
+
 //input関連
 // WndProcの上あたりに追加
 bool g_keyLeft = false;

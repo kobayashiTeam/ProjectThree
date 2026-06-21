@@ -40,6 +40,9 @@
     <Filter Include="リソース ファイル\shader_gs">
       <UniqueIdentifier>{4fab79f2-efbe-4ad9-a6dc-a779648ff469}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\geometry">
+      <UniqueIdentifier>{ebcc99e9-72cc-4161-876f-891c1ffdd608}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -237,6 +240,12 @@
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
     <ClInclude Include="skyBox.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="gsEffect.h">
+      <Filter>ヘッダー ファイル\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="moveGSEffect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

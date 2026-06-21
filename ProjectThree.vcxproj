@@ -177,6 +177,7 @@
     <ClInclude Include="depthStencilStates.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="graphicsCommon.h" />
+    <ClInclude Include="gsEffect.h" />
     <ClInclude Include="inversionPostProcess.h" />
     <ClInclude Include="litMaterial.h" />
     <ClInclude Include="material.h" />
@@ -187,6 +188,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="monochromePostProcess.h" />
+    <ClInclude Include="moveGSEffect.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
     <ClInclude Include="postProcess.h" />
