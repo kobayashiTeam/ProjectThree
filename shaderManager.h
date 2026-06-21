@@ -33,6 +33,8 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
         // skybox“à‚É’Ç‰Á
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
+        //pointCloud
+        if (!GetOrCreate(pDevice, ShaderID::PointParticle, L"Shaders/PointParticleShader.hlsl")) return false;
         return true;
     }
 
@@ -92,6 +94,10 @@ private:
         case ShaderID::ScreenBlit:
             layout = screenBlitLayout;
             layoutCount = 2;
+            break;
+        case ShaderID::PointParticle:
+            layout = posOnlyLayout;
+            layoutCount = 1;
             break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:

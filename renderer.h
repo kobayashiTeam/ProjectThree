@@ -28,6 +28,13 @@ class SharpenPostProcess;
 class VignettePostProcess;
 class SkyBox;
 
+struct PointCloud {
+    Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
+    UINT count = 0;
+    float basePointSize = 5.0f;
+};
+
+
 class Renderer
 {
 public:
@@ -91,5 +98,15 @@ private:
 
     //テスト：スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;
+
+    //テスト
+    PointCloud CreateRandomPointCloud(UINT count, float spread);
+    void DrawPointCloud(const PointCloud& pc);
+    ComPtr<ID3D11Buffer> CreateDynamicVertexBuffer(
+        const void* pData,
+        UINT byteWidth,
+        bool isDynamic=true);
+    PointCloud m_pc;
+    Shader* m_pPointCloudShader = nullptr;
 
 };

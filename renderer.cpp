@@ -157,6 +157,10 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
 
+    //テスト：ポイントクラウド
+    m_pc=CreateRandomPointCloud(1000,10);
+    m_pPointCloudShader = ShaderManager::GetInstance().GetShader(ShaderID::PointParticle);
+
     return true;
 }
 
@@ -222,6 +226,7 @@ void Renderer::Execute()
     // ==========================================
     m_offscreenRT->Clear(pContext);
     m_offscreenRT->Bind(pContext); // ※前回統合した自作のレンダーターゲット
+    //m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
@@ -245,8 +250,22 @@ void Renderer::Execute()
         m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
     }
 
-    //return;
+    //test:トポロジー戻し
+    // 共通のトポロジー設定
+    m_graphics->GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // 不透明パスの後、半透明パスの前（前回の推奨位置）
+    if (m_pc.count>0)
+    {
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // または DepthWriteOff
+
+        // m_blendStates->Bind(...) でAdditiveなどに変更も可能
+
+        DrawPointCloud(m_pc);
+    }
     
+    //return;
     // ─── 工程2: アウトラインパス ───
     //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
     //    this->BeginStencilOutlinePass(); // ステンシル等の特殊ステートON
@@ -263,7 +282,6 @@ void Renderer::Execute()
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 
     //return;
-    
     // ==========================================
     // 【新設】3. ポストプロセス・ピンポン・パイプライン
     // ==========================================
@@ -289,7 +307,6 @@ void Renderer::Execute()
         std::swap(pCurrentInput, pCurrentOutput);
     }
     
-    //return;
 
     // ==========================================
     // 4. 出力先を「デフォルト（画面）」に戻して最終転写
@@ -338,4 +355,87 @@ bool Renderer::createFinalRenderQuad() {
     if (!m_finalRenderMesh)return false;
 
     return true;
+}
+
+
+PointCloud Renderer::CreateRandomPointCloud(UINT count, float spread)
+{
+    std::vector<DirectX::XMFLOAT3> positions(count);
+    for (auto& p : positions)
+    {
+        p.x = (rand() / (float)RAND_MAX - 0.5f) * spread * 2.0f;
+        p.y = (rand() / (float)RAND_MAX - 0.5f) * spread * 2.0f;
+        p.z = (rand() / (float)RAND_MAX - 0.5f) * spread * 2.0f-5.0f;
+    }
+
+    //PointCloud pc{};
+    m_pc.count = count;
+    m_pc.vertexBuffer = CreateDynamicVertexBuffer(
+        positions.data(),
+        count * sizeof(DirectX::XMFLOAT3),
+        true);   // dynamic = true
+
+    return m_pc;
+}
+
+
+void Renderer::DrawPointCloud(const PointCloud& pc)
+{
+    ID3D11DeviceContext* pContext = m_graphics->GetContext();
+
+    if (pc.count == 0) return;
+
+    UINT stride = sizeof(DirectX::XMFLOAT3);
+    UINT offset = 0;
+
+    pContext->IASetVertexBuffers(0, 1, pc.vertexBuffer.GetAddressOf(), &stride, &offset);
+    // ★★★ 重要：Index Bufferを解除 ★★★
+    pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+    //pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+    // シェーダー設定
+    /*pContext->VSSetShader(m_pointVS.Get(), nullptr, 0);
+    pContext->PSSetShader(m_pointPS.Get(), nullptr, 0);*/
+    m_pPointCloudShader->Bind(pContext);
+
+    pContext->Draw(pc.count, 0);
+}
+
+
+// Renderer.cpp
+ComPtr<ID3D11Buffer> Renderer::CreateDynamicVertexBuffer(
+    const void* pData,
+    UINT byteWidth,
+    bool isDynamic /*= true*/)
+{
+    //頂点バッファ取得
+    D3D11_BUFFER_DESC bd = {};
+    bd.ByteWidth = byteWidth;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+    if (isDynamic)
+    {
+        bd.Usage = D3D11_USAGE_DYNAMIC;
+        bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    }
+    else
+    {
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.CPUAccessFlags = 0;
+    }
+
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = pData;
+
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+    HRESULT hr = m_graphics->GetDevice()->CreateBuffer(&bd, pData ? &initData : nullptr, 
+        buffer.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        // エラーログ出力（あなたの環境に合わせて調整）
+        OutputDebugStringA("Failed to create dynamic vertex buffer!\n");
+    }
+
+    return buffer;
 }
