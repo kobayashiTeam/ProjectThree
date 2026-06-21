@@ -172,6 +172,9 @@ bool InitDevice()
 
     if (!ShaderManager::GetInstance().LoadAllShaders(pDevice))
         return false;
+    if (!ShaderManager::GetInstance().LoadAllGeometryShaders(pDevice)) {
+        return false;
+    }
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);

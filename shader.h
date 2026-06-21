@@ -8,6 +8,8 @@ private:
     ID3D11VertexShader* m_pVertexShader = nullptr;
     ID3D11PixelShader* m_pPixelShader = nullptr;
     ID3D11InputLayout* m_pVertexLayout = nullptr;
+    //test:geometry
+    ID3D11GeometryShader* m_pGeometryShader = nullptr;
 
 public:
     Shader() = default;
@@ -25,4 +27,7 @@ public:
     void Bind(ID3D11DeviceContext* pContext);
 
     void Cleanup();
+
+    //test:geomtry
+    void SetGS(ID3D11GeometryShader* gs) { m_pGeometryShader = gs; }
 };

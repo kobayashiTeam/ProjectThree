@@ -6,7 +6,10 @@
 
 class ShaderManager {
 private:
+    //描画に必須なシェーダ（VS,PS）と、geometryシェーダを分けて保管する
     std::unordered_map<ShaderID, Shader*> m_shaders;
+    std::unordered_map<ShaderID, ID3D11GeometryShader*> m_geometryShaders;
+
 
     // シングルトンのお作法
     ShaderManager() = default;
@@ -41,6 +44,15 @@ public:
         auto it = m_shaders.find(id);
         if (it != m_shaders.end()) return it->second;
         return nullptr;
+    }
+
+    //テスト：gemetryShader
+    bool LoadAllGeometryShaders(ID3D11Device* pDevice) {
+        // GSが必要なShaderIDだけここに列挙する
+        if (!CreateGeometryShader(pDevice, ShaderID::NormalViz,
+            L"Shaders/NormalVizGS.hlsl")) return false;
+        // 必要になったら追加していく
+        return true;
     }
 
 private:
@@ -112,4 +124,29 @@ private:
         m_shaders[id] = pShader;
         return true;
     }
+
+    
+    bool CreateGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+        ComPtr<ID3DBlob> blob, errBlob;
+        HRESULT hr = D3DCompileFromFile(
+            filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "GSmain", "gs_5_0",
+            D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+            0, &blob, &errBlob
+        );
+        if (FAILED(hr)) {
+            if (errBlob) OutputDebugStringA((char*)errBlob->GetBufferPointer());
+            return false;
+        }
+        ID3D11GeometryShader* gs = nullptr;
+        hr = pDevice->CreateGeometryShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &gs);
+        if (FAILED(hr)) return false;
+        m_geometryShaders[id] = gs;
+        return true;
+    }
+
+    ID3D11GeometryShader* getGS(ShaderID id) {
+        return m_geometryShaders[id];
+    }
+    
 };

@@ -43,5 +43,7 @@ enum class ShaderID {
     Vignette,
     //skybox
     SkyBox,
-    Count
+    Count,
+    //geometry
+    NormalViz
 };
