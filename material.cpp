@@ -1,4 +1,5 @@
 ﻿#include "material.h"
+#include"moveGSEffect.h"
 //#include<WICTextureLoader.h> // もしビルドエラーが出たら後述の対策をします
 #include <directxtk/WICTextureLoader.h>
 
@@ -65,8 +66,11 @@ void Material::Bind(ID3D11DeviceContext* pContext)
     if (m_pShader) m_pShader->Bind(pContext);
 
     //test:GS
-        pContext->GSSetShader(m_pGeometryShader, nullptr, 0);
-    
+    if (m_pGSEffect)
+        m_pGSEffect->Bind(pContext);
+    else
+        pContext->GSSetShader(nullptr, nullptr, 0);  // ← ここに追加
+
     // テクスチャとサンプラーをバインド (以前のコードのまま)
     //どんなシェーダを使うかは知らないが、リソース情報をセットする
     //本当はmaterialを派生させてクラスごとにbindさせる内容を変える
@@ -121,7 +125,3 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
     return true;
 }
 
-
-void Material::SetGS(ID3D11GeometryShader* gs) {
-    m_pGeometryShader = gs;
-}

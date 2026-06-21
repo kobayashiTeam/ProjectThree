@@ -13,7 +13,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
     // 1. 6枚のPNGからキューブマップを作る
     // ==========================================
-    OutputDebugStringW(L"SkyBox file not found\n");
+    //OutputDebugStringW(L"SkyBox file not found\n");
 
     // ① 各面のテクスチャを一時的に読み込む
     ID3D11Texture2D* faceTex[6] = {};
@@ -271,6 +271,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // シェーダーの適用 (自作のShaderクラスのBind処理などを呼ぶ)
     // 内部で IASetInputLayout, VSSetShader, PSSetShader が走る想定です
     m_shaderProgram->Bind(context);
+    context->GSSetShader(nullptr, nullptr, 0);  // ← 追加
 
     // 頂点シェーダーに定数バッファをセット（スロット1）//一応１にしてみる
     ID3D11Buffer* cbPtr = m_constantBuffer.Get();

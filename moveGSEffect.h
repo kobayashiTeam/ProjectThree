@@ -40,6 +40,6 @@ public:
 
         // GS‚Æcbuffer‚ðƒoƒCƒ“ƒh
         pContext->GSSetShader(m_pGS, nullptr, 0);
-        pContext->GSSetConstantBuffers(3, 1, &m_pCB);
+        pContext->GSSetConstantBuffers(3, 1, &m_pCB);//3
     }
 };

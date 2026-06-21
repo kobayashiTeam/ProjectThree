@@ -77,7 +77,7 @@ ModelResource* modelResource = nullptr;
 
 //ジオメトリクラス
 #include"moveGSEffect.h"
-MoveGSEffect* moveGSEffect = nullptr;
+MoveGSEffect* g_pMoveGSEffect = nullptr;
 
 //input関連
 // WndProcの上あたりに追加
@@ -174,12 +174,17 @@ bool InitDevice()
     HRESULT hr;
     ID3D11Device* pDevice = g_pGraphics->GetDevice();
 
+    //より低レベルなパーツ
     if (!ShaderManager::GetInstance().LoadAllShaders(pDevice))
         return false;
     if (!ShaderManager::GetInstance().LoadAllGeometryShaders(pDevice)) {
         return false;
     }
 
+    g_pMoveGSEffect = new MoveGSEffect();
+    g_pMoveGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::Move));
+
+    //比較的高レベルなパーツ
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
 
@@ -192,7 +197,8 @@ bool InitDevice()
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
-    g_pLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::Move));
+    g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
+    g_pMoveGSEffect->SetOffset(10.1f,15.5f,0.0f);
 
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();

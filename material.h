@@ -4,12 +4,14 @@
 #include "shader.h" // 追加
 
 //前方
+class GSEffect;
 
 class Material {
 protected: // 派生クラスからアクセスできるように protected にする
     Shader* m_pShader;
     //test:GS
-    ID3D11GeometryShader* m_pGeometryShader = nullptr;
+    GSEffect* m_pGSEffect = nullptr;
+
     //マテリアルに使うテクスチャ、の設定を持ったview、とサンプラー
     ID3D11ShaderResourceView* m_pTextureRV;
     ID3D11SamplerState* m_pSamplerLinear;
@@ -27,5 +29,7 @@ public:
     void Cleanup();
 
     //test:GS
-    void SetGS(ID3D11GeometryShader* gs);
+    void SetGSEffect(GSEffect* gsEffect) {
+        m_pGSEffect = gsEffect;
+    }
 };
