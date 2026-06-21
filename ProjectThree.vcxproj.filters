@@ -153,6 +153,9 @@
     <ClCompile Include="Shaders\NormalViz.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
+    <ClCompile Include="normalVizMaterial.cpp">
+      <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -248,8 +251,14 @@
     <ClInclude Include="gsEffect.h">
       <Filter>ヘッダー ファイル\geometry</Filter>
     </ClInclude>
+    <ClInclude Include="normalVizMaterial.h">
+      <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="normalVizGSEffect.h">
+      <Filter>ヘッダー ファイル\geometry</Filter>
+    </ClInclude>
     <ClInclude Include="moveGSEffect.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\geometry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

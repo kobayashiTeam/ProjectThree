@@ -160,6 +160,7 @@
     <ClCompile Include="modelResource.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="normalVizMaterial.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
     <ClCompile Include="postProcess.cpp" />
@@ -189,6 +190,8 @@
     </ClInclude>
     <ClInclude Include="monochromePostProcess.h" />
     <ClInclude Include="moveGSEffect.h" />
+    <ClInclude Include="normalVizGSEffect.h" />
+    <ClInclude Include="normalVizMaterial.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
     <ClInclude Include="postProcess.h" />

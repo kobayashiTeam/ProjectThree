@@ -76,8 +76,11 @@ Renderer* g_pRenderer = nullptr;
 ModelResource* modelResource = nullptr;
 
 //ジオメトリクラス
+//moveGS
 #include"moveGSEffect.h"
 MoveGSEffect* g_pMoveGSEffect = nullptr;
+//normalViz
+
 
 //input関連
 // WndProcの上あたりに追加
@@ -198,7 +201,7 @@ bool InitDevice()
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
     g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
-    g_pMoveGSEffect->SetOffset(10.1f,15.5f,0.0f);
+    g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
 
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
