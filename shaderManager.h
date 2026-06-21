@@ -56,6 +56,8 @@ public:
             L"Shaders/NormalVizGS.hlsl")) return false;*/
         if (!loadGeometryShader(pDevice, ShaderID::PassThrough,
             L"Shaders/PassThroughGS.hlsl")) return false;
+        if (!loadGeometryShader(pDevice, ShaderID::Move,
+            L"Shaders/MoveGS.hlsl")) return false;
 
         // •K—v‚É‚È‚Á‚½‚ç’Ç‰Á‚µ‚Ä‚¢‚­
         return true;

@@ -12,7 +12,7 @@ struct GSIn
 
 typedef GSIn GSOut;
 
-[maxvertexcount(3)]
+[maxvertexcount(3)]//1下位の呼び出しで出力する頂点の最大数。３つずつ
 void GSmain(
     triangle GSIn input[3],
     inout TriangleStream<GSOut> stream)

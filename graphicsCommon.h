@@ -46,5 +46,6 @@ enum class ShaderID {
     Count,
     //geometry
     NormalViz,
-    PassThrough
+    PassThrough,
+    Move
 };

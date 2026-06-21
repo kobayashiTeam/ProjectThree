@@ -240,4 +240,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\MoveGS.hlsl">
+      <Filter>リソース ファイル\shader_gs</Filter>
+    </FxCompile>
+  </ItemGroup>
 </Project>

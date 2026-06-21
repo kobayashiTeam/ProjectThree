@@ -188,7 +188,7 @@ bool InitDevice()
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
-    g_pLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::PassThrough));
+    g_pLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::Move));
 
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
