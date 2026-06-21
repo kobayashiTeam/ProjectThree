@@ -31,6 +31,15 @@
     <Filter Include="ソース ファイル\postProcess">
       <UniqueIdentifier>{e335f01a-1916-479d-9f8f-870d65cd0b9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\shader_postprocess">
+      <UniqueIdentifier>{6d54aa85-910b-4647-8090-96921fa11ce8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\shader_mat">
+      <UniqueIdentifier>{02ebc1f7-e7d9-42d5-80f7-b1c3f05b2414}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\shader_gs">
+      <UniqueIdentifier>{4fab79f2-efbe-4ad9-a6dc-a779648ff469}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -90,12 +99,6 @@
     <ClCompile Include="postProcess.cpp">
       <Filter>ソース ファイル\postProcess</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\LitShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\Monochromatic.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\OutlineShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
@@ -103,24 +106,6 @@
       <Filter>リソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Shaders\Shader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\UnLitShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\InversionShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\SepiaShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\SimpleBoxBlurShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\SharpenShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\VignetteShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="skyBox.cpp">
@@ -132,8 +117,35 @@
     <ClCompile Include="main2.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\NormalVizShader.hlsl">
-      <Filter>リソース ファイル</Filter>
+    <ClCompile Include="Shaders\InversionShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\Monochromatic.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\SepiaShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\SharpenShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\SimpleBoxBlurShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\VignetteShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\LitShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\UnLitShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\NormalVizGS.hlsl">
+      <Filter>リソース ファイル\shader_gs</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\PassThroughGS.hlsl">
+      <Filter>リソース ファイル\shader_gs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

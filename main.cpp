@@ -188,6 +188,8 @@ bool InitDevice()
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
+    g_pLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::PassThrough));
+
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
 	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::UnLit), 
@@ -195,6 +197,8 @@ bool InitDevice()
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
+    //g_pUnLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::PassThrough));
+    
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Outline), 

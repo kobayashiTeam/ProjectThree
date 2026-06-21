@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include "graphicsCommon.h"
 #include "shader.h"
+#include <wrl/client.h>
+
+template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class ShaderManager {
 private:
@@ -49,10 +52,17 @@ public:
     //テスト：gemetryShader
     bool LoadAllGeometryShaders(ID3D11Device* pDevice) {
         // GSが必要なShaderIDだけここに列挙する
-        if (!CreateGeometryShader(pDevice, ShaderID::NormalViz,
-            L"Shaders/NormalVizGS.hlsl")) return false;
+        /*if (!loadGeometryShader(pDevice, ShaderID::NormalViz,
+            L"Shaders/NormalVizGS.hlsl")) return false;*/
+        if (!loadGeometryShader(pDevice, ShaderID::PassThrough,
+            L"Shaders/PassThroughGS.hlsl")) return false;
+
         // 必要になったら追加していく
         return true;
+    }
+
+    ID3D11GeometryShader* getGS(ShaderID id) {
+        return m_geometryShaders[id];
     }
 
 private:
@@ -126,7 +136,7 @@ private:
     }
 
     
-    bool CreateGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+    bool loadGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
         ComPtr<ID3DBlob> blob, errBlob;
         HRESULT hr = D3DCompileFromFile(
             filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -145,8 +155,6 @@ private:
         return true;
     }
 
-    ID3D11GeometryShader* getGS(ShaderID id) {
-        return m_geometryShaders[id];
-    }
+    
     
 };

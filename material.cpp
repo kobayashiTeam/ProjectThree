@@ -61,8 +61,12 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
 void Material::Bind(ID3D11DeviceContext* pContext)
 {
     // シェーダー側をバインドさせる
+    if (!m_pShader)return;
     if (m_pShader) m_pShader->Bind(pContext);
 
+    //test:GS
+        pContext->GSSetShader(m_pGeometryShader, nullptr, 0);
+    
     // テクスチャとサンプラーをバインド (以前のコードのまま)
     //どんなシェーダを使うかは知らないが、リソース情報をセットする
     //本当はmaterialを派生させてクラスごとにbindさせる内容を変える
@@ -115,4 +119,9 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
     if (FAILED(hr)) return false;
 
     return true;
+}
+
+
+void Material::SetGS(ID3D11GeometryShader* gs) {
+    m_pGeometryShader = gs;
 }

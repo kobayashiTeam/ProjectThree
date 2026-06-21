@@ -45,5 +45,6 @@ enum class ShaderID {
     SkyBox,
     Count,
     //geometry
-    NormalViz
+    NormalViz,
+    PassThrough
 };
