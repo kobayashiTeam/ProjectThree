@@ -268,5 +268,11 @@
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\PointSpriteGS.hlsl">
+      <Filter>リソース ファイル\shader_gs</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PointSpriteShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
