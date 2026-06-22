@@ -194,7 +194,7 @@ bool InitDevice()
         //normalVizGS
     g_pNormalVizGSEffect = new NormalVizGSEffect();
     g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));
-    g_pNormalVizGSEffect->SetNormalParams(5,5,5,5);
+    g_pNormalVizGSEffect->SetNormalParams(0.1,0,0,0);
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）

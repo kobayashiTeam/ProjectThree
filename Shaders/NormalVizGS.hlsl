@@ -36,32 +36,6 @@ float4 ToClip(float4 worldPos)
     return mul(mul(worldPos, mView), mProjection);
 }
 
-//[maxvertexcount(6)]
-//void GSmain(
-//    triangle GSIn input[3],
-//    inout LineStream<GSOut> stream)
-//{
-//    for (int i = 0; i < 3; i++)
-//    {
-//        float3 origin = input[i].WorldPos.xyz;
-//        float3 tip = origin + input[i].Normal * NormalLength;
-
-//        // 根元
-//        GSOut p0;
-//        p0.Pos = ToClip(float4(origin, 1.0f));
-//        p0.Color = float4(NormalColor, 1.0f);
-//        stream.Append(p0);
-
-//        // 先端
-//        GSOut p1;
-//        p1.Pos = ToClip(float4(tip, 1.0f));
-//        p1.Color = float4(NormalColor, 1.0f);
-//        stream.Append(p1);
-
-//        stream.RestartStrip(); // 線分を切断（繋げない）
-//    }
-//}
-
 
 //新しい方
 //[maxvertexcount(6)]
@@ -78,8 +52,8 @@ float4 ToClip(float4 worldPos)
 
 //        GSOut p1;
 //        p1.Pos = input[i].ClipPos;
-//        p1.Pos.y += 0.2f * p1.Pos.w; // ←重要
-//        p1.Color = float4(0, 1, 0, 1);
+//        p1.Pos.y += 0.4f * p1.Pos.w; // ←重要
+//        p1.Color = float4(0, 1, 0, 1);//赤から緑
 //        stream.Append(p1);
 
 //        stream.RestartStrip();
@@ -87,66 +61,30 @@ float4 ToClip(float4 worldPos)
 //}
 
 
-//[maxvertexcount(3)]
-//void GSmain(
-//    triangle GSIn input[3],
-//    inout TriangleStream<GSOut> stream)
-//{
-//    for (int i = 0; i < 3; i++)
-//    {
-//        GSOut o;
 
-//        o.Pos = input[i].ClipPos;
-//        o.Color = float4(1, 0, 0, 1);
-
-//        stream.Append(o);
-//    }
-
-//    stream.RestartStrip();
-//}
-
-
-//[maxvertexcount(6)]
-//void GSmain(
-//    triangle GSIn input[3],
-//    inout LineStream<GSOut> stream)
-//{
-//    for (int i = 0; i < 3; i++)
-//    {
-//        GSOut p0;
-//        p0.Pos = input[i].ClipPos;
-//        p0.Color = float4(1, 0, 0, 1);
-//        stream.Append(p0);
-
-//        GSOut p1;
-//        p1.Pos = input[i].ClipPos + float4(0.1f, 0, 0, 0);
-//        p1.Color = float4(0, 1, 0, 1);
-//        stream.Append(p1);
-
-//        stream.RestartStrip();
-//    }
-//}
-
-
-[maxvertexcount(6)]
-void GSmain(
-    triangle GSIn input[3],
-    inout LineStream<GSOut> stream)
+[maxvertexcount(6)] // 三角形の3頂点 × 2頂点(線分) = 6
+void GSmain(triangle GSIn input[3], inout LineStream<GSOut> lineStream)
 {
+    float normalLength = 5.0f; // 法線ラインの長さ（ワールド単位）
+
     for (int i = 0; i < 3; i++)
     {
-        float3 origin = input[i].WorldPos.xyz;
+        float3 base = input[i].WorldPos.xyz;
+        float3 tip = base + normalize(input[i].Normal) * normalLength;
+        //float3 tip = base + float3(0,1,0) * normalLength;
 
-        GSOut p0;
-        p0.Pos = ToClip(float4(origin, 1));
-        p0.Color = float4(1, 0, 0, 1);
-        stream.Append(p0);
+        GSOut v0, v1;
 
-        GSOut p1;
-        p1.Pos = ToClip(float4(origin + float3(0, 2, 0), 1));
-        p1.Color = float4(0, 1, 0, 1);
-        stream.Append(p1);
+        // 根元（白）
+        v0.Pos = ToClip(float4(base, 1.0f));
+        v0.Color = float4(1.0f, 1.0f, 0.0f, 1.0f); // 黄色
 
-        stream.RestartStrip();
+        // 先端（緑）
+        v1.Pos = ToClip(float4(tip, 1.0f));
+        v1.Color = float4(0.0f, 1.0f, 0.0f, 1.0f); // 緑
+
+        lineStream.Append(v0);
+        lineStream.Append(v1);
+        lineStream.RestartStrip(); // 線分ごとにリスタート
     }
 }

@@ -51,7 +51,7 @@ VS_OUTPUT VS(VS_INPUT input)
     output.WorldPos = worldPos; //worldPos//float4(1,0,0,1)
     output.ClipPos = mul(mul(worldPos, mView), mProjection);
     output.Normal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
-
+    //output.Normal = mul(float4(input.Normal, 0.0f), mModel).xyz;
     return output;
 }
 
