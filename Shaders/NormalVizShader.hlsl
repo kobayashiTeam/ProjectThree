@@ -48,7 +48,7 @@ VS_OUTPUT VS(VS_INPUT input)
     VS_OUTPUT output;
 
     float4 worldPos = mul(input.Pos, mModel);
-    output.WorldPos = worldPos;
+    output.WorldPos = worldPos; //worldPos//float4(1,0,0,1)
     output.ClipPos = mul(mul(worldPos, mView), mProjection);
     output.Normal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
 
@@ -60,7 +60,7 @@ VS_OUTPUT VS(VS_INPUT input)
 // ===================================================
 float4 PS(PS_INPUT input) : SV_Target
 {
-    //return input.Color;
+    return input.Color;
     return float4(1, 0, 0, 1);
 
 }

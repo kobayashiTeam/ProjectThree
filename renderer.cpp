@@ -191,6 +191,8 @@ void Renderer::UpdatePerFrameConstantBuffer()
     // スロット0にバインド
     ID3D11Buffer* cbArray[] = { m_perFrameCB.Get() };
     pContext->VSSetConstantBuffers(0, 1, cbArray);
+    //テスト：GSにも同cbを設定
+    pContext->GSGetConstantBuffers(0,1,cbArray);
 }
 
 void Renderer::Submit(Model* model, RenderPass pass, BlendMode mode)

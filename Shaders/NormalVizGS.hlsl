@@ -64,27 +64,27 @@ float4 ToClip(float4 worldPos)
 
 
 //新しい方
-[maxvertexcount(6)]
-void GSmain(
-    triangle GSIn input[3],
-    inout LineStream<GSOut> stream)
-{
-    for (int i = 0; i < 3; i++)
-    {
-        GSOut p0;
-        p0.Pos = input[i].ClipPos;
-        p0.Color = float4(1, 0, 0, 1);
-        stream.Append(p0);
+//[maxvertexcount(6)]
+//void GSmain(
+//    triangle GSIn input[3],
+//    inout LineStream<GSOut> stream)
+//{
+//    for (int i = 0; i < 3; i++)
+//    {
+//        GSOut p0;
+//        p0.Pos = input[i].ClipPos;
+//        p0.Color = float4(1, 0, 0, 1);
+//        stream.Append(p0);
 
-        GSOut p1;
-        p1.Pos = input[i].ClipPos;
-        p1.Pos.y += 0.2f * p1.Pos.w; // ←重要
-        p1.Color = float4(0, 1, 0, 1);
-        stream.Append(p1);
+//        GSOut p1;
+//        p1.Pos = input[i].ClipPos;
+//        p1.Pos.y += 0.2f * p1.Pos.w; // ←重要
+//        p1.Color = float4(0, 1, 0, 1);
+//        stream.Append(p1);
 
-        stream.RestartStrip();
-    }
-}
+//        stream.RestartStrip();
+//    }
+//}
 
 
 //[maxvertexcount(3)]
@@ -126,3 +126,27 @@ void GSmain(
 //        stream.RestartStrip();
 //    }
 //}
+
+
+[maxvertexcount(6)]
+void GSmain(
+    triangle GSIn input[3],
+    inout LineStream<GSOut> stream)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        float3 origin = input[i].WorldPos.xyz;
+
+        GSOut p0;
+        p0.Pos = ToClip(float4(origin, 1));
+        p0.Color = float4(1, 0, 0, 1);
+        stream.Append(p0);
+
+        GSOut p1;
+        p1.Pos = ToClip(float4(origin + float3(0, 2, 0), 1));
+        p1.Color = float4(0, 1, 0, 1);
+        stream.Append(p1);
+
+        stream.RestartStrip();
+    }
+}
