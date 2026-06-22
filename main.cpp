@@ -194,7 +194,7 @@ bool InitDevice()
         //normalVizGS
     g_pNormalVizGSEffect = new NormalVizGSEffect();
     g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));
-    g_pNormalVizGSEffect->SetNormalParams(3,1,0,0);
+    g_pNormalVizGSEffect->SetNormalParams(10,255,255,255);
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）
@@ -235,7 +235,7 @@ bool InitDevice()
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pNormalVizMaterial);//litmaterialを切り替え
-    g_pMainModel->SetPosition(0.0f, 3.0f, 5.0f);//y-1
+    g_pMainModel->SetPosition(0.0f, -1.0f, 5.0f);//y-1
     //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
@@ -298,8 +298,8 @@ void Render()
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
-    g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
+    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();
