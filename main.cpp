@@ -80,7 +80,8 @@ ModelResource* modelResource = nullptr;
 #include"moveGSEffect.h"
 MoveGSEffect* g_pMoveGSEffect = nullptr;
 //normalViz
-
+#include"normalVizGSEffect.h"
+//NormalVizGSEffect* g_pNormalVizGSEffect = nullptr;
 
 //input関連
 // WndProcの上あたりに追加
@@ -184,8 +185,13 @@ bool InitDevice()
         return false;
     }
 
+    //GS
+        //moveGS
     g_pMoveGSEffect = new MoveGSEffect();
     g_pMoveGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::Move));
+        //normalVizGS
+    /*g_pNormalVizGSEffect = new NormalVizGSEffect();
+    g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));*/
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）
@@ -201,7 +207,7 @@ bool InitDevice()
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
     g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
-    g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
+    //g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
 
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();

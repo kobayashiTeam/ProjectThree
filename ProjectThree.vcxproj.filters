@@ -150,7 +150,7 @@
     <ClCompile Include="Shaders\PassThroughGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\NormalViz.hlsl">
+    <ClCompile Include="Shaders\NormalVizShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
     <ClCompile Include="normalVizMaterial.cpp">

@@ -27,10 +27,14 @@ public:
     // 初期化時に、ゲームで使う全シェーダーを一括コンパイルしてしまう
     bool LoadAllShaders(ID3D11Device* pDevice) {
         // 対応表に基づいて一気に生成（内部で GetOrCreate を呼ぶ）
+        //basic material
         if (!GetOrCreate(pDevice, ShaderID::Lit, L"Shaders/LitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Outline, L"Shaders/OutlineShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;
+        //screenblit
         if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
+        //postProcess
         if (!GetOrCreate(pDevice, ShaderID::Monochromatic, L"Shaders/Monochromatic.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Inversion, L"Shaders/InversionShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sepia, L"Shaders/SepiaShader.hlsl")) return false;
@@ -52,8 +56,8 @@ public:
     //テスト：gemetryShader
     bool LoadAllGeometryShaders(ID3D11Device* pDevice) {
         // GSが必要なShaderIDだけここに列挙する
-        /*if (!loadGeometryShader(pDevice, ShaderID::NormalViz,
-            L"Shaders/NormalVizGS.hlsl")) return false;*/
+        if (!loadGeometryShader(pDevice, ShaderID::NormalVizGS,
+            L"Shaders/NormalVizGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::PassThrough,
             L"Shaders/PassThroughGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::Move,

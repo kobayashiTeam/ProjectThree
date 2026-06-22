@@ -36,7 +36,7 @@ float4 ToClip(float4 worldPos)
 }
 
 [maxvertexcount(6)]
-void GS(
+void GSmain(
     triangle GSIn input[3],
     inout LineStream<GSOut> stream)
 {

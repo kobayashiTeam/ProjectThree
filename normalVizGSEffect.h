@@ -32,14 +32,14 @@ public:
     }
 
     void Bind(ID3D11DeviceContext* pContext) override {
-        // cbufferの中身を更新してGPUに送る
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        pContext->Map(m_pCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        memcpy(mapped.pData, &m_cbData, sizeof(CBData));
-        pContext->Unmap(m_pCB, 0);
+        //// cbufferの中身を更新してGPUに送る
+        //D3D11_MAPPED_SUBRESOURCE mapped;
+        //pContext->Map(m_pCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        //memcpy(mapped.pData, &m_cbData, sizeof(CBData));
+        //pContext->Unmap(m_pCB, 0);
 
-        // GSとcbufferをバインド
-        pContext->GSSetShader(m_pGS, nullptr, 0);
-        pContext->GSSetConstantBuffers(3, 1, &m_pCB);//3
+        //// GSとcbufferをバインド
+        //pContext->GSSetShader(m_pGS, nullptr, 0);
+        //pContext->GSSetConstantBuffers(3, 1, &m_pCB);//3
     }
 };
