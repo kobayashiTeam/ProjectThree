@@ -35,6 +35,32 @@ float4 ToClip(float4 worldPos)
     return mul(mul(worldPos, mView), mProjection);
 }
 
+//[maxvertexcount(6)]
+//void GSmain(
+//    triangle GSIn input[3],
+//    inout LineStream<GSOut> stream)
+//{
+//    for (int i = 0; i < 3; i++)
+//    {
+//        float3 origin = input[i].WorldPos.xyz;
+//        float3 tip = origin + input[i].Normal * NormalLength;
+
+//        // ªŒ³
+//        GSOut p0;
+//        p0.Pos = ToClip(float4(origin, 1.0f));
+//        p0.Color = float4(NormalColor, 1.0f);
+//        stream.Append(p0);
+
+//        // æ’[
+//        GSOut p1;
+//        p1.Pos = ToClip(float4(tip, 1.0f));
+//        p1.Color = float4(NormalColor, 1.0f);
+//        stream.Append(p1);
+
+//        stream.RestartStrip(); // ü•ª‚ðØ’fiŒq‚°‚È‚¢j
+//    }
+//}
+
 [maxvertexcount(6)]
 void GSmain(
     triangle GSIn input[3],
@@ -43,20 +69,21 @@ void GSmain(
     for (int i = 0; i < 3; i++)
     {
         float3 origin = input[i].WorldPos.xyz;
-        float3 tip = origin + input[i].Normal * NormalLength;
 
-        // ªŒ³
+        // –@ü‚ðŽg‚í‚È‚¢
+        float3 tip = origin + float3(0, 1, 0);
+
         GSOut p0;
-        p0.Pos = ToClip(float4(origin, 1.0f));
-        p0.Color = float4(NormalColor, 1.0f);
+        p0.Pos = ToClip(float4(origin, 1));
+        p0.Color = float4(1, 0, 0, 1);
         stream.Append(p0);
 
-        // æ’[
         GSOut p1;
-        p1.Pos = ToClip(float4(tip, 1.0f));
-        p1.Color = float4(NormalColor, 1.0f);
+        p1.Pos = ToClip(float4(tip, 1));
+        p1.Color = float4(1, 0, 0, 1);
         stream.Append(p1);
 
-        stream.RestartStrip(); // ü•ª‚ðØ’fiŒq‚°‚È‚¢j
+        stream.RestartStrip();
     }
 }
+
