@@ -12,8 +12,8 @@ cbuffer PerFrameBuffer : register(b0)
 
 cbuffer CBNormalVis : register(b3)
 {
-    float NormalLength; // 例: 0.1f
-    float3 NormalColor; // 例: float3(1, 1, 0) 黄色
+    float3 NormalColor; // 12バイト
+    float NormalLength; // 4バイト (これで綺麗に16バイト)
 };
 
 // VSOutputと完全一致させること（セマンティクスも含めて）

@@ -194,7 +194,7 @@ bool InitDevice()
         //normalVizGS
     g_pNormalVizGSEffect = new NormalVizGSEffect();
     g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));
-    g_pNormalVizGSEffect->SetNormalParams(1,1,1,1);
+    g_pNormalVizGSEffect->SetNormalParams(3,1,0,0);
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）
@@ -231,10 +231,11 @@ bool InitDevice()
     g_pNormalVizMaterial = new NormalVizMaterial();
     if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::NormalViz), checker, 2, 2)) return false;
+    g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pNormalVizMaterial);//litmaterialを切り替え
-    g_pMainModel->SetPosition(0.0f, -3.0f, 5.0f);//y-1
+    g_pMainModel->SetPosition(0.0f, 3.0f, 5.0f);//y-1
     //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
