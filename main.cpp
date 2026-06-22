@@ -28,12 +28,14 @@ Camera* g_pCamera = nullptr;
 #include "litMaterial.h"
 #include"unLitMaterial.h"
 #include"outLineMaterial.h"
+#include"normalVizMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
 LitMaterial* g_pLitMaterial = nullptr; 
 UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
+NormalVizMaterial* g_pNormalVizMaterial = nullptr;
 Model* g_pMainModel = nullptr;
 //追加
 Model* g_pMainModel2 = nullptr;
@@ -81,7 +83,7 @@ ModelResource* modelResource = nullptr;
 MoveGSEffect* g_pMoveGSEffect = nullptr;
 //normalViz
 #include"normalVizGSEffect.h"
-//NormalVizGSEffect* g_pNormalVizGSEffect = nullptr;
+NormalVizGSEffect* g_pNormalVizGSEffect = nullptr;
 
 //input関連
 // WndProcの上あたりに追加
@@ -190,8 +192,9 @@ bool InitDevice()
     g_pMoveGSEffect = new MoveGSEffect();
     g_pMoveGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::Move));
         //normalVizGS
-    /*g_pNormalVizGSEffect = new NormalVizGSEffect();
-    g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));*/
+    g_pNormalVizGSEffect = new NormalVizGSEffect();
+    g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));
+    g_pNormalVizGSEffect->SetNormalParams(1,1,1,1);
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）
@@ -211,8 +214,8 @@ bool InitDevice()
 
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
-	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::UnLit), 
-        checker, 2, 2))//unlit
+	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
+        GetShader(ShaderID::UnLit),checker, 2, 2))//unlit
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
@@ -220,15 +223,18 @@ bool InitDevice()
     
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
-	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Outline), 
-        checker, 2, 2))//outline
-		return false;
+	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().
+        GetShader(ShaderID::Outline),  checker, 2, 2))return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
+    //normalvizMaterial
+    g_pNormalVizMaterial = new NormalVizMaterial();
+    if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
+        GetShader(ShaderID::NormalViz), checker, 2, 2)) return false;
 
     // Model
-    g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-    g_pMainModel->SetPosition(0.0f, -1.0f, 5.0f);
+    g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pNormalVizMaterial);//litmaterialを切り替え
+    g_pMainModel->SetPosition(0.0f, -3.0f, 5.0f);//y-1
     //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);

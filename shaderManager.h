@@ -121,6 +121,10 @@ private:
             layout = screenBlitLayout;
             layoutCount = 2;
             break;
+        case ShaderID::NormalViz:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
         case ShaderID::Sepia:
