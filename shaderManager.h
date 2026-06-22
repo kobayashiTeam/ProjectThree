@@ -32,6 +32,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::Outline, L"Shaders/OutlineShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::PointSprite, L"Shaders/PointSpriteShader.hlsl")) return false;
         //screenblit
         if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
         //postProcess
@@ -62,6 +63,8 @@ public:
             L"Shaders/PassThroughGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::Move,
             L"Shaders/MoveGS.hlsl")) return false;
+        if (!loadGeometryShader(pDevice, ShaderID::PointSpriteGS,
+            L"Shaders/PointSpriteGS.hlsl")) return false;
 
         // •K—v‚É‚È‚Á‚½‚ç’Ç‰Á‚µ‚Ä‚¢‚­
         return true;
@@ -124,6 +127,10 @@ private:
         case ShaderID::NormalViz:
             layout = standardLayout;
             layoutCount = 4;
+            break;
+        case ShaderID::PointSprite:
+            layout = posOnlyLayout;
+            layoutCount = 1;
             break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:

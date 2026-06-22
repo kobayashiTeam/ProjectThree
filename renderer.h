@@ -27,6 +27,8 @@ class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
 class VignettePostProcess;
 class SkyBox;
+//test
+class PointSpriteGSEffect;
 
 class Renderer
 {
@@ -91,5 +93,7 @@ private:
 
     //テスト：スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;
+    //pointSprite
+    PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
 
 };

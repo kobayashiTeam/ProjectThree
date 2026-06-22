@@ -35,6 +35,7 @@ enum class ShaderID {
     UnLit,
     ScreenBlit,
     NormalViz,
+    PointSprite,
     // postProcess
     Monochromatic,
     Inversion,
@@ -48,5 +49,6 @@ enum class ShaderID {
     //geometry
     NormalVizGS,
     PassThrough,
-    Move
+    Move,
+    PointSpriteGS
 };

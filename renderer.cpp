@@ -20,6 +20,7 @@
 #include<string>
 #include<array>
 #include <filesystem>
+#include"pointSpriteGSEffect.h"
 
 
 Renderer::~Renderer()
@@ -157,6 +158,10 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
 
+    //点をポリゴンに変えるクラスの生成、初期化
+    m_pPointSpriteGSEffect = new PointSpriteGSEffect();
+    if (!m_pPointSpriteGSEffect->Init(pDevice))return false;
+
     return true;
 }
 
@@ -236,6 +241,9 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
     m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 
+    // ─── 【新設】PointSpriteの描画 ───
+    m_pPointSpriteGSEffect->Draw(pContext);
+
     // ─── 【ここ！！】スカイボックスの描画 ───
     // ─── 【新設】スカイボックスの描画 ───
     if (m_pSkyBox) {
@@ -247,9 +255,7 @@ void Renderer::Execute()
         m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
     }
 
-    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+    
     //return;
     
     // ─── 工程2: アウトラインパス ───
