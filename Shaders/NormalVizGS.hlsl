@@ -21,7 +21,8 @@ struct GSIn
 {
     float4 ClipPos : SV_POSITION;
     float3 Normal : NORMAL;
-    float4 WorldPos : POSITION;
+    //float4 WorldPos : POSITION;
+    float4 WorldPos : TEXCOORD0;
 };
 
 struct GSOut
@@ -61,6 +62,8 @@ float4 ToClip(float4 worldPos)
 //    }
 //}
 
+
+//新しい方
 [maxvertexcount(6)]
 void GSmain(
     triangle GSIn input[3],
@@ -68,22 +71,58 @@ void GSmain(
 {
     for (int i = 0; i < 3; i++)
     {
-        float3 origin = input[i].WorldPos.xyz;
-
-        // 法線を使わない
-        float3 tip = origin + float3(0, 1, 0);
-
         GSOut p0;
-        p0.Pos = ToClip(float4(origin, 1));
+        p0.Pos = input[i].ClipPos;
         p0.Color = float4(1, 0, 0, 1);
         stream.Append(p0);
 
         GSOut p1;
-        p1.Pos = ToClip(float4(tip, 1));
-        p1.Color = float4(1, 0, 0, 1);
+        p1.Pos = input[i].ClipPos;
+        p1.Pos.y += 0.2f * p1.Pos.w; // ←重要
+        p1.Color = float4(0, 1, 0, 1);
         stream.Append(p1);
 
         stream.RestartStrip();
     }
 }
 
+
+//[maxvertexcount(3)]
+//void GSmain(
+//    triangle GSIn input[3],
+//    inout TriangleStream<GSOut> stream)
+//{
+//    for (int i = 0; i < 3; i++)
+//    {
+//        GSOut o;
+
+//        o.Pos = input[i].ClipPos;
+//        o.Color = float4(1, 0, 0, 1);
+
+//        stream.Append(o);
+//    }
+
+//    stream.RestartStrip();
+//}
+
+
+//[maxvertexcount(6)]
+//void GSmain(
+//    triangle GSIn input[3],
+//    inout LineStream<GSOut> stream)
+//{
+//    for (int i = 0; i < 3; i++)
+//    {
+//        GSOut p0;
+//        p0.Pos = input[i].ClipPos;
+//        p0.Color = float4(1, 0, 0, 1);
+//        stream.Append(p0);
+
+//        GSOut p1;
+//        p1.Pos = input[i].ClipPos + float4(0.1f, 0, 0, 0);
+//        p1.Color = float4(0, 1, 0, 1);
+//        stream.Append(p1);
+
+//        stream.RestartStrip();
+//    }
+//}

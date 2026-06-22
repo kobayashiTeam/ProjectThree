@@ -29,7 +29,8 @@ struct VS_OUTPUT
 {
     float4 ClipPos : SV_POSITION;
     float3 Normal : NORMAL;
-    float4 WorldPos : POSITION; // GS内でオフセット計算に使う
+    //float4 WorldPos : POSITION; // GS内でオフセット計算に使う
+    float4 WorldPos : TEXCOORD0;
 };
 
 // GS→PSに渡す構造体
