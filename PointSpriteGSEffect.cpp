@@ -95,7 +95,6 @@ void PointSpriteGSEffect::Draw(ID3D11DeviceContext* pContext) {
 	cb = nullptr;
 
 	//•`‰æ
-	//pContext->DrawIndexed(1, 0, 0);
 	pContext->Draw(1, 0);
 
 	//”ñŒø—¦‚©‚à‚µ‚ê‚È‚¢‚ªApointlist‚Í‚±‚±‚Å‚µ‚©Žg‚í‚È‚¢‚Ì‚ÅA‚à‚¤–ß‚·

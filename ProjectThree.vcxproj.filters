@@ -180,8 +180,14 @@
     <ClCompile Include="instancedModel.cpp">
       <Filter>ソース ファイル\model</Filter>
     </ClCompile>
+    <ClCompile Include="main4.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Shaders\Lit_InstancingShader.hlsl">
-      <Filter>リソース ファイル</Filter>
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\TestInstancingShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

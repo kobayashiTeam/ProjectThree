@@ -33,11 +33,13 @@ void InstancedModel::Render(ID3D11DeviceContext* pContext) {
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 
     // 3. 描画（直接バッファのポインタとストライドのサイズを渡す）
+    //UINT count = m_instanceData.size();
     m_pMesh->RenderInstanced(pContext, count, m_pInstanceBuffer, sizeof(InstanceData));
 }
 
 
-bool InstancedModel:: Init(ID3D11Device* pDevice, Mesh* mesh,UINT maxInstances) {
+bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
+    Mesh* mesh,UINT maxInstances) {
     m_pMesh = mesh;
     m_maxInstances = maxInstances;
 
@@ -98,10 +100,10 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, Mesh* mesh,UINT maxInstances) 
     if (FAILED(hr)) return false;
 
     //テクスチャの作成
-    UINT32 checker[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+    UINT32 white = 0xFFFFFFFF;
     D3D11_TEXTURE2D_DESC td = {};
-    td.Width = 2;
-    td.Height = 2;
+    td.Width = 1;
+    td.Height = 1;
     td.MipLevels = 1;
     td.ArraySize = 1;
     td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -110,8 +112,8 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, Mesh* mesh,UINT maxInstances) 
     td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
     D3D11_SUBRESOURCE_DATA tInitData = {};
-    tInitData.pSysMem = checker;
-    tInitData.SysMemPitch = 2 * sizeof(UINT32);
+    tInitData.pSysMem = &white;
+    tInitData.SysMemPitch =  sizeof(UINT32);
 
     ID3D11Texture2D* pTexture2D = nullptr;
     hr = pDevice->CreateTexture2D(&td, &tInitData, &pTexture2D);
@@ -146,6 +148,47 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, Mesh* mesh,UINT maxInstances) 
     if (FAILED(hr))return false;
     //一応マテリアルを初期化する
     SetMaterialColor(1,1,1,1);
+
+
+    //test:行列リソースをここで作っておく
+    std::vector<InstanceData> instances;
+    const int N = 3;
+    const float spacing = 2.5f;
+    for (int z = 0; z < N; ++z)
+        for (int y = 0; y < N; ++y)
+            for (int x = 0; x < N; ++x)
+            {
+                float px = (x - N / 2) * spacing;
+                float py = (y - N / 2) * spacing;
+                float pz = (z - N / 2) * spacing;
+
+                // インスタンスごとに位相をずらして回転
+                //float phase = (x + y * N + z * N * N) * 0.3f;
+                //DirectX::XMMATRIX rot = XMMatrixRotationY(time + phase);
+                DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(px, py, pz);
+
+                // ★ XMMatrixMultiply は「左から右に適用」
+                //   rot * trans = ローカル回転してからワールド平行移動
+                //DirectX::XMMATRIX world = XMMatrixMultiply(rot, trans);
+
+                // ★ シェーダへ送る前に転置が必要か？
+                //   HLSLのmul(vec,mat)は「行ベクトル × 行列」なので、
+                //   XMMatrixを「そのまま行ごとにfloat4x4に書き出す」だけでOK。
+                //   （XMStoreFloat4x4 → row0=_11~_14 の順で格納）
+                m_instanceData.push_back(MatrixToInstanceData(world));
+            }
+    /*DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(5.5f, 0.5f, 10.5f);
+    InstanceData changedWorld = MatrixToInstanceData(world);
+    AddInstance(MatrixToInstanceData(world));*/
+    UINT count = (UINT)instances.size();
+        //c++でつくったデータを送る
+    D3D11_MAPPED_SUBRESOURCE mapped = {};
+    if (SUCCEEDED(pContext->Map(m_pInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+    {
+        memcpy(mapped.pData, m_instanceData.data(), sizeof(InstanceData)*count);
+        pContext->Unmap(m_pInstanceBuffer, 0);
+    }
+
 
     return true;
 }

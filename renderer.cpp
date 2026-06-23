@@ -39,6 +39,7 @@ bool Renderer::Initialize(Graphics* graphics)
     if (!graphics) return false;
     m_graphics = graphics;
     ID3D11Device* pDevice = m_graphics->GetDevice();
+    ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
     // 1. 各種ステートクラスの生成と初期化
     m_rasterStates = new RasterizerStates();
@@ -166,28 +167,8 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //instancedModel:ここでmesh,materialをつくらないと
     m_pInstancedModel = new InstancedModel();
-    if (!m_pInstancedModel->Init(pDevice, Mesh::CreateCube(pDevice, 1.0f), 1))return false;
-    // 10行×10列で綺麗に格子状に並べる行列を作って追加
-    //for (int x = 0; x < 2; ++x) {
-    //    for (int z = 0; z < 2; ++z) {
-    //        DirectX::XMMATRIX transform = DirectX::XMMatrixTranslation(x * 1.5f, 1.0f, z * 1.5f);
-    //        // ★必ずシェーダーに送る前に行列を転置（ひっくり返す）する！
-    //        DirectX::XMMATRIX transposed = DirectX::XMMatrixTranspose(transform);
-    //        DirectX::XMFLOAT4X4 world;
-    //        DirectX::XMStoreFloat4x4(&world, transposed);
-
-    //        m_pInstancedModel->AddInstance(world); // ここで追加！
-    //    }
-    //}
-
-    DirectX::XMMATRIX transform = DirectX::XMMatrixTranslation(0.5f, 0.5f, 10.0f);
-    // ★必ずシェーダーに送る前に行列を転置（ひっくり返す）する！
-    DirectX::XMMATRIX transposed = DirectX::XMMatrixTranspose(transform);
-    DirectX::XMFLOAT4X4 world;
-    DirectX::XMStoreFloat4x4(&world, transposed);
-
-    m_pInstancedModel->AddInstance(world); // ここで追加！
-
+    if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 27))return false;
+    
 
     return true;
 }

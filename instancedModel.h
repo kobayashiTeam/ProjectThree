@@ -11,7 +11,10 @@ class InstancedModel{
 
 public:
     struct InstanceData {
-        DirectX::XMFLOAT4X4 WorldMatrix;
+        DirectX::XMFLOAT4 row0;
+        DirectX::XMFLOAT4 row1;
+        DirectX::XMFLOAT4 row2;
+        DirectX::XMFLOAT4 row3;
     };
 
     struct PerMaterialCB
@@ -46,7 +49,7 @@ public:
         }
     }
 
-    bool Init(ID3D11Device* pDevice, Mesh* mesh,UINT maxInstances);
+    bool Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,Mesh* mesh,UINT maxInstances);
 
     // ★追加メソッド①：データを全部リセットする（毎フレーム再構築する場合に使う）
     void ClearInstances() {
@@ -54,11 +57,9 @@ public:
     }
 
     // ★追加メソッド②：インスタンスを1個追加する
-    void AddInstance(const DirectX::XMFLOAT4X4& worldMatrix) {
+    void AddInstance(const InstanceData& data) {
         if (m_instanceData.size() >= m_maxInstances) return; // 上限ガード
 
-        InstanceData data;
-        data.WorldMatrix = worldMatrix;
         m_instanceData.push_back(data);
     }
 
@@ -68,4 +69,16 @@ public:
     }
 
     void Render(ID3D11DeviceContext* context);
+
+    InstanceData MatrixToInstanceData(DirectX::XMMATRIX m)
+    {
+        DirectX::XMFLOAT4X4 f;
+        XMStoreFloat4x4(&f, m);           // row-major で書き出し
+        InstanceData d;
+        d.row0 = { f._11, f._12, f._13, f._14 };
+        d.row1 = { f._21, f._22, f._23, f._24 };
+        d.row2 = { f._31, f._32, f._33, f._34 };
+        d.row3 = { f._41, f._42, f._43, f._44 };
+        return d;
+    }
 };

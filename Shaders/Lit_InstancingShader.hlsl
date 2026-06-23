@@ -50,82 +50,6 @@ struct PS_INPUT
 Texture2D txDiffuse : register(t0);
 SamplerState samLinear : register(s0);
 
-//// ---------------------------------------------------------
-//// 頂点シェーダー (VS)
-//// ---------------------------------------------------------
-//PS_INPUT VS(VS_INPUT input)
-//{
-//    PS_INPUT output = (PS_INPUT) 0;
-    
-//    // ★4本のfloat4から、このインスタンス固有の4x4ワールド行列を再構築
-//    float4x4 instanceModelMatrix = float4x4(
-//        input.InstMatrixRow0,
-//        input.InstMatrixRow1,
-//        input.InstMatrixRow2,
-//        input.InstMatrixRow3
-//    );
-    
-//    // ★mModelの代わりに、再構築したinstanceModelMatrixを使ってワールド座標を計算
-//    float4 worldPos = mul(input.Pos, instanceModelMatrix);//input.Pos, instanceModelMatrix
-//    output.WorldPos = worldPos.xyz;
-    
-//    output.Pos = mul(worldPos, mView);
-//    output.Pos = mul(output.Pos, mProjection);
-    
-//    // ★法線ベクトルもインスタンス行列でワールド変換
-//    output.Normal = mul(float4(input.Normal, 0.0f), instanceModelMatrix).xyz;
-//    output.Normal = normalize(output.Normal);
-    
-//    output.Color = input.Color;
-//    output.Tex = input.Tex;
-    
-//    return output;
-//}
-
-//// ---------------------------------------------------------
-//// ピクセルシェーダー (PS) - 元のコードから変更なし！
-//// ---------------------------------------------------------
-//float4 PS(PS_INPUT input) : SV_Target
-//{
-//    float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    
-//    float4 objectColor = texColor * input.Color * vMaterialColor;
-    
-//    float3 lightVec = vLightPos.xyz - input.WorldPos;
-//    float distance = length(lightVec);
-//    float3 lightDir = normalize(lightVec);
-    
-//    float attenuation = 1.0f / (vAttenuation.x +
-//                                 vAttenuation.y * distance +
-//                                 vAttenuation.z * (distance * distance));
-    
-//    // 1. Ambient (環境光)
-//    float ambientStrength = 0.2f;
-//    float3 ambient = ambientStrength * vLightColor.xyz;
-    
-//    // 2. Diffuse (拡散反射光)
-//    float3 normal = normalize(input.Normal);
-//    float diff = max(dot(normal, lightDir), 0.0f);
-//    float3 diffuse = diff * vLightColor.xyz;
-    
-//    // 3. Specular (鏡面反射光)
-//    float specularStrength = 0.5f;
-//    float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
-//    float3 halfwayDir = normalize(lightDir + viewDir);
-    
-//    float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
-//    float3 specular = specularStrength * spec * vLightColor.xyz;
-    
-//    ambient *= attenuation;
-//    diffuse *= attenuation;
-//    specular *= attenuation;
-    
-//    float3 finalColor = (ambient + diffuse) * objectColor.xyz + specular;
-    
-//    return float4(finalColor, objectColor.a);
-//}
-
-
 // ---------------------------------------------------------
 // 頂点シェーダー (VS)
 // ---------------------------------------------------------
@@ -133,6 +57,7 @@ PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
     
+    // ★4本のfloat4から、このインスタンス固有の4x4ワールド行列を再構築
     float4x4 instanceModelMatrix = float4x4(
         input.InstMatrixRow0,
         input.InstMatrixRow1,
@@ -140,10 +65,16 @@ PS_INPUT VS(VS_INPUT input)
         input.InstMatrixRow3
     );
     
-    // ワールド→ビュー→プロジェクション変換のみ
-    float4 worldPos = mul(input.Pos, instanceModelMatrix);
+    // ★mModelの代わりに、再構築したinstanceModelMatrixを使ってワールド座標を計算
+    float4 worldPos = mul(input.Pos, instanceModelMatrix); //input.Pos, instanceModelMatrix
+    output.WorldPos = worldPos.xyz;
+    
     output.Pos = mul(worldPos, mView);
     output.Pos = mul(output.Pos, mProjection);
+    
+    // ★法線ベクトルもインスタンス行列でワールド変換
+    output.Normal = mul(float4(input.Normal, 0.0f), instanceModelMatrix).xyz;
+    output.Normal = normalize(output.Normal);
     
     output.Color = input.Color;
     output.Tex = input.Tex;
@@ -152,12 +83,82 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ピクセルシェーダー (PS)
+// ピクセルシェーダー (PS) - 元のコードから変更なし！
 // ---------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
     
-    // ライティング計算なし。テクスチャ・頂点カラー・マテリアルカラーの積をそのまま出力
-    return texColor * input.Color * vMaterialColor;
+    float4 objectColor = texColor * input.Color * vMaterialColor;
+    
+    float3 lightVec = vLightPos.xyz - input.WorldPos;
+    float distance = length(lightVec);
+    float3 lightDir = normalize(lightVec);
+    
+    float attenuation = 1.0f / (vAttenuation.x +
+                                 vAttenuation.y * distance +
+                                 vAttenuation.z * (distance * distance));
+    
+    // 1. Ambient (環境光)
+    float ambientStrength = 0.2f;
+    float3 ambient = ambientStrength * vLightColor.xyz;
+    
+    // 2. Diffuse (拡散反射光)
+    float3 normal = normalize(input.Normal);
+    float diff = max(dot(normal, lightDir), 0.0f);
+    float3 diffuse = diff * vLightColor.xyz;
+    
+    // 3. Specular (鏡面反射光)
+    float specularStrength = 0.5f;
+    float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
+    float3 halfwayDir = normalize(lightDir + viewDir);
+    
+    float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
+    float3 specular = specularStrength * spec * vLightColor.xyz;
+    
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+    
+    float3 finalColor = (ambient + diffuse) * objectColor.xyz + specular;
+    
+    return float4(finalColor, objectColor.a);
 }
+
+
+//unlit版
+// ---------------------------------------------------------
+// 頂点シェーダー (VS)
+// ---------------------------------------------------------
+//PS_INPUT VS(VS_INPUT input)
+//{
+//    PS_INPUT output = (PS_INPUT) 0;
+    
+//    float4x4 instanceModelMatrix = float4x4(
+//        input.InstMatrixRow0,
+//        input.InstMatrixRow1,
+//        input.InstMatrixRow2,
+//        input.InstMatrixRow3
+//    );
+    
+//    // ワールド→ビュー→プロジェクション変換のみ
+//    float4 worldPos = mul(input.Pos, instanceModelMatrix);
+//    output.Pos = mul(worldPos, mView);
+//    output.Pos = mul(output.Pos, mProjection);
+    
+//    output.Color = input.Color;
+//    output.Tex = input.Tex;
+    
+//    return output;
+//}
+
+//// ---------------------------------------------------------
+//// ピクセルシェーダー (PS)
+//// ---------------------------------------------------------
+//float4 PS(PS_INPUT input) : SV_Target
+//{
+//    float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
+    
+//    // ライティング計算なし。テクスチャ・頂点カラー・マテリアルカラーの積をそのまま出力
+//    return texColor * input.Color * vMaterialColor;
+//}
