@@ -46,6 +46,12 @@
     <Filter Include="ソース ファイル\guest">
       <UniqueIdentifier>{424cdc2f-06a9-4493-8d62-532e5be4370d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\model">
+      <UniqueIdentifier>{0f9baa65-dc15-47da-9c56-b82dfd9e4f65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\model">
+      <UniqueIdentifier>{4394dbc5-30d3-488d-b3d0-82e50f08ae56}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,9 +64,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="graphics.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="model.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="shader.cpp">
@@ -171,6 +174,12 @@
     <ClCompile Include="PointSpriteGSEffect.cpp">
       <Filter>ソース ファイル\guest</Filter>
     </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>ソース ファイル\model</Filter>
+    </ClCompile>
+    <ClCompile Include="instancedModel.cpp">
+      <Filter>ソース ファイル\model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -183,9 +192,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="graphics.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="model.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="graphicsCommon.h">
@@ -277,6 +283,12 @@
     </ClInclude>
     <ClInclude Include="pointSpriteGSEffect.h">
       <Filter>ヘッダー ファイル\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>ヘッダー ファイル\model</Filter>
+    </ClInclude>
+    <ClInclude Include="instancedModel.h">
+      <Filter>ヘッダー ファイル\model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

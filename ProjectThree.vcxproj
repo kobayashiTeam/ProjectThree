@@ -147,6 +147,7 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="depthStencilStates.cpp" />
     <ClCompile Include="graphics.cpp" />
+    <ClCompile Include="instancedModel.cpp" />
     <ClCompile Include="litMaterial.cpp" />
     <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -184,6 +185,7 @@
     <ClInclude Include="graphics.h" />
     <ClInclude Include="graphicsCommon.h" />
     <ClInclude Include="gsEffect.h" />
+    <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionPostProcess.h" />
     <ClInclude Include="litMaterial.h" />
     <ClInclude Include="material.h" />

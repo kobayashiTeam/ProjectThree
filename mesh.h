@@ -25,6 +25,9 @@ public:
 
     // パイプラインにバッファをセットして描画コマンドを発行する
     void Render(ID3D11DeviceContext* pImmediateContext);
+    //test:instancing向けの描画
+    void RenderInstanced(ID3D11DeviceContext* context,UINT instanceCount,
+        ID3D11Buffer* pInstanceBuffer,UINT instanceStride);
 
     // 後片付け
     void Cleanup();

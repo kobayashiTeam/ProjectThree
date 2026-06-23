@@ -295,3 +295,10 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     }
     return pMesh;
 }
+
+void Mesh::RenderInstanced(ID3D11DeviceContext* context,UINT instanceCount,
+    ID3D11Buffer* pInstanceBuffer, UINT instanceStride ) 
+{
+
+
+}
