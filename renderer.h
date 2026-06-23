@@ -29,6 +29,8 @@ class VignettePostProcess;
 class SkyBox;
 //test
 class PointSpriteGSEffect;
+class InstancedModel;
+
 
 class Renderer
 {
@@ -95,5 +97,7 @@ private:
     SkyBox* m_pSkyBox = nullptr;
     //pointSprite
     PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
+    //instancedModel
+    InstancedModel* m_pInstancedModel = nullptr;
 
 };

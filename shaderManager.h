@@ -29,6 +29,7 @@ public:
         // 対応表に基づいて一気に生成（内部で GetOrCreate を呼ぶ）
         //basic material
         if (!GetOrCreate(pDevice, ShaderID::Lit, L"Shaders/LitShader.hlsl")) return false;
+        //if (!GetOrCreate(pDevice, ShaderID::LitInstancing, L"Shaders/Lit_InstancingShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Outline, L"Shaders/OutlineShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;

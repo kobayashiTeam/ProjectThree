@@ -21,6 +21,8 @@
 #include<array>
 #include <filesystem>
 #include"pointSpriteGSEffect.h"
+#include"instancedModel.h"
+#include"litMaterial.h"
 
 
 Renderer::~Renderer()
@@ -162,6 +164,31 @@ bool Renderer::Initialize(Graphics* graphics)
     m_pPointSpriteGSEffect = new PointSpriteGSEffect();
     if (!m_pPointSpriteGSEffect->Init(pDevice))return false;
 
+    //instancedModel:ここでmesh,materialをつくらないと
+    m_pInstancedModel = new InstancedModel();
+    if (!m_pInstancedModel->Init(pDevice, Mesh::CreateCube(pDevice, 1.0f), 1))return false;
+    // 10行×10列で綺麗に格子状に並べる行列を作って追加
+    //for (int x = 0; x < 2; ++x) {
+    //    for (int z = 0; z < 2; ++z) {
+    //        DirectX::XMMATRIX transform = DirectX::XMMatrixTranslation(x * 1.5f, 1.0f, z * 1.5f);
+    //        // ★必ずシェーダーに送る前に行列を転置（ひっくり返す）する！
+    //        DirectX::XMMATRIX transposed = DirectX::XMMatrixTranspose(transform);
+    //        DirectX::XMFLOAT4X4 world;
+    //        DirectX::XMStoreFloat4x4(&world, transposed);
+
+    //        m_pInstancedModel->AddInstance(world); // ここで追加！
+    //    }
+    //}
+
+    DirectX::XMMATRIX transform = DirectX::XMMatrixTranslation(0.5f, 0.5f, 10.0f);
+    // ★必ずシェーダーに送る前に行列を転置（ひっくり返す）する！
+    DirectX::XMMATRIX transposed = DirectX::XMMatrixTranspose(transform);
+    DirectX::XMFLOAT4X4 world;
+    DirectX::XMStoreFloat4x4(&world, transposed);
+
+    m_pInstancedModel->AddInstance(world); // ここで追加！
+
+
     return true;
 }
 
@@ -196,6 +223,8 @@ void Renderer::UpdatePerFrameConstantBuffer()
     // スロット0にバインド
     ID3D11Buffer* cbArray[] = { m_perFrameCB.Get() };
     pContext->VSSetConstantBuffers(0, 1, cbArray);
+    //test:PSにもこれを設定
+    pContext->PSSetConstantBuffers(0, 1, cbArray);
     //テスト：GSにも同cbを設定
     pContext->GSSetConstantBuffers(0,1,cbArray);
 }
@@ -242,7 +271,10 @@ void Renderer::Execute()
     m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
 
     // ─── 【新設】PointSpriteの描画 ───
-    m_pPointSpriteGSEffect->Draw(pContext);
+    //m_pPointSpriteGSEffect->Draw(pContext);
+
+    // ─── 【新設】InstancedModelの描画 ───
+    m_pInstancedModel->Render(pContext);
 
     // ─── 【ここ！！】スカイボックスの描画 ───
     // ─── 【新設】スカイボックスの描画 ───

@@ -180,6 +180,9 @@
     <ClCompile Include="instancedModel.cpp">
       <Filter>ソース ファイル\model</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\Lit_InstancingShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">

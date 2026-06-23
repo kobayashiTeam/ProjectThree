@@ -296,9 +296,32 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     return pMesh;
 }
 
-void Mesh::RenderInstanced(ID3D11DeviceContext* context,UINT instanceCount,
-    ID3D11Buffer* pInstanceBuffer, UINT instanceStride ) 
+void Mesh::RenderInstanced(ID3D11DeviceContext* context, UINT instanceCount, ID3D11Buffer* pInstanceBuffer, UINT instanceStride)
 {
+    // 1~4個目は既存のメンババッファ、5個目に引数のインスタンスバッファをセット
+    ID3D11Buffer* vbs[5] = {
+        m_pPosBuffer,
+        m_pNrmBuffer,
+        m_pColorBuffer,
+        m_pUvBuffer,
+        pInstanceBuffer
+    };
 
+    // それぞれのバッファの1要素のバイトサイズ（ストライド）
+    UINT strides[5] = {
+        sizeof(DirectX::XMFLOAT3), // Position
+        sizeof(DirectX::XMFLOAT3), // Normal
+        sizeof(DirectX::XMFLOAT4), // Color
+        sizeof(DirectX::XMFLOAT2), // UV
+        instanceStride             // ★引数で受け取ったサイズ (sizeof(InstanceData))
+    };
 
+    UINT offsets[5] = { 0, 0, 0, 0, 0 };
+
+    // 5個のバッファを一括バインド
+    context->IASetVertexBuffers(0, 5, vbs, strides, offsets);
+    context->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    // インスタンシング用のドローコールを実行
+    context->DrawIndexedInstanced(m_indexCount, instanceCount, 0, 0, 0);
 }

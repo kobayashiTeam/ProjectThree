@@ -34,6 +34,8 @@ private:
 public:
     // ★従来の「単一メッシュ用」コンストラクタ（立方体などの互換性を残すため）
     Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial);
+    // ★派生クラス専用の空っぽのコンストラクタを1つ追加
+    Model() : m_Position(0, 0, 0), m_Rotation(0, 0, 0), m_Scale(1, 1, 1), m_pObjectBuffer(nullptr) {}
 
     // ★【新設】「.gltfなどの外部リソース用」コンストラクタ
     Model(ID3D11Device* pDevice, const ModelResource* pResource);

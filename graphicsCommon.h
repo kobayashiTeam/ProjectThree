@@ -31,6 +31,7 @@ enum class RenderPass {
 
 enum class ShaderID {
     Lit,
+    LitInstancing,
     Outline,
     UnLit,
     ScreenBlit,
