@@ -88,7 +88,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderMonochromePostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
     //テスト：効果オフ
-    //m_finalRenderMonochromePostProcess->SetActive(false);
+    m_finalRenderMonochromePostProcess->SetActive(false);
     //Inversion
     m_finalRenderInversionPostProcess = new InversionPostProcess();
     m_finalRenderInversionPostProcess->Initialize(pDevice,
