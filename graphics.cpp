@@ -41,14 +41,14 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     if (FAILED(hr)) return false;
 
     // 2. レンダーターゲットビューの作成
-    ID3D11Texture2D* pBackBuffer = nullptr;
+    pBackBuffer = nullptr;
     //getBufferが情報取得だけじゃなくて、pBackBufferにいれたのか？
     hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
     if (FAILED(hr)) return false;
     //これがカラーバッファーのことか？ここに最終的に出力されたものが表示されるのか？
     //正しい。インデックス0にPSなどの処理後の出力先にここに送られる。
     hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pRenderTargetView);
-    pBackBuffer->Release();
+    //pBackBuffer->Release();
     if (FAILED(hr)) return false;
 
     // 3. 深度バッファの作成

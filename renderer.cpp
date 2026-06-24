@@ -67,6 +67,11 @@ bool Renderer::Initialize(Graphics* graphics)
 		return false;
 	}
 
+    m_offscreenRTwithMSAA = new RenderTarget();
+    if (!m_offscreenRTwithMSAA->InitializeWithMSAA(pDevice, 1280, 720)) {
+        return false;
+    }
+
     //4.オフスクリーンレンダー２号の初期化（２号というか２枚で十分）
     m_tmpRT = new RenderTarget();
     if (!m_tmpRT->Initialize(pDevice, 1280, 720)) {
@@ -83,7 +88,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderMonochromePostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
     //テスト：効果オフ
-    m_finalRenderMonochromePostProcess->SetActive(false);
+    //m_finalRenderMonochromePostProcess->SetActive(false);
     //Inversion
     m_finalRenderInversionPostProcess = new InversionPostProcess();
     m_finalRenderInversionPostProcess->Initialize(pDevice,
@@ -237,8 +242,10 @@ void Renderer::Execute()
     // ==========================================
     // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
     // ==========================================
-    m_offscreenRT->Clear(pContext);
-    m_offscreenRT->Bind(pContext); // ※前回統合した自作のレンダーターゲット
+    //m_offscreenRT->Clear(pContext);//テスト：
+    //m_offscreenRT->Bind(pContext); // ※前回統合した自作のレンダーターゲット
+    m_offscreenRTwithMSAA->Clear(pContext);//テスト：
+    m_offscreenRTwithMSAA->Bind(pContext); // ※前回統合した自作のレンダーターゲット
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
@@ -295,6 +302,16 @@ void Renderer::Execute()
     RenderTarget* pCurrentInput = m_offscreenRT; // 3Dシーンが描き込まれている
     RenderTarget* pCurrentOutput = m_tmpRT;      // まだ空っぽの作業机
 
+    //これ以前でMSAAレンダリングした内容をm_offscreenRTにダウンサンプリング描画
+    ID3D11Texture2D* offScreenRTTex = m_offscreenRT->GetTexture(); // 描画先
+    ID3D11Texture2D* msaaTex = m_offscreenRTwithMSAA->GetTexture(); //描画元
+    //Resolve（解像）を実行して画面に直接転写する
+    pContext->ResolveSubresource(
+        offScreenRTTex, 0,           // 転送先：本物の画面
+        msaaTex, 0,                 // 転送元：自作MSAAバッファ
+        DXGI_FORMAT_R8G8B8A8_UNORM // フォーマット（お使いのものに合わせる）
+    );
+
     // 登録されたエフェクトを先頭から全自動で実行
     for (PostProcess* effect : m_postProcessChain)
     {
@@ -321,8 +338,6 @@ void Renderer::Execute()
     m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
     m_blendStates->Bind(pContext, BlendMode::Opaque);
 
-    // ★重要：最後に残った「最新の絵が入っているバッファ」は pCurrentInput に入っています。
-    // それを画面に素通り（ScreenBlit）で貼り付けます。
     m_finalRenderScreenBlitPostProcess->Render(pContext, pCurrentInput);
     m_finalRenderMesh->Render(pContext);
     

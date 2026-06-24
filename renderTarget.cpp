@@ -103,3 +103,78 @@ void RenderTarget::Clear(ID3D11DeviceContext* context, const float* color) {
 		context->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 }
+
+
+bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height,
+    DXGI_FORMAT colorFormat, uint32_t sampleCount, bool createDepth)
+{
+    m_width = width;
+    m_height = height;
+    m_hasDepth = createDepth;
+    m_isMSAA = true; // MSAAとして初期化されたことを記録
+
+    HRESULT hr;
+
+    // ─── 共通処理：MSAAカラーバッファ（テクスチャ・RTV）の生成 ───
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width = width;
+    textureDesc.Height = height;
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = colorFormat;
+
+    // ★ここが通常と違う！MSAAの設定
+    textureDesc.SampleDesc.Count = sampleCount; // 4 や 8 など
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+    // ★重要：MSAAテクスチャはそのままシェーダーで読めないため、
+    // BIND_SHADER_RESOURCE は外し、RENDER_TARGET のみにします。
+    textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+
+    // 1. テクスチャ（カラー実体）の生成
+    hr = device->CreateTexture2D(&textureDesc, nullptr, &m_texture);
+    if (FAILED(hr)) return false;
+
+    // 2. レンダーターゲットビュー（書き込み窓口）の作成
+    // MSAA用の場合は、第2引数をnullptrにすれば自動的にマルチサンプル用として作成されます
+    hr = device->CreateRenderTargetView(m_texture.Get(), nullptr, &m_rtv);
+    if (FAILED(hr)) return false;
+
+    // ★MSAAなので、シェーダーリソースビュー(SRV)は作成しません（m_srv = nullptrのまま）
+
+
+    // ─── 条件付き処理：深度バッファが必要な場合のみ実行 ───
+    if (!createDepth) {
+        return true;
+    }
+
+    // 4. 深度バッファ（テクスチャ実体）の作成
+    D3D11_TEXTURE2D_DESC descDepth = {};
+    descDepth.Width = width;
+    descDepth.Height = height;
+    descDepth.MipLevels = 1;
+    descDepth.ArraySize = 1;
+    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+    // ★カラーバッファとサンプル数を完全に一致させる！
+    descDepth.SampleDesc.Count = sampleCount;
+    descDepth.SampleDesc.Quality = 0;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+    hr = device->CreateTexture2D(&descDepth, nullptr, &m_depthTexture);
+    if (FAILED(hr)) return false;
+
+    // 5. 深度ステンシルビュー（深度の窓口）の作成
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+    descDSV.Format = descDepth.Format;
+
+    // ★通常は TEXTURE2D ですが、MSAAの場合は TEXTURE2DMS に指定する必要があります！
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+
+    hr = device->CreateDepthStencilView(m_depthTexture.Get(), &descDSV, &m_dsv);
+    if (FAILED(hr)) return false;
+
+    return true;
+}

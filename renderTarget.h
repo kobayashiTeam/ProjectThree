@@ -29,6 +29,9 @@ public:
     // 1つのメソッドに統合。デフォルトでは深度バッファも作成する設定にする
     bool Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
         DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true);
+    // ★新しく追加
+    bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
+        DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, bool createDepth=true);
 
 private:
 	ComPtr<ID3D11Texture2D> m_texture;// カラーバッファー
@@ -41,4 +44,5 @@ private:
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     bool m_hasDepth = false;
+    bool m_isMSAA = false; // MSAAかどうかを記録しておくと便利
 };

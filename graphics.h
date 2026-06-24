@@ -22,11 +22,14 @@ public:
 
     //テスト
 	void bindDefaultRenderTarget();
+    //描画先カラーバッファを直接外部から欲しいときがある
+    ID3D11Texture2D* getBackBufferTexture() {return pBackBuffer; }
 
 private:
     ID3D11Device* m_pd3dDevice = nullptr;
     ID3D11DeviceContext* m_pImmediateContext = nullptr;
     IDXGISwapChain* m_pSwapChain = nullptr;
+    ID3D11Texture2D* pBackBuffer = nullptr;
     ID3D11RenderTargetView* m_pRenderTargetView = nullptr;
     //描画領域と被るようなオブジェクトは大体texture2dの型？
     ID3D11Texture2D* m_pDepthStencil = nullptr;

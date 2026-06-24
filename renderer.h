@@ -74,6 +74,7 @@ private:
 
     //テスト：オフスクリーンレンダーターゲット
 	RenderTarget* m_offscreenRT=nullptr;
+    RenderTarget* m_offscreenRTwithMSAA = nullptr;//test,MSAA
     RenderTarget* m_tmpRT = nullptr;//ピンポン設計にするためにもう一枚
     // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
     std::vector<PostProcess*> m_postProcessChain;
