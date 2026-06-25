@@ -203,6 +203,20 @@ bool Renderer::Initialize(Graphics* graphics)
     m_shadowMaps.push_back(shadowMap);
         //shadowシェーダ設定
     m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::Shadow);
+        //サンプラー生成
+    // Renderer初期化時に作成
+    D3D11_SAMPLER_DESC sampDesc = {};
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.BorderColor[0] = 1.0f; // 範囲外は影なし
+    sampDesc.BorderColor[1] = 1.0f;
+    sampDesc.BorderColor[2] = 1.0f;
+    sampDesc.BorderColor[3] = 1.0f;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+    pDevice->CreateSamplerState(&sampDesc, &m_shadowSampler);
     
 
 
@@ -294,6 +308,7 @@ void Renderer::Execute()
     // シャドウマップをt3にバインド
     auto* srv = m_shadowMaps[0].GetSRV();
     pContext->PSSetShaderResources(3, 1, &srv);
+    pContext->PSSetSamplers(1, 1, &m_shadowSampler); // ← これも同じタイミング
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 

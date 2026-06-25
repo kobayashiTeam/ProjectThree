@@ -37,8 +37,8 @@ UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 NormalVizMaterial* g_pNormalVizMaterial = nullptr;
 Model* g_pMainModel = nullptr;
-//追加
 Model* g_pMainModel2 = nullptr;
+Model* g_pMainModel3 = nullptr;
 //oldCamera(modelResource)用モデル
 Model* g_pOldCameraBagModel = nullptr;
 
@@ -204,8 +204,9 @@ bool InitDevice()
     //litMaterial
     g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
+    UINT32 white = 0xFFFFFFFF;
     if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
-        , checker, 2, 2,true))//lit
+        , &white, 1, 1,true))//lit
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
@@ -240,6 +241,10 @@ bool InitDevice()
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
+    //Model3
+    g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
+    g_pMainModel3->SetPosition(0.0f,-2.5f,5.0f);
+    g_pMainModel3->SetScale(10.0f,1.0f,10.0f);
     //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
@@ -300,6 +305,7 @@ void Render()
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
+    g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();

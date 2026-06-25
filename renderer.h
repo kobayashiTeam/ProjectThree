@@ -112,4 +112,6 @@ private:
     //shadowMap
     std::vector<ShadowMap>     m_shadowMaps;
     Shader* m_pShadowShader = nullptr;
+    // Renderer.h‚É’Ç‰Á
+    ComPtr<ID3D11SamplerState> m_shadowSampler;
 };

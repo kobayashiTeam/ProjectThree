@@ -61,10 +61,15 @@ struct PS_INPUT
     float4 Color : COLOR;
     float2 Tex : TEXCOORD0;
     float3 WorldPos : POSITION; // ワールド空間でのピクセルの位置
+    float4 LightSpacePos : TEXCOORD1; // ← 追加
 };
 
 Texture2D txDiffuse : register(t0);
 SamplerState samLinear : register(s0);
+
+// 追加
+Texture2D shadowMap : register(t3);
+SamplerComparisonState shadowSampler : register(s1);
 
 // ---------------------------------------------------------
 // 頂点シェーダー (VS)
@@ -87,9 +92,23 @@ PS_INPUT VS(VS_INPUT input)
     output.Color = input.Color;
     output.Tex = input.Tex;
     
+    // VSでLightSpacePosを計算して渡す
+    output.LightSpacePos = mul(worldPos, lights[0].lightSpaceMatrix);
+    
     return output;
 }
 
+
+// ShadowCalculation関数
+float ShadowCalculation(float4 lightSpacePos)
+{
+    float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+    float2 shadowUV;
+    shadowUV.x = projCoords.x * 0.5f + 0.5f;
+    shadowUV.y = -projCoords.y * 0.5f + 0.5f; // D3D11はY反転
+    float currentDepth = projCoords.z;
+    return shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, currentDepth - 0.005f);
+}
 // ---------------------------------------------------------
 // ピクセルシェーダー (PS)
 // ---------------------------------------------------------
@@ -110,6 +129,9 @@ float4 PS(PS_INPUT input) : SV_Target
         float attenuation = 1.0f / (vAttenuation.x +
                                     vAttenuation.y * distance +
                                     vAttenuation.z * (distance * distance));
+        
+        // PSのループ内で影を反映
+        float shadow = ShadowCalculation(input.LightSpacePos);
 
         // Ambient
         float3 ambient = 0.2f * lights[i].color.xyz;
@@ -126,8 +148,8 @@ float4 PS(PS_INPUT input) : SV_Target
         float3 specular = 0.5f * spec * lights[i].color.xyz;
 
         ambient *= attenuation;
-        diffuse *= attenuation;
-        specular *= attenuation;
+        diffuse *= attenuation*shadow;
+        specular *= attenuation*shadow;
 
         // ループのたびに加算
         totalLight += (ambient + diffuse) * objectColor.xyz + specular;
@@ -135,3 +157,5 @@ float4 PS(PS_INPUT input) : SV_Target
 
     return float4(totalLight, objectColor.a);
 }
+
+
