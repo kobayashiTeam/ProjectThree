@@ -205,7 +205,7 @@ bool InitDevice()
     g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
-        , checker, 2, 2))//lit
+        , checker, 2, 2,true))//lit
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
@@ -215,7 +215,7 @@ bool InitDevice()
 	//unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
 	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::UnLit),checker, 2, 2))//unlit
+        GetShader(ShaderID::UnLit),checker, 2, 2,true))//unlit
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
@@ -224,13 +224,13 @@ bool InitDevice()
     //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::Outline),  checker, 2, 2))return false;
+        GetShader(ShaderID::Outline),  checker, 2, 2,true))return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
     //normalvizMaterial
     g_pNormalVizMaterial = new NormalVizMaterial();
     if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::NormalViz), checker, 2, 2)) return false;
+        GetShader(ShaderID::NormalViz), checker, 2, 2,true)) return false;
     g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
 
     // Model

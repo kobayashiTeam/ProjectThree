@@ -8,7 +8,7 @@ Material::Material() : m_pShader(nullptr), m_pTextureRV(nullptr), m_pSamplerLine
 Material::~Material() { Cleanup(); }
 
 bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader, 
-    const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight)
+    const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight,bool isSRGB)
 {
     HRESULT hr;
     ID3DBlob* pVSBlob = nullptr;
@@ -20,14 +20,28 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
 
     // 4. テクスチャの作成
     D3D11_TEXTURE2D_DESC td = {};
-    td.Width = txtWidth;
-    td.Height = txtHeight;
-    td.MipLevels = 1;
-    td.ArraySize = 1;
-    td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    td.SampleDesc.Count = 1;
-    td.Usage = D3D11_USAGE_DEFAULT;
-    td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    if (isSRGB) {
+        td = {};
+        td.Width = txtWidth;
+        td.Height = txtHeight;
+        td.MipLevels = 1;
+        td.ArraySize = 1;
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//caution:ガンマ補正してある、データマップには不適
+        td.SampleDesc.Count = 1;
+        td.Usage = D3D11_USAGE_DEFAULT;
+        td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    }
+    else {
+        td = {};
+        td.Width = txtWidth;
+        td.Height = txtHeight;
+        td.MipLevels = 1;
+        td.ArraySize = 1;
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//caution:ガンマ補正してある、データマップには不適
+        td.SampleDesc.Count = 1;
+        td.Usage = D3D11_USAGE_DEFAULT;
+        td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    }
 
 	//具体的なテクスチャ内容を渡すための構造体
     //代入の型が気になる。pSysMemってなんでもいいのか？

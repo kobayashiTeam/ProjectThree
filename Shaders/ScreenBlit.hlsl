@@ -31,7 +31,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
     
     // «—ˆ‚±‚±‚ÉŒy‚¢’²®‚ğ“ü‚ê‚é—]’n‚ğc‚·
-    // color.rgb = pow(color.rgb, 1.0 / 2.2); // GammaC³‚È‚Ç
+     color.rgb = pow(color.rgb, 1.0 / 2.2); // GammaC³‚È‚Ç
     
     return color;
 }

@@ -21,7 +21,7 @@ public:
     virtual ~Material(); // 仮想デストラクタにしておく
 
     bool Initialize(ID3D11Device* pDevice, Shader* pShader,
-        const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight);
+        const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight,bool isSRGB);
 
     // ★ virtual をつけて、派生クラスで拡張できるようにする！
     virtual void Bind(ID3D11DeviceContext* pContext);

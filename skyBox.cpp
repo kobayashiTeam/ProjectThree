@@ -65,7 +65,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     cubeDesc.Height = height;
     cubeDesc.MipLevels = 1;
     cubeDesc.ArraySize = 6;                          // 6面
-    cubeDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    cubeDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     cubeDesc.SampleDesc.Count = 1;
     cubeDesc.Usage = D3D11_USAGE_DEFAULT;
     cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -91,7 +91,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
 
     // ④ SRVを作る
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
     srvDesc.TextureCube.MostDetailedMip = 0;
     srvDesc.TextureCube.MipLevels = 1;
@@ -125,19 +125,6 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
     float size = 100.0f;
-    //SkyboxVertex vertices[] = {
-    //    // 前面 (Z = 0.5)
-    //    { { DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 左上手前
-    //    { { DirectX::XMFLOAT3(1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 右上手前
-    //    { { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 右下手前
-    //    { { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f) }, {}, {}, {} }, // 左下手前
-    //    // 背面 (Z = -0.5)
-    //    {  { DirectX::XMFLOAT3(-1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 左上奥
-    //    { { DirectX::XMFLOAT3(1.0f,  1.0f,  1.0f) }, {}, {}, {} }, // 右上手奥
-    //    { { DirectX::XMFLOAT3(1.0f, -1.0f,  1.0f) }, {}, {}, {} }, // 右下手奥
-    //    { { DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f) }, {}, {}, {} }  // 左下手奥
-    //};
-
     // 置き換え
     DirectX::XMFLOAT3 positions[] = {
         {-1.0f,  1.0f, -1.0f},
