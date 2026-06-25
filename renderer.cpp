@@ -23,6 +23,7 @@
 #include"pointSpriteGSEffect.h"
 #include"instancedModel.h"
 #include"litMaterial.h"
+#include"light.h"
 
 
 Renderer::~Renderer()
@@ -170,10 +171,26 @@ bool Renderer::Initialize(Graphics* graphics)
     m_pPointSpriteGSEffect = new PointSpriteGSEffect();
     if (!m_pPointSpriteGSEffect->Init(pDevice))return false;
 
-    //instancedModel:ここでmesh,materialをつくらないと
+    //instancedModel:ここでmeshをつくる
     m_pInstancedModel = new InstancedModel();
     if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 27))return false;
     
+    //ライト
+    D3D11_BUFFER_DESC bd = {};
+    bd.ByteWidth = sizeof(LightBufferCB);
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    pDevice->CreateBuffer(&bd, nullptr, &m_lightCB);
+        //ライト生成
+    // Renderer初期化時など
+    Light dirLight;
+    dirLight.type = LightType::Directional;
+    dirLight.position = { 0.0f, 5.0f, 2.0f };
+    dirLight.direction = { 0.0f, -1.0f, -0.5f };
+    dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    dirLight.intensity = 1.0f;
+    m_lights.push_back(dirLight);
+
 
     return true;
 }
@@ -188,6 +205,8 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
 
     // フレームごとの定数バッファ更新
     UpdatePerFrameConstantBuffer();
+        //lightも共通なので送る
+    UpdateLightConstantBuffer();
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -377,4 +396,33 @@ bool Renderer::createFinalRenderQuad() {
     if (!m_finalRenderMesh)return false;
 
     return true;
+}
+
+
+void Renderer::UpdateLightConstantBuffer()
+{
+    LightBufferCB cb = {};
+    cb.lightCount = (int)m_lights.size();
+
+    for (int i = 0; i < cb.lightCount && i < MAX_LIGHTS; i++)
+    {
+        const Light& L = m_lights[i];
+        cb.lights[i].position = { L.position.x, L.position.y, L.position.z, 0.0f };
+        cb.lights[i].direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
+        cb.lights[i].color = L.color;
+        cb.lights[i].intensity = L.intensity;
+        cb.lights[i].type = (int)L.type;
+
+        // lightSpaceMatrixはTransposeして送る
+        DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
+        cb.lights[i].lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
+    }
+
+    m_graphics->GetContext()->UpdateSubresource(m_lightCB.Get(), 0, nullptr, &cb, 0, 0);
+
+    // 未使用スロット（b2）にバインド・既存のb0は触らない//perframe,model,materialについでb3に
+    ID3D11Buffer* cbArray[] = { m_lightCB.Get() };
+    auto* ctx = m_graphics->GetContext();
+    ctx->VSSetConstantBuffers(3, 1, cbArray);
+    ctx->PSSetConstantBuffers(3, 1, cbArray);
 }

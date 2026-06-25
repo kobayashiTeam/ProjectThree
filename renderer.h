@@ -10,6 +10,7 @@ template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 //実体宣言
 #include"renderQueue.h"
+#include"light.h"
 
 //前方宣言
 class Graphics;
@@ -55,6 +56,8 @@ public:
 
     //test
     bool createFinalRenderQuad();
+    //ライト
+    void UpdateLightConstantBuffer();
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -100,5 +103,9 @@ private:
     PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
     //instancedModel
     InstancedModel* m_pInstancedModel = nullptr;
+
+    //test:Light
+    std::vector<Light>     m_lights;
+    ComPtr<ID3D11Buffer> m_lightCB;  // 新しいcbuffer
 
 };

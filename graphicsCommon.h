@@ -53,3 +53,31 @@ enum class ShaderID {
     Move,
     PointSpriteGS
 };
+
+//ライト関連
+#define MAX_LIGHTS 4
+
+enum class LightType {
+    Directional,
+    Point,
+    Spot
+};
+
+
+struct LightData  // GPU側に送る1ライト分のデータ
+{
+    DirectX::XMFLOAT4 position;         // w未使用
+    DirectX::XMFLOAT4 direction;        // w未使用
+    DirectX::XMFLOAT4 color;
+    DirectX::XMMATRIX lightSpaceMatrix; // シャドウ用
+    int   type;
+    float intensity;
+    float padding[2];
+};
+
+struct LightBufferCB  // cbuffer全体
+{
+    LightData lights[MAX_LIGHTS];
+    int       lightCount;
+    float     padding[3];
+};
