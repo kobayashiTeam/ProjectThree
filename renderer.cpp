@@ -273,8 +273,6 @@ void Renderer::Execute()
     // ==========================================
     // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
     // ==========================================
-    //m_offscreenRT->Clear(pContext);//テスト：
-    //m_offscreenRT->Bind(pContext); // ※前回統合した自作のレンダーターゲット
     m_offscreenRTwithMSAA->Clear(pContext);//テスト：
     m_offscreenRTwithMSAA->Bind(pContext); // ※前回統合した自作のレンダーターゲット
 

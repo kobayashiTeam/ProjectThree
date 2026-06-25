@@ -179,6 +179,7 @@
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="shadowMap.cpp" />
     <ClCompile Include="skyBox.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
@@ -191,7 +192,7 @@
     <ClInclude Include="gsEffect.h" />
     <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionPostProcess.h" />
-    <ClInclude Include="Light.h" />
+    <ClInclude Include="light.h" />
     <ClInclude Include="litMaterial.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="mathUtils.h" />
@@ -216,6 +217,7 @@
     <ClInclude Include="sepiaPostProcess.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shaderManager.h" />
+    <ClInclude Include="shadowMap.h" />
     <ClInclude Include="sharpenPostProcess.h" />
     <ClInclude Include="simpleBoxBlurPostProcess.h" />
     <ClInclude Include="skyBox.h" />

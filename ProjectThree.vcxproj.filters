@@ -52,10 +52,10 @@
     <Filter Include="ソース ファイル\model">
       <UniqueIdentifier>{4394dbc5-30d3-488d-b3d0-82e50f08ae56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\light">
+    <Filter Include="ヘッダー ファイル\light_shadowMap">
       <UniqueIdentifier>{50162263-3fc6-4a27-8554-73038dcecc52}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\light">
+    <Filter Include="ソース ファイル\light_shadowMap">
       <UniqueIdentifier>{6ebd5ca8-fe4e-401b-ad87-b736ea5e3f6b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -196,7 +196,10 @@
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
     <ClCompile Include="light.cpp">
-      <Filter>ソース ファイル\light</Filter>
+      <Filter>ソース ファイル\light_shadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="shadowMap.cpp">
+      <Filter>ソース ファイル\light_shadowMap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -308,8 +311,11 @@
     <ClInclude Include="instancedModel.h">
       <Filter>ヘッダー ファイル\model</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>ヘッダー ファイル\light</Filter>
+    <ClInclude Include="light.h">
+      <Filter>ヘッダー ファイル\light_shadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="shadowMap.h">
+      <Filter>ヘッダー ファイル\light_shadowMap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

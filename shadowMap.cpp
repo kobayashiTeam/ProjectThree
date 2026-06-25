@@ -1,4 +1,5 @@
 #include"shadowMap.h"
+#include"light.h"
 
 void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
 {
@@ -36,4 +37,18 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
 
     hr = pDevice->CreateShaderResourceView(m_texture.Get(), &srvDesc, &m_srv);
     if (FAILED(hr)) return;
+}
+
+
+DirectX::XMMATRIX ShadowMap::GetLightSpaceMatrix() const
+{
+    // 呼び出されるたびにライトの現在状態から計算する
+    DirectX::XMMATRIX view = m_pLight->GetViewMatrix();
+    DirectX::XMMATRIX proj = m_pLight->GetProjectionMatrix();
+    return view * proj;
+}
+
+
+void ShadowMap::BeginRender(ID3D11DeviceContext* ctx) {
+
 }

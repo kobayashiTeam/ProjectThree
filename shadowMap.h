@@ -17,11 +17,12 @@ public:
 
     ID3D11ShaderResourceView* GetSRV() const;     // パス2でシェーダに渡す
     DirectX::XMMATRIX GetLightSpaceMatrix() const;         // cbufferに渡す行列
+    void setLight(Light* light) { m_pLight = light; }
 
 private:
     ComPtr<ID3D11Texture2D>          m_texture;
     ComPtr<ID3D11DepthStencilView>   m_dsv;
     ComPtr<ID3D11ShaderResourceView> m_srv;
-    const Light* m_light;  // 外から受け取る（所有しない）
+    const Light* m_pLight;  // 外から受け取る（所有しない）
     UINT m_size;
 };
