@@ -24,6 +24,7 @@
 #include"instancedModel.h"
 #include"litMaterial.h"
 #include"light.h"
+#include"graphicsCommon.h"
 
 
 Renderer::~Renderer()
@@ -189,7 +190,18 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.direction = { 0.0f, -1.0f, -0.5f };
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
     dirLight.intensity = 1.0f;
+        //m_lights要素数登録
+    m_lights.reserve(MAX_LIGHTS);
     m_lights.push_back(dirLight);
+
+    //シャドウマップ
+    ShadowMap shadowMap;
+    shadowMap.Initialize(pDevice,2048);
+    shadowMap.setLight(&m_lights[0]);
+        //ライトとの組み合わせ、事前に配列予約
+    m_shadowMaps.reserve(MAX_LIGHTS);
+    m_shadowMaps.push_back(shadowMap);
+    
 
 
     return true;

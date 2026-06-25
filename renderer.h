@@ -11,6 +11,7 @@ template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 //À‘ÌéŒ¾
 #include"renderQueue.h"
 #include"light.h"
+#include"shadowMap.h"
 
 //‘O•ûéŒ¾
 class Graphics;
@@ -107,5 +108,6 @@ private:
     //test:Light
     std::vector<Light>     m_lights;
     ComPtr<ID3D11Buffer> m_lightCB;  // V‚µ‚¢cbuffer
-
+    //shadowMap
+    std::vector<ShadowMap>     m_shadowMaps;
 };
