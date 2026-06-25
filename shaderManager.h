@@ -45,6 +45,8 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
         // skybox“à‚É’Ç‰Á
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
+        //shadow
+        if (!GetOrCreate(pDevice, ShaderID::Shadow, L"Shaders/ShadowShader.hlsl")) return false;
         return true;
     }
 
@@ -130,6 +132,10 @@ private:
             layoutCount = 4;
             break;
         case ShaderID::PointSprite:
+            layout = posOnlyLayout;
+            layoutCount = 1;
+            break;
+        case ShaderID::Shadow:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;

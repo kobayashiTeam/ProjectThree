@@ -49,6 +49,24 @@ DirectX::XMMATRIX ShadowMap::GetLightSpaceMatrix() const
 }
 
 
-void ShadowMap::BeginRender(ID3D11DeviceContext* ctx) {
+void ShadowMap::BeginRender(ID3D11DeviceContext* ctx)
+{
+    // RTVはnullptr、DSVだけセット
+    ID3D11RenderTargetView* nullRTV = nullptr;
+    ctx->OMSetRenderTargets(1, &nullRTV, m_dsv.Get());
+    ctx->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+    // ビューポートもシャドウマップサイズに合わせる
+    D3D11_VIEWPORT vp = {};
+    vp.Width = (float)m_size;
+    vp.Height = (float)m_size;
+    vp.MaxDepth = 1.0f;
+    ctx->RSSetViewports(1, &vp);
+}
+
+void ShadowMap::EndRender(ID3D11DeviceContext* ctx)
+{
+    // DSVを外してSRVとして使えるようにする
+    ID3D11RenderTargetView* nullRTV = nullptr;
+    ctx->OMSetRenderTargets(1, &nullRTV, nullptr);
 }

@@ -51,7 +51,9 @@ enum class ShaderID {
     NormalVizGS,
     PassThrough,
     Move,
-    PointSpriteGS
+    PointSpriteGS,
+    //shadow
+    Shadow
 };
 
 //ƒ‰ƒCƒgŠÖ˜A

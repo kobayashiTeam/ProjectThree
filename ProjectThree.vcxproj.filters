@@ -58,6 +58,9 @@
     <Filter Include="ソース ファイル\light_shadowMap">
       <UniqueIdentifier>{6ebd5ca8-fe4e-401b-ad87-b736ea5e3f6b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\shadow">
+      <UniqueIdentifier>{05573f1a-48dd-4bee-ad1b-d75dc3db8c07}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -200,6 +203,9 @@
     </ClCompile>
     <ClCompile Include="shadowMap.cpp">
       <Filter>ソース ファイル\light_shadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\ShadowShader.hlsl">
+      <Filter>リソース ファイル\shadow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

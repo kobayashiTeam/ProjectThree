@@ -4,6 +4,18 @@ cbuffer PerObjectBuffer : register(b1)
     matrix mModel;
 };
 
+// LightData‚Ì1ƒ‰ƒCƒg•ª
+struct LightData
+{
+    float4 position;
+    float4 direction;
+    float4 color;
+    matrix lightSpaceMatrix;
+    int type;
+    float intensity;
+    float2 padding;
+};
+
 cbuffer LightBuffer : register(b3)
 {
     // LightData‚Ì’è‹`...
