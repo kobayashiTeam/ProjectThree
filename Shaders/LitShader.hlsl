@@ -23,6 +23,26 @@ cbuffer PerMaterialBuffer : register(b2)
     float4 vMaterialColor; // C++側の構造体と完全一致させる
 };
 
+// LightDataの1ライト分
+struct LightData
+{
+    float4 position;
+    float4 direction;
+    float4 color;
+    matrix lightSpaceMatrix;
+    int type;
+    float intensity;
+    float2 padding;
+};
+
+// LightBufferCB全体
+cbuffer LightBuffer : register(b3)
+{
+    LightData lights[4]; // MAX_LIGHTSの数値を直接書く
+    int lightCount;
+    float3 padding;
+};
+
 // ---------------------------------------------------------
 // 入出力構造体
 // ---------------------------------------------------------
@@ -76,48 +96,42 @@ PS_INPUT VS(VS_INPUT input)
 float4 PS(PS_INPUT input) : SV_Target
 {
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    
-    // ★オブジェクトの色に、マテリアル固有の色（vMaterialColor）も掛け合わせる！
     float4 objectColor = texColor * input.Color * vMaterialColor;
-    
-    // 光源からピクセルへのベクトル（正規化前）
-    float3 lightVec = vLightPos.xyz - input.WorldPos;
-    
-    // 距離 (d) の計算
-    float distance = length(lightVec);
-    
-    // ライトの方向ベクトル（正規化）
-    float3 lightDir = normalize(lightVec);
-    
-    // 減衰率の計算
-    float attenuation = 1.0f / (vAttenuation.x +
-                                 vAttenuation.y * distance +
-                                 vAttenuation.z * (distance * distance));
-    
-    // 1. Ambient (環境光)
-    float ambientStrength = 0.2f;
-    float3 ambient = ambientStrength * vLightColor.xyz;
-    
-    // 2. Diffuse (拡散反射光)
-    float3 normal = normalize(input.Normal);
-    float diff = max(dot(normal, lightDir), 0.0f);
-    float3 diffuse = diff * vLightColor.xyz;
-    
-    // 3. Specular (鏡面反射光：Blinn-Phongモデル)
-    float specularStrength = 0.5f;
-    float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
-    float3 halfwayDir = normalize(lightDir + viewDir);
-    
-    float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
-    float3 specular = specularStrength * spec * vLightColor.xyz;
-    
-    // すべての光の成分に減衰率を乗算
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
-    
-    // 最終的な色の結合
-    float3 finalColor = (ambient + diffuse) * objectColor.xyz + specular;
-    
-    return float4(finalColor, objectColor.a);
+
+    // ループの外で合計を初期化
+    float3 totalLight = float3(0.0f, 0.0f, 0.0f);
+
+    for (int i = 0; i < lightCount; i++)
+    {
+        float3 lightVec = lights[i].position.xyz - input.WorldPos;
+        float distance = length(lightVec);
+        float3 lightDir = normalize(lightVec);
+
+        float attenuation = 1.0f / (vAttenuation.x +
+                                    vAttenuation.y * distance +
+                                    vAttenuation.z * (distance * distance));
+
+        // Ambient
+        float3 ambient = 0.2f * lights[i].color.xyz;
+
+        // Diffuse
+        float3 normal = normalize(input.Normal);
+        float diff = max(dot(normal, lightDir), 0.0f);
+        float3 diffuse = diff * lights[i].color.xyz;
+
+        // Specular
+        float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
+        float3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
+        float3 specular = 0.5f * spec * lights[i].color.xyz;
+
+        ambient *= attenuation;
+        diffuse *= attenuation;
+        specular *= attenuation;
+
+        // ループのたびに加算
+        totalLight += (ambient + diffuse) * objectColor.xyz + specular;
+    }
+
+    return float4(totalLight, objectColor.a);
 }

@@ -185,7 +185,7 @@ bool Renderer::Initialize(Graphics* graphics)
     // Renderer初期化時など
     Light dirLight;
     dirLight.type = LightType::Directional;
-    dirLight.position = { 0.0f, 5.0f, 2.0f };
+    dirLight.position = { 0.0f, 5.0f, 2.0f };//{ 0.0f, 5.0f, 2.0f };
     dirLight.direction = { 0.0f, -1.0f, -0.5f };
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
     dirLight.intensity = 1.0f;
@@ -281,7 +281,7 @@ void Renderer::Execute()
     //m_pPointSpriteGSEffect->Draw(pContext);
 
     // ─── 【新設】InstancedModelの描画 ───
-    m_pInstancedModel->Render(pContext);
+    //m_pInstancedModel->Render(pContext);
 
     // ─── 【ここ！！】スカイボックスの描画 ───
     // ─── 【新設】スカイボックスの描画 ───
