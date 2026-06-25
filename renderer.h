@@ -59,6 +59,7 @@ public:
     bool createFinalRenderQuad();
     //ÉâÉCÉg
     void UpdateLightConstantBuffer();
+    void SubmitShadowPass();
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -110,4 +111,5 @@ private:
     ComPtr<ID3D11Buffer> m_lightCB;  // êVÇµÇ¢cbuffer
     //shadowMap
     std::vector<ShadowMap>     m_shadowMaps;
+    Shader* m_pShadowShader = nullptr;
 };

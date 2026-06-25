@@ -31,3 +31,8 @@ float4 VS(float4 pos : POSITION) : SV_POSITION
     return lightViewPos;
 }
 // PSはなし
+// 空のPS（コンパイルエラー回避用）
+float4 PS() : SV_Target
+{
+    return float4(0, 0, 0, 0);
+}

@@ -134,3 +134,37 @@ void Model::DrawWithOutLine(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameB
         part.pMesh->Render(pContext);
     }
 }
+
+
+// Model側に追加
+void Model::DrawGeometryOnly(ID3D11DeviceContext* ctx, ID3D11Buffer* pPerFrameCB)
+{
+    // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回
+    ctx->VSSetConstantBuffers(0, 1, &pPerFrameCB);
+    ctx->PSSetConstantBuffers(0, 1, &pPerFrameCB);
+
+    // モデルが持つすべてのパーツをループ描画
+    for (const auto& part : m_Parts)
+    {
+        if (!part.pMesh || !part.pMaterial) continue;
+
+        // 1. マテリアルの適用をしない。同じシェーダをセットし続ければ問題ない
+        //part.pMaterial->Bind(pContext);
+
+        // 2. ★超重要：このパーツ専用の行列を計算
+        // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
+        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
+            GetWorldMatrix());
+
+        //バッファは初期化時に生成されている。今はデータを作る
+        Model::PerObjectCB objCB;
+        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX用に転置
+
+        // 3. 定数バッファをパーツごとに書き換えてスロット1にバインド
+        ctx->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
+        ctx->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
+
+        // 4. メッシュの描画
+        part.pMesh->Render(ctx);
+    }
+}
