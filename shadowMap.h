@@ -15,7 +15,7 @@ public:
     void BeginRender(ID3D11DeviceContext* ctx);   // パス1の開始
     void EndRender(ID3D11DeviceContext* ctx);
 
-    ID3D11ShaderResourceView* GetSRV() const;     // パス2でシェーダに渡す
+    ID3D11ShaderResourceView* GetSRV() const { return m_srv.Get(); }    // パス2でシェーダに渡す
     DirectX::XMMATRIX GetLightSpaceMatrix() const;         // cbufferに渡す行列
     void setLight(Light* light) { m_pLight = light; }
 

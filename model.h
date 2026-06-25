@@ -59,4 +59,7 @@ public:
     // 後から変更もできるようにしておく（演出用）
     void SetTransparent(bool enable) { m_isTransparent = enable; }
     bool IsTransparent() const { return m_isTransparent; }
+
+    //shadowMap用
+    void DrawGeometryOnly(ID3D11DeviceContext* ctx, ID3D11Buffer* pPerFrameCB);
 };

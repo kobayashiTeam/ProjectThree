@@ -201,6 +201,8 @@ bool Renderer::Initialize(Graphics* graphics)
         //ライトとの組み合わせ、事前に配列予約
     m_shadowMaps.reserve(MAX_LIGHTS);
     m_shadowMaps.push_back(shadowMap);
+        //shadowシェーダ設定
+    m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::Shadow);
     
 
 
@@ -270,11 +272,28 @@ void Renderer::Execute()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
+    // ===== 1パス目：シャドウマップ生成 =====
+    m_shadowMaps[0].BeginRender(pContext);
+    // シャドウ用VSをバインド
+    m_pShadowShader->Bind(pContext);
+    pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
+    // ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
+    // 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
+    SubmitShadowPass();//対象renderQueueのコマンド内容を変える
+    m_renderQueues[static_cast<int>(RenderPass::Opaque)].
+        Execute(pContext, m_perFrameCB.Get(), m_blendStates,false);
+    m_shadowMaps[0].EndRender(pContext);
+
+    // オーバーライドをリセット
+    m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
     // ==========================================
     // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
     // ==========================================
     m_offscreenRTwithMSAA->Clear(pContext);//テスト：
     m_offscreenRTwithMSAA->Bind(pContext); // ※前回統合した自作のレンダーターゲット
+    // シャドウマップをt3にバインド
+    auto* srv = m_shadowMaps[0].GetSRV();
+    pContext->PSSetShaderResources(3, 1, &srv);
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
@@ -285,7 +304,7 @@ void Renderer::Execute()
     // ─── 工程1: 不透明パス ───
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
-    m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+    m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates,true);
 
     // ─── 【新設】PointSpriteの描画 ───
     //m_pPointSpriteGSEffect->Draw(pContext);
@@ -320,7 +339,7 @@ void Renderer::Execute()
     // ─── 工程3: 半透明パス ───
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 必要ならデプス書き込みOFFのステートなど
-    m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
+    m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates,true);
 
     //return;
     
@@ -435,4 +454,11 @@ void Renderer::UpdateLightConstantBuffer()
     auto* ctx = m_graphics->GetContext();
     ctx->VSSetConstantBuffers(3, 1, cbArray);
     ctx->PSSetConstantBuffers(3, 1, cbArray);
+}
+
+
+// シャドウパス用にキューに積むとき
+void Renderer::SubmitShadowPass()
+{
+    m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(m_pShadowShader);
 }

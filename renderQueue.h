@@ -11,6 +11,8 @@ public:
     struct RenderCommand {
         Model* pModel;
         float depth; // カメラからの距離
+        // 追加
+        Shader* pOverrideShader = nullptr;
     };
 
 private:
@@ -30,7 +32,10 @@ public:
     }
 
     // ③ 実行（描画）
-    void Execute(ID3D11DeviceContext* pContext, ID3D11Buffer* pPerFrameCB,BlendStates* pBlendStates) {
+    void Execute(ID3D11DeviceContext* pContext, 
+        ID3D11Buffer* pPerFrameCB,
+        BlendStates* pBlendStates,
+        bool isAfterClear) {
         int opaqueIdx = static_cast<int>(BlendMode::Opaque);
         int alphaIdx = static_cast<int>(BlendMode::AlphaBlend);
         int addIdx = static_cast<int>(BlendMode::Additive);
@@ -56,11 +61,23 @@ public:
 
             // そのブレンドタイプに溜まっているモデルを全描画
             for (const auto& cmd : m_queues[i]) {
-                cmd.pModel->Draw(pContext, pPerFrameCB);
+                if (!cmd.pOverrideShader) { cmd.pModel->Draw(pContext, pPerFrameCB); }
+                else{ cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB); }
             }
 
             // 描画が終わったらそのキューをクリア
+            if(isAfterClear)
             m_queues[i].clear();
+        }
+    }
+
+    // RenderQueue側にオーバーライド設定メソッドを追加
+    void SetOverrideVS(Shader* pVS)
+    {
+        int opaqueIdx = static_cast<int>(BlendMode::Opaque);
+        for (auto& cmd : m_queues[opaqueIdx])
+        {
+            cmd.pOverrideShader = pVS;
         }
     }
 };
