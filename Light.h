@@ -8,7 +8,7 @@ struct Light {
     LightType             type = LightType::Directional;
     DirectX::XMFLOAT3     position = { 0.0f, 5.0f, 0.0f };//y5
     DirectX::XMFLOAT3     direction = { 0.0f, -1.0f, 0.0f };
-    DirectX::XMFLOAT4     color = { 1.0f, 0.0f, 1.0f, 1.0f };
+    DirectX::XMFLOAT4     color = { 1.0f, 1.0f, 1.0f, 1.0f };
     float                 intensity = 1.0f;
 
     DirectX::XMMATRIX GetViewMatrix() const
@@ -24,6 +24,6 @@ struct Light {
     {
         using namespace DirectX;
         // 平行光源は正射影・範囲は決め打ち（後で調整）
-        return XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 50.0f);
+        return XMMatrixOrthographicLH(50.0f, 50.0f, 0.1f, 50.0f);//20,20,0.1,50
     }
 };

@@ -308,7 +308,8 @@ void Renderer::Execute()
     // シャドウマップをt3にバインド
     auto* srv = m_shadowMaps[0].GetSRV();
     pContext->PSSetShaderResources(3, 1, &srv);
-    pContext->PSSetSamplers(1, 1, &m_shadowSampler); // ← これも同じタイミング
+    ID3D11SamplerState* sampler = m_shadowSampler.Get();
+    pContext->PSSetSamplers(1, 1, &sampler); // ← これも同じタイミング
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
