@@ -60,7 +60,7 @@ struct PS_INPUT
     float3 Normal : NORMAL;
     float4 Color : COLOR;
     float2 Tex : TEXCOORD0;
-    float3 WorldPos : POSITION; // ワールド空間でのピクセルの位置
+    float3 WorldPos : TEXCOORD2; // ワールド空間でのピクセルの位置 POSITIOn
     float4 LightSpacePos : TEXCOORD1; // ← 追加
 };
 
@@ -107,7 +107,8 @@ float ShadowCalculation(float4 lightSpacePos)
     shadowUV.x = projCoords.x * 0.5f + 0.5f;
     shadowUV.y = -projCoords.y * 0.5f + 0.5f; // D3D11はY反転
     float currentDepth = projCoords.z;
-    return shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, currentDepth - 0.005f);
+    return shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, currentDepth - 0.005f);//0.005
+   
 }
 // ---------------------------------------------------------
 // ピクセルシェーダー (PS)
@@ -154,7 +155,7 @@ float4 PS(PS_INPUT input) : SV_Target
         // ループのたびに加算
         totalLight += (ambient + diffuse) * objectColor.xyz + specular;
     }
-
+    
     return float4(totalLight, objectColor.a);
 }
 

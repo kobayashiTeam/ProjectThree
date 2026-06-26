@@ -210,7 +210,7 @@ bool InitDevice()
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
-    g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
+    //g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
     //g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
 
 	//unLitMaterial
@@ -236,14 +236,14 @@ bool InitDevice()
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え
-    g_pMainModel->SetPosition(0.0f, -1.0f, 5.0f);//y-1
+    g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);//y-1
     //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
     //Model3
     g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-    g_pMainModel3->SetPosition(0.0f,-2.5f,5.0f);
+    g_pMainModel3->SetPosition(0.0f,-3.0f,5.0f);
     g_pMainModel3->SetScale(10.0f,1.0f,10.0f);
     //oldCamera(modelResource)
     modelResource = new ModelResource();
@@ -303,7 +303,7 @@ void Render()
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
 

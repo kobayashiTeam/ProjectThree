@@ -1,17 +1,17 @@
-#include"shadowMap.h"
+ï»¿#include"shadowMap.h"
 #include"light.h"
 
 void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
 {
     m_size = size;
 
-    // R32_TYPELESS‚Åì‚éiDSV‚ÆSRV‚ÅŒ^‚ğg‚¢•ª‚¯‚é‚½‚ßj
+    // R32_TYPELESSã§ä½œã‚‹ï¼ˆDSVã¨SRVã§å‹ã‚’ä½¿ã„åˆ†ã‘ã‚‹ãŸã‚ï¼‰
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = size;
     texDesc.Height = size;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R32_TYPELESS; // © ƒ|ƒCƒ“ƒg
+    texDesc.Format = DXGI_FORMAT_R32_TYPELESS; // â† ãƒã‚¤ãƒ³ãƒˆ
     texDesc.SampleDesc.Count = 1;
     texDesc.Usage = D3D11_USAGE_DEFAULT;
     texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
@@ -19,18 +19,18 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
     HRESULT hr = pDevice->CreateTexture2D(&texDesc, nullptr, &m_texture);
     if (FAILED(hr)) return;
 
-    // DSVi[“x‘‚«‚İ—pj
+    // DSVï¼ˆæ·±åº¦æ›¸ãè¾¼ã¿ç”¨ï¼‰
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-    dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // ‘‚«‚İ‚ÍD32
+    dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // æ›¸ãè¾¼ã¿ã¯D32
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Texture2D.MipSlice = 0;
 
     hr = pDevice->CreateDepthStencilView(m_texture.Get(), &dsvDesc, &m_dsv);
     if (FAILED(hr)) return;
 
-    // SRViƒVƒF[ƒ_[“Ç‚İæ‚è—pj
+    // SRVï¼ˆã‚·ã‚§ãƒ¼ãƒ€ãƒ¼èª­ã¿å–ã‚Šç”¨ï¼‰
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // “Ç‚İæ‚è‚ÍR32
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // èª­ã¿å–ã‚Šã¯R32
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MipLevels = 1;
     srvDesc.Texture2D.MostDetailedMip = 0;
@@ -42,7 +42,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
 
 DirectX::XMMATRIX ShadowMap::GetLightSpaceMatrix() const
 {
-    // ŒÄ‚Ño‚³‚ê‚é‚½‚Ñ‚Éƒ‰ƒCƒg‚ÌŒ»İó‘Ô‚©‚çŒvZ‚·‚é
+    // å‘¼ã³å‡ºã•ã‚Œã‚‹ãŸã³ã«ãƒ©ã‚¤ãƒˆã®ç¾åœ¨çŠ¶æ…‹ã‹ã‚‰è¨ˆç®—ã™ã‚‹
     DirectX::XMMATRIX view = m_pLight->GetViewMatrix();
     DirectX::XMMATRIX proj = m_pLight->GetProjectionMatrix();
     return view * proj;
@@ -51,12 +51,23 @@ DirectX::XMMATRIX ShadowMap::GetLightSpaceMatrix() const
 
 void ShadowMap::BeginRender(ID3D11DeviceContext* ctx)
 {
-    // RTV‚ÍnullptrADSV‚¾‚¯ƒZƒbƒg
-    ID3D11RenderTargetView* nullRTV = nullptr;
-    ctx->OMSetRenderTargets(1, &nullRTV, m_dsv.Get());
+    //// RTVã¯nullptrã€DSVã ã‘ã‚»ãƒƒãƒˆ
+    //ID3D11RenderTargetView* nullRTV = nullptr;
+    //ctx->OMSetRenderTargets(1, &nullRTV, m_dsv.Get());//1
+    //ctx->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+    //// ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã‚‚ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ã‚µã‚¤ã‚ºã«åˆã‚ã›ã‚‹
+    //D3D11_VIEWPORT vp = {};
+    //vp.Width = (float)m_size;
+    //vp.Height = (float)m_size;
+    //vp.MaxDepth = 1.0f;
+    //ctx->RSSetViewports(1, &vp);
+
+
+
+    ctx->OMSetRenderTargets(0, nullptr, m_dsv.Get()); // âœ… ç¬¬1å¼•æ•°0ã€ç¬¬2å¼•æ•°nullptr
     ctx->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    // ƒrƒ…[ƒ|[ƒg‚àƒVƒƒƒhƒEƒ}ƒbƒvƒTƒCƒY‚É‡‚í‚¹‚é
     D3D11_VIEWPORT vp = {};
     vp.Width = (float)m_size;
     vp.Height = (float)m_size;
@@ -66,7 +77,11 @@ void ShadowMap::BeginRender(ID3D11DeviceContext* ctx)
 
 void ShadowMap::EndRender(ID3D11DeviceContext* ctx)
 {
-    // DSV‚ğŠO‚µ‚ÄSRV‚Æ‚µ‚Äg‚¦‚é‚æ‚¤‚É‚·‚é
-    ID3D11RenderTargetView* nullRTV = nullptr;
-    ctx->OMSetRenderTargets(1, &nullRTV, nullptr);
+    // DSVã‚’å¤–ã—ã¦SRVã¨ã—ã¦ä½¿ãˆã‚‹ã‚ˆã†ã«ã™ã‚‹
+    /*ID3D11RenderTargetView* nullRTV = nullptr;
+    ctx->OMSetRenderTargets(1, &nullRTV, nullptr);*/
+
+    //colorBufferåˆ©ç”¨ã—ãªã„ã¨ãã¯ï¼‘ãŒï¼ã€ï¼’ãŒå…·ä½“çš„ãªå‚ç…§ã€ã‚†ãˆã«nullptr
+    //ç¬¬ä¸‰ã¯dsvã€€æ˜ç¤ºçš„ã«ç©ºã«ã—ã¦ãŠã
+    ctx->OMSetRenderTargets(0, nullptr, nullptr); // âœ… DSVã‚‚å«ã‚ã¦å®Œå…¨ã«ã‚¯ãƒªã‚¢
 }
