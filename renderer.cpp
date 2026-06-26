@@ -178,6 +178,7 @@ bool Renderer::Initialize(Graphics* graphics)
     
 
     //ライト①（Directional）
+        //cb生成
     D3D11_BUFFER_DESC bd = {};
     bd.ByteWidth = sizeof(LightBufferCB);
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -221,12 +222,30 @@ bool Renderer::Initialize(Graphics* graphics)
 
 
     //ライト②（Point）
-    
+        //cb生成
+    D3D11_BUFFER_DESC bd = {};
+    bd.ByteWidth = sizeof(ShadowCubeCB);
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
+    //ライト生成
+// Renderer初期化時など
+    PointLight  pointLight = {};
+    pointLight.position = { 5.0f, 5.0f, 8.0f };
+    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    pointLight.intensity = 1.0f;
+    //m_lights要素数登録
+    m_pointLights.reserve(MAX_LIGHTS);
+    m_pointLights.push_back(pointLight);
     //シャドウキューブマップ（Point Light）
     ShadowCubeMap shadowCubeMap;
     shadowCubeMap.Initialize(pDevice,2048);
-    //shadowCubeMap.SetLight();
-    
+    shadowCubeMap.SetLight(&pointLight);
+    //ライトとの組み合わせ、事前に配列予約
+    m_shadowCubeMaps.reserve(MAX_LIGHTS);
+    m_shadowCubeMaps.push_back(shadowCubeMap);
+    //shadowシェーダ設定
+    m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
 
 
     return true;
@@ -243,7 +262,7 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // フレームごとの定数バッファ更新
     UpdatePerFrameConstantBuffer();
         //lightも共通なので送る
-    UpdateLightConstantBuffer();
+    UpdateDirectionalLightConstantBuffer();
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -453,8 +472,10 @@ bool Renderer::createFinalRenderQuad() {
 }
 
 
-void Renderer::UpdateLightConstantBuffer()
+void Renderer::UpdateDirectionalLightConstantBuffer()
 {
+    
+
     LightBufferCB cb = {};
     cb.lightCount = (int)m_lights.size();
 
@@ -480,6 +501,34 @@ void Renderer::UpdateLightConstantBuffer()
     auto* ctx = m_graphics->GetContext();
     ctx->VSSetConstantBuffers(3, 1, cbArray);
     ctx->PSSetConstantBuffers(3, 1, cbArray);
+}
+
+
+void Renderer::UpdateShadowCubeConstantBuffer()
+{
+    if (m_pointLights.empty()) return;
+
+    ShadowCubeCB cb = {};
+    const PointLight& L = m_pointLights[0];  // 今は1灯固定
+
+    cb.gLightPos = L.position;
+    cb.gFarPlane = L.farPlane;
+
+    // 6面分のViewProj行列
+    DirectX::XMMATRIX proj = L.GetProjectionMatrix();
+    for (int i = 0; i < 6; i++)
+    {
+        DirectX::XMMATRIX vp = L.GetViewMatrix(i) * proj;
+        cb.gLightViewProj[i] = DirectX::XMMatrixTranspose(vp);
+    }
+
+    auto* ctx = m_graphics->GetContext();
+    ctx->UpdateSubresource(m_pointLightCB.Get(), 0, nullptr, &cb, 0, 0);
+
+    ID3D11Buffer* cbArray[] = { m_pointLightCB.Get() };
+    ctx->VSSetConstantBuffers(4, 1, cbArray);
+    ctx->GSSetConstantBuffers(4, 1, cbArray);  // GSにも忘れず
+    ctx->PSSetConstantBuffers(4, 1, cbArray);
 }
 
 

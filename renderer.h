@@ -59,8 +59,9 @@ public:
     //defaultRTに戻してから描画するQuadオブジェクト
     bool createFinalRenderQuad();
     //ライト
-    void UpdateLightConstantBuffer();
+    void UpdateDirectionalLightConstantBuffer();
     void SubmitShadowPass();
+    void UpdateShadowCubeConstantBuffer();
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -120,8 +121,9 @@ private:
     std::vector<PointLight> m_pointLights;
     ComPtr<ID3D11Buffer>m_pointLightCB;
         //shadowMap
-    std::vector<ShadowCubeMap> m_shadowCubeMpas;
+    std::vector<ShadowCubeMap> m_shadowCubeMaps;
     Shader* m_pShadowCubeShader = nullptr;
-
+        //ジオメトリシェーダ
+    ID3D11GeometryShader* m_shadowCubeGS = nullptr;
 
 };

@@ -68,6 +68,7 @@ enum class LightType {
 };
 
 
+//Directional ライト用
 struct LightData  // GPU側に送る1ライト分のデータ
 {
     DirectX::XMFLOAT4 position;         // w未使用
@@ -80,9 +81,19 @@ struct LightData  // GPU側に送る1ライト分のデータ
     float padding;
 };
 
-struct LightBufferCB  // cbuffer全体
+//Directional
+struct LightBufferCB  //b3CBに送る内容。LightData内容（上記）はシェーダ側で再定義する
 {
     LightData lights[MAX_LIGHTS];
     int       lightCount;
     float     padding[3];
+};
+
+
+//Point ライト
+struct ShadowCubeCB//b4CBに送る内容。内容が一個（view*Proj行列）しかないのでむき出しで送る
+{
+    DirectX:: XMMATRIX gLightViewProj[6]; // GSが使う
+    DirectX::XMFLOAT3 gLightPos;
+    float gFarPlane;
 };
