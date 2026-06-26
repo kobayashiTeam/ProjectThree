@@ -4,6 +4,8 @@
 #include <DirectXMath.h>
 #include "graphicsCommon.h"
 
+
+//Directional Light
 struct Light {
     LightType             type = LightType::Directional;
     DirectX::XMFLOAT3     position = { 0.0f, 10.0f, 0.0f };//y5
@@ -35,4 +37,19 @@ struct Light {
         // 平行光源は正射影・範囲は決め打ち（後で調整）
         return XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 50.0f);//20,20,0.1,50
     }
+};
+
+
+
+// Point Light
+struct PointLight {
+    DirectX::XMFLOAT3 position = { 0.0f, 5.0f, 0.0f };
+    DirectX::XMFLOAT4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float             intensity = 1.0f;
+    float             farPlane = 100.0f;  // ShadowCubeMapと共有
+
+    // 6方向それぞれのView行列
+    DirectX::XMMATRIX GetViewMatrix(int face) const;
+    // 透視投影・90度FOV固定
+    DirectX::XMMATRIX GetProjectionMatrix() const;
 };
