@@ -107,7 +107,7 @@ private:
     InstancedModel* m_pInstancedModel = nullptr;
 
     //test:Light
-    std::vector<Light>     m_lights;
+    std::vector<DirectionalLight>     m_lights;
     ComPtr<ID3D11Buffer> m_lightCB;  // êVÇµÇ¢cbuffer
     //shadowMap
     std::vector<ShadowMap>     m_shadowMaps;

@@ -184,7 +184,7 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateBuffer(&bd, nullptr, &m_lightCB);
         //ƒ‰ƒCƒg¶¬
     // Renderer‰Šú‰»‚È‚Ç
-    Light dirLight;
+    DirectionalLight dirLight;
     dirLight.type = LightType::Directional;
     dirLight.position = { -3.0f, 3.0f, 5.0f };//{ 0.0f, 5.0f, 2.0f };
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
@@ -451,7 +451,7 @@ void Renderer::UpdateLightConstantBuffer()
 
     for (int i = 0; i < cb.lightCount && i < MAX_LIGHTS; i++)
     {
-        const Light& L = m_lights[i];
+        const DirectionalLight& L = m_lights[i];
         cb.lights[i].position = { L.position.x, L.position.y, L.position.z, 0.0f };
         cb.lights[i].direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
         cb.lights[i].color = L.color;

@@ -7,7 +7,7 @@
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 //forward
-class Light;
+class DirectionalLight;
 
 class ShadowMap {
 public:
@@ -17,12 +17,12 @@ public:
 
     ID3D11ShaderResourceView* GetSRV() const { return m_srv.Get(); }    // パス2でシェーダに渡す
     DirectX::XMMATRIX GetLightSpaceMatrix() const;         // cbufferに渡す行列
-    void setLight(Light* light) { m_pLight = light; }
+    void setLight(DirectionalLight* light) { m_pLight = light; }
 
 private:
     ComPtr<ID3D11Texture2D>          m_texture;
     ComPtr<ID3D11DepthStencilView>   m_dsv;
     ComPtr<ID3D11ShaderResourceView> m_srv;
-    const Light* m_pLight;  // 外から受け取る（所有しない）
+    const DirectionalLight* m_pLight;  // 外から受け取る（所有しない）
     UINT m_size;
 };
