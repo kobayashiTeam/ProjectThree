@@ -132,6 +132,7 @@ float4 PS(PS_INPUT input) : SV_Target
                                     vAttenuation.z * (distance * distance));
         
         // PSのループ内で影を反映
+        //当該ピクセルに影ができるかを0,1で返す。掛け算でsimpleな切り替え処理が期待できる
         float shadow = ShadowCalculation(input.LightSpacePos);
 
         // Ambient

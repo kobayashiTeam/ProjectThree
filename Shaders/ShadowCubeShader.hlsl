@@ -12,7 +12,7 @@ cbuffer ShadowCubeCB : register(b3)
 };
 
 // ---- VS ----
-struct VS_IN
+struct VS_INPUT
 {
     float3 pos : POSITION;
 };
@@ -22,23 +22,23 @@ struct VS_OUT
     float4 posW : TEXCOORD0; // ÉèÅ[ÉãÉhç¿ïWÇGSÇ…ìnÇ∑
 };
 
-VS_OUT VS(VS_IN vin)
+VS_OUT VS(VS_INPUT input)
 {
     VS_OUT vout;
-    vout.posW = mul(float4(vin.pos, 1.0f), mModel);
+    vout.posW = mul(float4(input.pos, 1.0f), mModel);
     return vout;
 }
 
 // ---- PS ----
-struct GS_OUT
+struct PS_INPUT
 {
     float4 pos : SV_Position;
     float3 fragPosW : TEXCOORD0;
     uint slice : SV_RenderTargetArrayIndex;
 };
 
-float PS(GS_OUT pin) : SV_Depth
+float PS(PS_INPUT input) : SV_Depth
 {
-    float dist = length(pin.fragPosW - gLightPos);
+    float dist = length(input.fragPosW - gLightPos);
     return dist / gFarPlane;
 }
