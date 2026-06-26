@@ -13,7 +13,8 @@ struct LightData
     matrix lightSpaceMatrix;
     int type;
     float intensity;
-    float2 padding;
+    float farPlane;
+    float padding;
 };
 
 cbuffer LightBuffer : register(b3)

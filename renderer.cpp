@@ -176,7 +176,8 @@ bool Renderer::Initialize(Graphics* graphics)
     m_pInstancedModel = new InstancedModel();
     if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 27))return false;
     
-    //ライト
+
+    //ライト①（Directional）
     D3D11_BUFFER_DESC bd = {};
     bd.ByteWidth = sizeof(LightBufferCB);
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -184,7 +185,7 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateBuffer(&bd, nullptr, &m_lightCB);
         //ライト生成
     // Renderer初期化時など
-    DirectionalLight dirLight;
+    DirectionalLight dirLight = {};
     dirLight.type = LightType::Directional;
     dirLight.position = { -3.0f, 3.0f, 5.0f };//{ 0.0f, 5.0f, 2.0f };
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
@@ -194,7 +195,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_lights.reserve(MAX_LIGHTS);
     m_lights.push_back(dirLight);
 
-    //シャドウマップ
+    //シャドウマップ(Directional Light)
     ShadowMap shadowMap;
     shadowMap.Initialize(pDevice,2048);
     shadowMap.setLight(&m_lights[0]);
@@ -217,6 +218,14 @@ bool Renderer::Initialize(Graphics* graphics)
     sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
 
     pDevice->CreateSamplerState(&sampDesc, &m_shadowSampler);
+
+
+    //ライト②（Point）
+    
+    //シャドウキューブマップ（Point Light）
+    ShadowCubeMap shadowCubeMap;
+    shadowCubeMap.Initialize(pDevice,2048);
+    //shadowCubeMap.SetLight();
     
 
 
@@ -460,41 +469,6 @@ void Renderer::UpdateLightConstantBuffer()
 
         // lightSpaceMatrixはTransposeして送る
         DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
-
-        DirectX::XMMATRIX view = L.GetViewMatrix();
-        DirectX::XMMATRIX proj = L.GetProjectionMatrix();
-
-        DirectX::XMFLOAT4X4 mv, mp;
-        XMStoreFloat4x4(&mv, view);
-        XMStoreFloat4x4(&mp, proj);
-
-        char buf[1024]; // ← 512から増やす
-        sprintf_s(buf,
-            "VIEW row0: %.3f %.3f %.3f %.3f\n"
-            "VIEW row1: %.3f %.3f %.3f %.3f\n"
-            "VIEW row2: %.3f %.3f %.3f %.3f\n"
-            "VIEW row3: %.3f %.3f %.3f %.3f\n"
-            "PROJ row0: %.3f %.3f %.3f %.3f\n"
-            "PROJ row1: %.3f %.3f %.3f %.3f\n"
-            "PROJ row2: %.3f %.3f %.3f %.3f\n"
-            "PROJ row3: %.3f %.3f %.3f %.3f\n",
-            mv._11, mv._12, mv._13, mv._14,
-            mv._21, mv._22, mv._23, mv._24,
-            mv._31, mv._32, mv._33, mv._34,
-            mv._41, mv._42, mv._43, mv._44,
-            mp._11, mp._12, mp._13, mp._14,
-            mp._21, mp._22, mp._23, mp._24,
-            mp._31, mp._32, mp._33, mp._34,
-            mp._41, mp._42, mp._43, mp._44);
-        OutputDebugStringA(buf);
-
-        //// 行列の中身をOutputDebugStringで確認
-        //DirectX::XMFLOAT4X4 m;
-        //XMStoreFloat4x4(&m, lsm);
-        //char buf[256];
-        //sprintf_s(buf, "LSM[0]: %.3f %.3f %.3f %.3f\n", m._11, m._12, m._13, m._14);
-        //OutputDebugStringA(buf);
-
 
         cb.lights[i].lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
     }

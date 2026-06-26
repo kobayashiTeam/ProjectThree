@@ -52,8 +52,10 @@ enum class ShaderID {
     PassThrough,
     Move,
     PointSpriteGS,
+    ShadowCubeGS,
     //shadow
-    Shadow
+    Shadow,
+    ShadowCube
 };
 
 //ライト関連
@@ -74,7 +76,8 @@ struct LightData  // GPU側に送る1ライト分のデータ
     DirectX::XMMATRIX lightSpaceMatrix; // シャドウ用
     int   type;
     float intensity;
-    float padding[2];
+    float farPlane;
+    float padding;
 };
 
 struct LightBufferCB  // cbuffer全体

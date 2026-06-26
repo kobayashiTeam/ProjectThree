@@ -12,6 +12,7 @@ template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 #include"renderQueue.h"
 #include"light.h"
 #include"shadowMap.h"
+#include"shadowCubeMap.h"
 
 //前方宣言
 class Graphics;
@@ -55,7 +56,7 @@ public:
     void BeginStencilOutlinePass();
     void EndStencilOutlinePass();
 
-    //test
+    //defaultRTに戻してから描画するQuadオブジェクト
     bool createFinalRenderQuad();
     //ライト
     void UpdateLightConstantBuffer();
@@ -77,7 +78,7 @@ private:
 
     ComPtr<ID3D11Buffer> m_perFrameCB;
 
-    //テスト：オフスクリーンレンダーターゲット
+    //オフスクリーンレンダーターゲット
 	RenderTarget* m_offscreenRT=nullptr;
     RenderTarget* m_offscreenRTwithMSAA = nullptr;//test,MSAA
     RenderTarget* m_tmpRT = nullptr;//ピンポン設計にするためにもう一枚
@@ -99,19 +100,28 @@ private:
     SharpenPostProcess* m_finalRenderSharpenPostProcess = nullptr;
     VignettePostProcess* m_finalRenderVignettePostProcess = nullptr;
 
-    //テスト：スカイボックスオブジェクト
+    //スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;
     //pointSprite
     PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
     //instancedModel
     InstancedModel* m_pInstancedModel = nullptr;
 
-    //test:Light
+    //DirectionalLight
     std::vector<DirectionalLight>     m_lights;
-    ComPtr<ID3D11Buffer> m_lightCB;  // 新しいcbuffer
+    ComPtr<ID3D11Buffer> m_lightCB;//cb用のバッファ
     //shadowMap
     std::vector<ShadowMap>     m_shadowMaps;
     Shader* m_pShadowShader = nullptr;
-    // Renderer.hに追加
+    // Renderer.hに追加、shadow用サンプラーは１つの共用でいい
     ComPtr<ID3D11SamplerState> m_shadowSampler;
+
+    //test:PointLight
+    std::vector<PointLight> m_pointLights;
+    ComPtr<ID3D11Buffer>m_pointLightCB;
+        //shadowMap
+    std::vector<ShadowCubeMap> m_shadowCubeMpas;
+    Shader* m_pShadowCubeShader = nullptr;
+
+
 };

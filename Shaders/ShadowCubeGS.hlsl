@@ -1,15 +1,16 @@
 // ShadowCubeGS.hlsl
 
-cbuffer ShadowCubeCB : register(b3)
+cbuffer ShadowCubeCB : register(b4)
 {
-    matrix gLightViewProj[6];
+    matrix gLightViewProj[6]; // GSÇ™égÇ§
     float3 gLightPos;
     float gFarPlane;
 };
 
+
 struct GSIn
 {
-    float4 posW : TEXCOORD0;
+    float4 posW : TEXCOORD0;//texcoordÇ≈Ç†ÇÈÇ±Ç∆Ç…à”ñ°ÇÕÇ»Ç¢ÅAâΩÇÃé©ìÆèàóùÇ‡ÇπÇ∏Ç…float4Ç≈â^Ç‘éwé¶
 };
 
 struct GSOut
@@ -20,15 +21,15 @@ struct GSOut
 };
 
 [maxvertexcount(18)]
-void GS(triangle GSIn input[3], inout TriangleStream<GSOut> stream)
+void GSmain(triangle GSIn input[3], inout TriangleStream<GSOut> stream)
 {
     for (int face = 0; face < 6; face++)
     {
         for (int v = 0; v < 3; v++)
         {
             GSOut gout;
-            gout.pos = mul(gin[v].posW, gLightViewProj[face]);
-            gout.fragPosW = gin[v].posW.xyz;
+            gout.pos = mul(input[v].posW, gLightViewProj[face]);
+            gout.fragPosW = input[v].posW.xyz;
             gout.slice = face;
             stream.Append(gout);
         }

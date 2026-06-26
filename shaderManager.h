@@ -47,6 +47,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
         //shadow
         if (!GetOrCreate(pDevice, ShaderID::Shadow, L"Shaders/ShadowShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::ShadowCube, L"Shaders/ShadowCubeShader.hlsl")) return false;
         return true;
     }
 
@@ -68,6 +69,8 @@ public:
             L"Shaders/MoveGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::PointSpriteGS,
             L"Shaders/PointSpriteGS.hlsl")) return false;
+        if (!loadGeometryShader(pDevice, ShaderID::ShadowCubeGS,
+            L"Shaders/ShadowCubeGS.hlsl")) return false;
 
         // •K—v‚É‚È‚Á‚½‚ç’Ç‰Á‚µ‚Ä‚¢‚­
         return true;
@@ -136,6 +139,10 @@ private:
             layoutCount = 1;
             break;
         case ShaderID::Shadow:
+            layout = posOnlyLayout;
+            layoutCount = 1;
+            break;
+        case ShaderID::ShadowCube:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;

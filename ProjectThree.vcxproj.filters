@@ -210,11 +210,11 @@
     <ClCompile Include="shadowCubeMap.cpp">
       <Filter>ソース ファイル\light_shadowMap</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\ShadowCubeShader.hlsl">
-      <Filter>リソース ファイル\shader_mat</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\ShadowCubeGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\ShadowCubeShader.hlsl">
+      <Filter>リソース ファイル\shadow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

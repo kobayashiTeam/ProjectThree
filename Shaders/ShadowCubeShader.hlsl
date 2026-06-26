@@ -5,8 +5,10 @@ cbuffer PerObjectCB : register(b1)
     matrix mModel;
 };
 
-cbuffer ShadowCubeCB : register(b3)
+
+cbuffer ShadowCubeCB : register(b4)
 {
+    matrix gLightViewProj[6]; // GS‚ªŽg‚¤
     float3 gLightPos;
     float gFarPlane;
 };
