@@ -303,7 +303,7 @@ void Render()
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
 

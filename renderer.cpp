@@ -223,29 +223,31 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //ライト②（Point）
         //cb生成
-    D3D11_BUFFER_DESC bd = {};
+    bd = {};
     bd.ByteWidth = sizeof(ShadowCubeCB);
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
-    //ライト生成
-// Renderer初期化時など
+        //ライト生成
     PointLight  pointLight = {};
     pointLight.position = { 5.0f, 5.0f, 8.0f };
     pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
     pointLight.intensity = 1.0f;
-    //m_lights要素数登録
+        //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
     m_pointLights.push_back(pointLight);
-    //シャドウキューブマップ（Point Light）
+        //シャドウキューブマップ（Point Light）
     ShadowCubeMap shadowCubeMap;
     shadowCubeMap.Initialize(pDevice,2048);
     shadowCubeMap.SetLight(&pointLight);
-    //ライトとの組み合わせ、事前に配列予約
+        //ライトとの組み合わせ、事前に配列予約
     m_shadowCubeMaps.reserve(MAX_LIGHTS);
     m_shadowCubeMaps.push_back(shadowCubeMap);
-    //shadowシェーダ設定
-    m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
+        //shadowシェーダ設定
+    m_pShadowCubeShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
+        //GS設定
+    m_pShadowCubeGS = ShaderManager::GetInstance().getGS(ShaderID::ShadowCubeGS);
+
 
 
     return true;
@@ -259,10 +261,12 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // 共通のトポロジー設定
     m_graphics->GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // フレームごとの定数バッファ更新
+    // フレームごとの定数バッファ更新(b0)
     UpdatePerFrameConstantBuffer();
-        //lightも共通なので送る
+        //DirectionalLightも共通なので送る(b3)
     UpdateDirectionalLightConstantBuffer();
+        //PointLightも送る(b4)
+    UpdatePointLightConstantBuffer();
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -315,6 +319,7 @@ void Renderer::Execute()
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
     // ===== 1パス目：シャドウマップ生成 =====
+    // ===== DirectionalLight のシャドウパス =====
     m_shadowMaps[0].BeginRender(pContext);
     // シャドウ用VSをバインド
     m_pShadowShader->Bind(pContext);
@@ -325,9 +330,19 @@ void Renderer::Execute()
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].
         Execute(pContext, m_perFrameCB.Get(), m_blendStates,false);
     m_shadowMaps[0].EndRender(pContext);
-
     // オーバーライドをリセット
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
+
+
+    // ===== PointLight のシャドウパス =====
+    m_shadowCubeMaps[0].BeginRender(pContext);
+    m_pShadowCubeShader->Bind(pContext);  // VS+PS
+    pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
+    pContext->PSSetShader(nullptr, nullptr, 0);
+    m_renderQueues[static_cast<int>(RenderPass::Opaque)].
+        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_shadowCubeMaps[0].EndRender(pContext);
+
     // ==========================================
     // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
     // ==========================================
@@ -504,7 +519,7 @@ void Renderer::UpdateDirectionalLightConstantBuffer()
 }
 
 
-void Renderer::UpdateShadowCubeConstantBuffer()
+void Renderer::UpdatePointLightConstantBuffer()
 {
     if (m_pointLights.empty()) return;
 

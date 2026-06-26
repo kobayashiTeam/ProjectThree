@@ -71,6 +71,45 @@ public:
         }
     }
 
+    //test:各modelにシェーダをbindさせずvertex,index描画だけさせる
+    void ExecuteGeometryOnly(ID3D11DeviceContext* pContext,
+        ID3D11Buffer* pPerFrameCB,
+        BlendStates* pBlendStates,
+        bool isAfterClear) {
+        int opaqueIdx = static_cast<int>(BlendMode::Opaque);
+        int alphaIdx = static_cast<int>(BlendMode::AlphaBlend);
+        int addIdx = static_cast<int>(BlendMode::Additive);
+
+        // 1. ソート処理
+        // 不透明は手前から奥（昇順）
+        std::sort(m_queues[opaqueIdx].begin(), m_queues[opaqueIdx].end(),
+            [](const RenderCommand& a, const RenderCommand& b) { return a.depth < b.depth; });
+
+        // 半透明と加算は奥から手前（降順）
+        auto backToFront = [](const RenderCommand& a, const RenderCommand& b) { return a.depth > b.depth; };
+        std::sort(m_queues[alphaIdx].begin(), m_queues[alphaIdx].end(), backToFront);
+        std::sort(m_queues[addIdx].begin(), m_queues[addIdx].end(), backToFront);
+
+        // 2. 順次描画（登録されたステートを自動でバインドしながらループ）
+        for (int i = 0; i < static_cast<int>(BlendMode::Count); ++i) {
+            if (m_queues[i].empty()) continue;
+
+            // 事前に登録しておいた対応するブレンドステートをバインド（参照してBind）
+            if (pBlendStates) {
+                pBlendStates->Bind(pContext, static_cast<BlendMode>(i));
+            }
+
+            // そのブレンドタイプに溜まっているモデルを全描画
+            for (const auto& cmd : m_queues[i]) {
+                cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB); 
+            }
+
+            // 描画が終わったらそのキューをクリア
+            if (isAfterClear)
+                m_queues[i].clear();
+        }
+    }
+
     // RenderQueue側にオーバーライド設定メソッドを追加
     void SetOverrideVS(Shader* pVS)
     {

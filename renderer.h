@@ -61,7 +61,7 @@ public:
     //ライト
     void UpdateDirectionalLightConstantBuffer();
     void SubmitShadowPass();
-    void UpdateShadowCubeConstantBuffer();
+    void UpdatePointLightConstantBuffer();
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -124,6 +124,6 @@ private:
     std::vector<ShadowCubeMap> m_shadowCubeMaps;
     Shader* m_pShadowCubeShader = nullptr;
         //ジオメトリシェーダ
-    ID3D11GeometryShader* m_shadowCubeGS = nullptr;
+    ID3D11GeometryShader* m_pShadowCubeGS = nullptr;
 
 };
