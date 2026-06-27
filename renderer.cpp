@@ -188,10 +188,10 @@ bool Renderer::Initialize(Graphics* graphics)
     // Rendererèâä˙âªéûÇ»Ç«
     DirectionalLight dirLight = {};
     dirLight.type = LightType::Directional;
-    dirLight.position = { -3.0f, 3.0f, 5.0f };
+    dirLight.position = { -3.0f, 5.0f, 5.0f };
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
-    dirLight.color = { 0.8f, 0.8f, 0.8f, 1.0f };
-    dirLight.intensity = 1.0f;
+    dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    dirLight.intensity = 0.1f;//0.1f
         //m_lightsóvëfêîìoò^
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:ãÛÇ…ÇµÇƒÇ›ÇÈ
@@ -230,9 +230,9 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
         //ÉâÉCÉgê∂ê¨
     PointLight  pointLight = {};
-    pointLight.position = { 0.0f, 5.0f, 3.0f };
+    pointLight.position = { 5.0f, 5.0f, 3.0f };
     pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
-    pointLight.intensity = 1.0f;
+    pointLight.intensity = 1.0f;//0.6f
         //m_lightsóvëfêîìoò^
     m_pointLights.reserve(MAX_LIGHTS);
     m_pointLights.push_back(pointLight);
