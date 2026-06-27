@@ -191,7 +191,7 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.position = { -3.0f, 5.0f, 5.0f };
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.1f;//0.1f
+    dirLight.intensity = 0.05f;//0.1f
         //m_lightsóvëfêîìoò^
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:ãÛÇ…ÇµÇƒÇ›ÇÈ
