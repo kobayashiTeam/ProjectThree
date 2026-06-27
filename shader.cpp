@@ -11,7 +11,12 @@ bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wcha
 
     // 1. 頂点シェーダーのコンパイルと生成
     hr = D3DCompileFromFile(vsFileName, nullptr, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, &pErrorBlob);
-    if (FAILED(hr)) { if (pErrorBlob) pErrorBlob->Release(); return false; }
+    if (FAILED(hr)) {
+        if (pErrorBlob) {
+            // 出力ウィンドウにコンパイルエラーの詳細を表示
+            OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+            pErrorBlob->Release();
+        } return false; }
 
     hr = pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &m_pVertexShader);
     if (FAILED(hr)) { pVSBlob->Release(); return false; }

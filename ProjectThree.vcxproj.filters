@@ -153,9 +153,6 @@
     <ClCompile Include="Shaders\VignetteShader.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\LitShader.hlsl">
-      <Filter>リソース ファイル\shader_mat</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\UnLitShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
@@ -215,6 +212,9 @@
     </ClCompile>
     <ClCompile Include="Shaders\ShadowCubeShader.hlsl">
       <Filter>リソース ファイル\shadow</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\LitShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
