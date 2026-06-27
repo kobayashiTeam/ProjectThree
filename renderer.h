@@ -59,7 +59,7 @@ public:
     //defaultRTに戻してから描画するQuadオブジェクト
     bool createFinalRenderQuad();
     //ライト
-    void UpdateDirectionalLightConstantBuffer();
+    void UpdateLightDataConstantBuffer();
     void SubmitShadowPass();
     void UpdatePointLightConstantBuffer();
 
@@ -108,9 +108,11 @@ private:
     //instancedModel
     InstancedModel* m_pInstancedModel = nullptr;
 
+    //Light
+        //共用
+    ComPtr<ID3D11Buffer> m_lightCB;//種類を問わず全てのライトをここに入れる。LitShaderのPSで使う
     //DirectionalLight
-    std::vector<DirectionalLight>     m_lights;
-    ComPtr<ID3D11Buffer> m_lightCB;//cb用のバッファ
+    std::vector<DirectionalLight>     m_directionalLights;
     //shadowMap
     std::vector<ShadowMap>     m_shadowMaps;
     Shader* m_pShadowShader = nullptr;
@@ -125,5 +127,7 @@ private:
     Shader* m_pShadowCubeShader = nullptr;
         //ジオメトリシェーダ
     ID3D11GeometryShader* m_pShadowCubeGS = nullptr;
+        //サンプラー
+    ComPtr<ID3D11SamplerState> m_shadowCubeSampler;
 
 };

@@ -188,18 +188,18 @@ bool Renderer::Initialize(Graphics* graphics)
     // Renderer初期化時など
     DirectionalLight dirLight = {};
     dirLight.type = LightType::Directional;
-    dirLight.position = { -3.0f, 3.0f, 5.0f };//{ 0.0f, 5.0f, 2.0f };
+    dirLight.position = { -3.0f, 3.0f, 5.0f };
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
-    dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    dirLight.color = { 0.8f, 0.8f, 0.8f, 1.0f };
     dirLight.intensity = 1.0f;
         //m_lights要素数登録
-    m_lights.reserve(MAX_LIGHTS);
-    m_lights.push_back(dirLight);
+    m_directionalLights.reserve(MAX_LIGHTS);
+    m_directionalLights.push_back(dirLight);//test:空にしてみる
 
     //シャドウマップ(Directional Light)
     ShadowMap shadowMap;
     shadowMap.Initialize(pDevice,2048);
-    shadowMap.setLight(&m_lights[0]);
+    shadowMap.setLight(&m_directionalLights[0]);
         //ライトとの組み合わせ、事前に配列予約
     m_shadowMaps.reserve(MAX_LIGHTS);
     m_shadowMaps.push_back(shadowMap);
@@ -230,8 +230,8 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
         //ライト生成
     PointLight  pointLight = {};
-    pointLight.position = { 5.0f, 5.0f, 8.0f };
-    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    pointLight.position = { 0.0f, 5.0f, 3.0f };
+    pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
     pointLight.intensity = 1.0f;
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
@@ -247,6 +247,16 @@ bool Renderer::Initialize(Graphics* graphics)
     m_pShadowCubeShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
         //GS設定
     m_pShadowCubeGS = ShaderManager::GetInstance().getGS(ShaderID::ShadowCubeGS);
+        //通常サンプラー生成
+    sampDesc = {};
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    pDevice->CreateSamplerState(&sampDesc, &m_shadowCubeSampler);
 
 
 
@@ -264,7 +274,7 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // フレームごとの定数バッファ更新(b0)
     UpdatePerFrameConstantBuffer();
         //DirectionalLightも共通なので送る(b3)
-    UpdateDirectionalLightConstantBuffer();
+    UpdateLightDataConstantBuffer();
         //PointLightも送る(b4)
     UpdatePointLightConstantBuffer();
 }
@@ -323,7 +333,7 @@ void Renderer::Execute()
     m_shadowMaps[0].BeginRender(pContext);
     // シャドウ用VSをバインド
     m_pShadowShader->Bind(pContext);
-    pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
+    //pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
     // ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
     // 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
     SubmitShadowPass();//対象renderQueueのコマンド内容を変える
@@ -338,7 +348,7 @@ void Renderer::Execute()
     m_shadowCubeMaps[0].BeginRender(pContext);
     m_pShadowCubeShader->Bind(pContext);  // VS+PS
     pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
-    pContext->PSSetShader(nullptr, nullptr, 0);
+    //pContext->PSSetShader(nullptr, nullptr, 0);
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].
         ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowCubeMaps[0].EndRender(pContext);
@@ -348,11 +358,16 @@ void Renderer::Execute()
     // ==========================================
     m_offscreenRTwithMSAA->Clear(pContext);//テスト：
     m_offscreenRTwithMSAA->Bind(pContext); // ※前回統合した自作のレンダーターゲット
-    // シャドウマップをt3にバインド
+    // Directionalライトの為のシャドウマップをt3に、比較用サンプラーもバインド
     auto* srv = m_shadowMaps[0].GetSRV();
     pContext->PSSetShaderResources(3, 1, &srv);
     ID3D11SamplerState* sampler = m_shadowSampler.Get();
-    pContext->PSSetSamplers(1, 1, &sampler); // ← これも同じタイミング
+    pContext->PSSetSamplers(1, 1, &sampler); 
+    //Pointライトの為のシャドウマップをt4に、キューブ用サンプラーもバインド
+    srv = m_shadowCubeMaps[0].GetSRV();
+    pContext->PSSetShaderResources(4,1,&srv);
+    sampler = m_shadowCubeSampler.Get();
+    pContext->PSSetSamplers(2,1,&sampler);
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
@@ -487,33 +502,44 @@ bool Renderer::createFinalRenderQuad() {
 }
 
 
-void Renderer::UpdateDirectionalLightConstantBuffer()
+void Renderer::UpdateLightDataConstantBuffer()
 {
-    
-
     LightBufferCB cb = {};
-    cb.lightCount = (int)m_lights.size();
 
-    for (int i = 0; i < cb.lightCount && i < MAX_LIGHTS; i++)
+    // Directionalを先に詰める
+    for (int i = 0; i < (int)m_directionalLights.size() && cb.lightCount < MAX_LIGHTS; i++)
     {
-        const DirectionalLight& L = m_lights[i];
-        cb.lights[i].position = { L.position.x, L.position.y, L.position.z, 0.0f };
-        cb.lights[i].direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
-        cb.lights[i].color = L.color;
-        cb.lights[i].intensity = L.intensity;
-        cb.lights[i].type = (int)L.type;
-
-        // lightSpaceMatrixはTransposeして送る
+        const DirectionalLight& L = m_directionalLights[i];
+        auto& dst = cb.lights[cb.lightCount];
+        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
+        dst.direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
+        dst.color = L.color;
+        dst.intensity = L.intensity;
+        dst.type = (int)LightType::Directional;
+        dst.farPlane = 0.0f;  // 未使用
         DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
-
-        cb.lights[i].lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
+        dst.lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
+        cb.lightCount++;
     }
 
-    m_graphics->GetContext()->UpdateSubresource(m_lightCB.Get(), 0, nullptr, &cb, 0, 0);
+    // Pointを続けて詰める
+    for (int i = 0; i < (int)m_pointLights.size() && cb.lightCount < MAX_LIGHTS; i++)
+    {
+        const PointLight& L = m_pointLights[i];
+        auto& dst = cb.lights[cb.lightCount];
+        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
+        dst.color = L.color;
+        dst.intensity = L.intensity;
+        dst.type = (int)LightType::Point;
+        dst.farPlane = L.farPlane;
+        // lightSpaceMatrixは未使用なのでゼロのまま
+        cb.lightCount++;
+    }
 
-    // 未使用スロット（b2）にバインド・既存のb0は触らない//perframe,model,materialについでb3に
-    ID3D11Buffer* cbArray[] = { m_lightCB.Get() };
     auto* ctx = m_graphics->GetContext();
+    ctx->UpdateSubresource(m_lightCB.Get(), 0, nullptr, &cb, 0, 0);
+
+    ID3D11Buffer* cbArray[] = { m_lightCB.Get() };
     ctx->VSSetConstantBuffers(3, 1, cbArray);
     ctx->PSSetConstantBuffers(3, 1, cbArray);
 }
