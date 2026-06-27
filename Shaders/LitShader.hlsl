@@ -1,5 +1,5 @@
-// ---------------------------------------------------------
-// ’è”ƒoƒbƒtƒ@‚Ì•ªŠ„
+ï»¿// ---------------------------------------------------------
+// å®šæ•°ãƒãƒƒãƒ•ã‚¡ã®åˆ†å‰²
 // ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
@@ -41,7 +41,7 @@ cbuffer LightBuffer : register(b3)
 };
 
 // ---------------------------------------------------------
-// “üo—Í\‘¢‘Ì
+// å…¥å‡ºåŠ›æ§‹é€ ä½“
 // ---------------------------------------------------------
 struct VS_INPUT
 {
@@ -71,7 +71,7 @@ SamplerComparisonState shadowSampler : register(s1);
 SamplerState shadowCubeSampler : register(s2);
 
 // ---------------------------------------------------------
-// ’¸“_ƒVƒF[ƒ_[
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
 // ---------------------------------------------------------
 PS_INPUT VS(VS_INPUT input)
 {
@@ -88,7 +88,7 @@ PS_INPUT VS(VS_INPUT input)
     output.Color = input.Color;
     output.Tex = input.Tex;
 
-    // Directionalƒ‰ƒCƒg‚ÌlightSpacePosilights[0]ŒÅ’èj
+    // Directionalãƒ©ã‚¤ãƒˆã®lightSpacePosï¼ˆlights[0]å›ºå®šï¼‰
     output.LightSpacePos = float4(0, 0, 0, 0);
     for (int i = 0; i < lightCount; i++)
     {
@@ -103,7 +103,7 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ƒVƒƒƒhƒEŒvZ
+// ã‚·ãƒ£ãƒ‰ã‚¦è¨ˆç®—
 // ---------------------------------------------------------
 float ShadowCalculation_Directional(float4 lightSpacePos)
 {
@@ -121,18 +121,18 @@ float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
     float currentDepth = length(lightToFrag);
     float closestDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r * farPlane;
     
-    // yƒeƒXƒg—pzƒVƒƒƒhƒEƒ}ƒbƒv‚ğ“Ç‚Ü‚¸Aƒ‰ƒCƒg‚©‚ç‚Ì‹——£‚ª100ˆÈ“à‚È‚çuŒõ‚ª“Í‚­(1.0)v‚Æ‚·‚é
+    // ã€ãƒ†ã‚¹ãƒˆç”¨ã€‘ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ã‚’èª­ã¾ãšã€ãƒ©ã‚¤ãƒˆã‹ã‚‰ã®è·é›¢ãŒ100ä»¥å†…ãªã‚‰ã€Œå…‰ãŒå±Šã(1.0)ã€ã¨ã™ã‚‹
     if (currentDepth < 100.0f)
     {
-        return 1.0f; // Œõ‚ª“–‚½‚é
+        return 1.0f; // å…‰ãŒå½“ãŸã‚‹
     }
-    return 0.0f; // 100‚æ‚è‰“‚¢‚Ì‚Å‰eiˆÃˆÅj‚É‚·‚é
+    return 0.0f; // 100ã‚ˆã‚Šé ã„ã®ã§å½±ï¼ˆæš—é—‡ï¼‰ã«ã™ã‚‹
     
-    return (currentDepth - 0.0f > closestDepth) ? 0.0f : 1.0f;
+    return (currentDepth - 0.005f > closestDepth) ? 0.0f : 1.0f;
 }
 
 // ---------------------------------------------------------
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_[
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
 // ---------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
@@ -142,15 +142,15 @@ float4 PS(PS_INPUT input) : SV_Target
     float3 normal = normalize(input.Normal);
     float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
 
-    // yC³zƒAƒ“ƒrƒGƒ“ƒg‚Íƒ‹[ƒv‚ÌŠO‚Å1‰ñ‚¾‚¯iƒx[ƒX‚ÌˆÃ‚³‚ğŒˆ‚ß‚éj
-    // ƒV[ƒ“‘S‘Ì‚ÌŠÂ‹«Œõ‚Æ‚µ‚ÄA—á‚¦‚Î 0.1 ’ö“x‚Ì‹­‚³‚É‚·‚é
+    // ã€ä¿®æ­£ã€‘ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆã¯ãƒ«ãƒ¼ãƒ—ã®å¤–ã§1å›ã ã‘ï¼ˆãƒ™ãƒ¼ã‚¹ã®æš—ã•ã‚’æ±ºã‚ã‚‹ï¼‰
+    // ã‚·ãƒ¼ãƒ³å…¨ä½“ã®ç’°å¢ƒå…‰ã¨ã—ã¦ã€ä¾‹ãˆã° 0.1 ç¨‹åº¦ã®å¼·ã•ã«ã™ã‚‹
     float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
     
     float3 totalDirectLight = float3(0.0f, 0.0f, 0.0f);
 
     for (int i = 0; i < lightCount; i++)
     {
-        // --- (ƒ‰ƒCƒg•ûŒü‚ÆŒ¸Š‚ÌŒvZ‚Í‚»‚Ì‚Ü‚Ü) ---
+        // --- (ãƒ©ã‚¤ãƒˆæ–¹å‘ã¨æ¸›è¡°ã®è¨ˆç®—ã¯ãã®ã¾ã¾) ---
         float3 lightDir;
         if (lights[i].type == 0)
         {
@@ -169,8 +169,8 @@ float4 PS(PS_INPUT input) : SV_Target
             (vAttenuation.x + vAttenuation.y * distance + vAttenuation.z * distance * distance);
         }
 
-        // --- (ƒVƒƒƒhƒEŒvZ‚Í‚»‚Ì‚Ü‚Ü) ---
-        float shadow = 1.0f; // ƒfƒtƒHƒ‹ƒg‚Í‰e‚È‚µ(1.0)
+        // --- (ã‚·ãƒ£ãƒ‰ã‚¦è¨ˆç®—ã¯ãã®ã¾ã¾) ---
+        float shadow = 1.0f; // ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã¯å½±ãªã—(1.0)
         if (lights[i].type == 0)
         {
             shadow = ShadowCalculation_Directional(input.LightSpacePos);
@@ -180,25 +180,25 @@ float4 PS(PS_INPUT input) : SV_Target
             shadow = ShadowCalculation_Point(input.WorldPos, lights[i].position.xyz, lights[i].farPlane);
         }
 
-        // --- ƒ‰ƒCƒeƒBƒ“ƒOŒvZiƒAƒ“ƒrƒGƒ“ƒg‚ğ”rœj ---
+        // --- ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°è¨ˆç®—ï¼ˆã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆã‚’æ’é™¤ï¼‰ ---
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0f);
-        float3 diffuse = diff * lights[i].color.xyz * lights[i].intensity; // intensity‚àl—¶
+        float3 diffuse = diff * lights[i].color.xyz * lights[i].intensity; // intensityã‚‚è€ƒæ…®
 
         // Specular
         float3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
         float3 specular = 0.5f * spec * lights[i].color.xyz * lights[i].intensity;
 
-        // Œ¸Š‚ÆƒVƒƒƒhƒE‚ğ“K—p
+        // æ¸›è¡°ã¨ã‚·ãƒ£ãƒ‰ã‚¦ã‚’é©ç”¨
         diffuse *= attenuation * shadow;
         specular *= attenuation * shadow;
 
-        // ’¼ËŒõ‚Ì‚İ‚ğ’~Ï
+        // ç›´å°„å…‰ã®ã¿ã‚’è“„ç©
         totalDirectLight += diffuse * objectColor.xyz + specular;
     }
 
-    // ÅIƒJƒ‰[  ‘S‘Ì‚ÌŠÂ‹«Œõ { ’~Ï‚³‚ê‚½’¼ËŒõ
+    // æœ€çµ‚ã‚«ãƒ©ãƒ¼ ï¼ å…¨ä½“ã®ç’°å¢ƒå…‰ ï¼‹ è“„ç©ã•ã‚ŒãŸç›´å°„å…‰
     float3 finalColor = globalAmbient + totalDirectLight;
 
     
@@ -207,9 +207,9 @@ float4 PS(PS_INPUT input) : SV_Target
     float closestDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r * lights[1].farPlane;
 
     return float4(
-    currentDepth > closestDepth ? 1.0f : 0.0f,
-    currentDepth > closestDepth ? 0.0f : 1.0f,
-    0.0f, 1.0f);
+    currentDepth > closestDepth ? 1.0f : 0.0f, //R
+    currentDepth > closestDepth ? 0.0f : 1.0f, //G
+    0.0f, 1.0f); //B,Î±
     
     return float4(finalColor, objectColor.a);
 }

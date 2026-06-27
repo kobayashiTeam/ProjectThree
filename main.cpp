@@ -243,8 +243,8 @@ bool InitDevice()
     g_pMainModel2->SetTransparent(true);
     //Model3
     g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
-    g_pMainModel3->SetPosition(0.0f,-3.0f,5.0f);
-    g_pMainModel3->SetScale(10.0f,1.0f,10.0f);
+    g_pMainModel3->SetPosition(0.0f,-7.0f,5.0f);
+    g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
     //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
