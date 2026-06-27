@@ -32,7 +32,8 @@ struct LightData
     matrix lightSpaceMatrix;
     int type;
     float intensity;
-    float2 padding;
+    float farPlane;
+    float padding;
 };
 
 // LightBufferCB全体
@@ -69,7 +70,10 @@ SamplerState samLinear : register(s0);
 
 // 追加
 Texture2D shadowMap : register(t3);
+TextureCube shadowCubeMap : register(t4); // 追加
+
 SamplerComparisonState shadowSampler : register(s1);
+SamplerState shadowCubeSampler : register(s2); // 追加
 
 // ---------------------------------------------------------
 // 頂点シェーダー (VS)
@@ -99,7 +103,7 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 
-// ShadowCalculation関数
+// Directional用（既存のまま）
 float ShadowCalculation(float4 lightSpacePos)
 {
     float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
@@ -110,6 +114,16 @@ float ShadowCalculation(float4 lightSpacePos)
     return shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, currentDepth - 0.005f);//0.005
    
 }
+
+// Point用（新規）
+float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
+{
+    float3 lightToFrag = worldPos - lightPos;
+    float currentDepth = length(lightToFrag);
+    float closestDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r * farPlane;
+    return (currentDepth - 0.05f > closestDepth) ? 0.0f : 1.0f;
+}
+
 // ---------------------------------------------------------
 // ピクセルシェーダー (PS)
 // ---------------------------------------------------------
