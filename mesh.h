@@ -19,6 +19,7 @@ public:
         const DirectX::XMFLOAT3* normals,
         const DirectX::XMFLOAT4* colors,
         const DirectX::XMFLOAT2* uvs,
+        const DirectX::XMFLOAT3* tans,
         UINT vertexCount,
         const DWORD* indices,
         UINT indexCount);

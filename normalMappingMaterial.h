@@ -35,4 +35,7 @@ public:
 
     // ★親のBindを上書き（オーバーライド）して、自分専用のバッファもセットする！
     void Bind(ID3D11DeviceContext* pContext) override;
+
+    //test:normalmapの入手
+	bool InitializeNormalMapFromFile(ID3D11Device* pDevice, const wchar_t* pFileName);
 };

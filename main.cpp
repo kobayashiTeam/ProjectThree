@@ -41,6 +41,7 @@ NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
 Model* g_pMainModel = nullptr;
 Model* g_pMainModel2 = nullptr;
 Model* g_pMainModel3 = nullptr;
+Model* g_pMainModel4 = nullptr;//brick
 //oldCamera(modelResource)用モデル
 Model* g_pOldCameraBagModel = nullptr;
 
@@ -237,7 +238,14 @@ bool InitDevice()
     g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
 
     //normalMappingMaterial
-	//g_pNormalMappingMaterial = new NormalMappingMaterial();
+	g_pNormalMappingMaterial = new NormalMappingMaterial();
+        //まずdiffuse画像を設定
+    if (!g_pNormalMappingMaterial->InitializeFromFile(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::NormalMapping),
+        L"assets/brick/diff.png"))return false;
+	    //次にnormal画像を設定
+    if (!g_pNormalMappingMaterial->InitializeNormalMapFromFile(pDevice,
+        L"assets/brick/nor.png"))return false;
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え
@@ -250,6 +258,10 @@ bool InitDevice()
     g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel3->SetPosition(0.0f,-7.0f,5.0f);
     g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
+    //Model4
+    g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
+    g_pMainModel4->SetPosition(-3.0f, 0.0f, 5.0f);
+    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);
     //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
@@ -290,8 +302,6 @@ void UpdateScene()
 
     g_pCamera->UpdateDirection(deltaYaw, deltaPitch);
 
-    // 以前の eye/at/up 渡しの3行は削除
-
     // モデル回転
     g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
 }
@@ -311,6 +321,7 @@ void Render()
     //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
+    g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();

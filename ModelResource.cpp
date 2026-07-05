@@ -92,6 +92,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     std::vector<DirectX::XMFLOAT3> normals;
     std::vector<DirectX::XMFLOAT4> colors;
     std::vector<DirectX::XMFLOAT2> uvs;
+    std::vector<DirectX::XMFLOAT3> tangents; // ★追加！
     std::vector<DWORD> indices;
 
      // --- 頂点データのコンバート ---
@@ -129,6 +130,20 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
         else {
             uvs.push_back({ 0.0f, 0.0f }); // フォールバック
         }
+
+        // ★Tangent のロード & フォールバック処理
+        if (mesh->HasTangentsAndBitangents() && mesh->mTangents != nullptr) {
+            tangents.push_back({
+                mesh->mTangents[i].x,
+                mesh->mTangents[i].y,
+                mesh->mTangents[i].z
+                });
+        }
+        else {
+            // もしモデルがTangentを持っていなければ、
+            // ひとまず安全なデフォルト値（前方を向くダミー値など）を詰める
+            tangents.push_back({ 1.0f, 0.0f, 0.0f });
+        }
     }
 
     // --- インデックスデータのコンバート ---
@@ -143,7 +158,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
     Mesh* newMesh = new Mesh();
     newMesh->Create(
         pDevice,
-        positions.data(), normals.data(), colors.data(), uvs.data(),
+		positions.data(), normals.data(), colors.data(), uvs.data(), tangents.data(),
         (UINT)positions.size(),
         indices.data(), (UINT)indices.size()
     );

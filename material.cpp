@@ -26,7 +26,7 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
         td.Height = txtHeight;
         td.MipLevels = 1;
         td.ArraySize = 1;
-        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//caution:ガンマ補正してある、データマップには不適
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//caution:ガンマ補正してある、通常テクスチャに適
         td.SampleDesc.Count = 1;
         td.Usage = D3D11_USAGE_DEFAULT;
         td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -37,14 +37,13 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
         td.Height = txtHeight;
         td.MipLevels = 1;
         td.ArraySize = 1;
-        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//caution:ガンマ補正してある、データマップには不適
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//caution:ガンマ補正しない、データマップに適
         td.SampleDesc.Count = 1;
         td.Usage = D3D11_USAGE_DEFAULT;
         td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     }
 
 	//具体的なテクスチャ内容を渡すための構造体
-    //代入の型が気になる。pSysMemってなんでもいいのか？
     D3D11_SUBRESOURCE_DATA tInitData = {};
     tInitData.pSysMem = pTexturePixels;
     tInitData.SysMemPitch = txtWidth * sizeof(UINT32);

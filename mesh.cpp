@@ -19,6 +19,7 @@ bool Mesh::Create(
     const DirectX::XMFLOAT3* normals,
     const DirectX::XMFLOAT4* colors,
     const DirectX::XMFLOAT2* uvs,
+    const DirectX::XMFLOAT3* tans,
     UINT vertexCount,
     const DWORD* indices,
     UINT indexCount)
@@ -53,9 +54,18 @@ bool Mesh::Create(
     if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pUvBuffer)))    return false;
 
     //Tangent
-	//bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
-	//initData.pSysMem = nullptr; // Tangentデータがない場合はnullptrを指定
-	//if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pTangentBuffer))) return false;
+    if (tans != nullptr) {
+        bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
+        initData.pSysMem = tans;
+        if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pTangentBuffer))) return false;
+    }
+    else {
+        // ★Tangentデータが渡されなかった場合は、ダミー（ゼロ）でバッファを作成
+        std::vector<DirectX::XMFLOAT3> dummyTangents(vertexCount, DirectX::XMFLOAT3(0, 0, 0));
+        bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
+        initData.pSysMem = dummyTangents.data();
+        if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pTangentBuffer))) return false;
+    }
 
     // Index
     D3D11_BUFFER_DESC ibd = {};
@@ -72,14 +82,15 @@ void Mesh::Render(ID3D11DeviceContext* pImmediateContext)
 {
     if (!m_pPosBuffer || !m_pIndexBuffer) return;
 
-    ID3D11Buffer* vbs[4] = { m_pPosBuffer, m_pNrmBuffer, m_pColorBuffer, m_pUvBuffer };
-    UINT strides[4] = { 
+    ID3D11Buffer* vbs[5] = { m_pPosBuffer, m_pNrmBuffer, m_pColorBuffer, m_pUvBuffer,m_pTangentBuffer };
+    UINT strides[5] = { 
         sizeof(DirectX::XMFLOAT3), 
         sizeof(DirectX::XMFLOAT3), 
         sizeof(DirectX::XMFLOAT4), 
-        sizeof(DirectX::XMFLOAT2) };
-    UINT offsets[4] = { 0, 0, 0, 0 };
-    pImmediateContext->IASetVertexBuffers(0, 4, vbs, strides, offsets);
+        sizeof(DirectX::XMFLOAT2),
+        sizeof(DirectX::XMFLOAT3), };
+    UINT offsets[5] = { 0, 0, 0, 0,0 };
+    pImmediateContext->IASetVertexBuffers(0, 5, vbs, strides, offsets);
     pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pImmediateContext->DrawIndexed(m_indexCount, 0, 0);
 }
@@ -227,6 +238,47 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
     };
 
 
+    // ★既存の positions, normals, colors, uvs の後ろに追加してください
+    DirectX::XMFLOAT3 tangents[] =
+    {
+        // 1. 手前面 (Normal: 0, 0, -1) -> UVの右方向は「空間の右(+X)」
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+
+        // 2. 奥面 (Normal: 0, 0, 1) -> UVの右方向は「空間の左(-X)」
+        {-1.0f,  0.0f,  0.0f },
+        {-1.0f,  0.0f,  0.0f },
+        {-1.0f,  0.0f,  0.0f },
+        {-1.0f,  0.0f,  0.0f },
+
+        // 3. 上面 (Normal: 0, 1, 0) -> UVの右方向は「空間の右(+X)」
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+
+        // 4. 底面 (Normal: 0, -1, 0) -> UVの右方向は「空間の右(+X)」
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+        { 1.0f,  0.0f,  0.0f },
+
+        // 5. 左側面 (Normal: -1, 0, 0) -> UVの右方向は「空間の奥(-Z)」
+        { 0.0f,  0.0f, -1.0f },
+        { 0.0f,  0.0f, -1.0f },
+        { 0.0f,  0.0f, -1.0f },
+        { 0.0f,  0.0f, -1.0f },
+
+        // 6. 右側面 (Normal: 1, 0, 0) -> UVの右方向は「空間の手前(+Z)」
+        { 0.0f,  0.0f,  1.0f },
+        { 0.0f,  0.0f,  1.0f },
+        { 0.0f,  0.0f,  1.0f },
+        { 0.0f,  0.0f,  1.0f }
+    };
+
+
     DWORD indices[] =
     {
         0, 1, 2,    0, 2, 3,
@@ -238,7 +290,7 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
     };
 	Mesh* pMesh = new Mesh();
 	
-    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,_countof(positions),indices,_countof(indices)))
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,tangents,_countof(positions),indices,_countof(indices)))
     {
         delete pMesh;
         return nullptr;
@@ -285,6 +337,15 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
         { 0.0f, 1.0f }  // 左下
     };
 
+    // ★既存の positions, normals, colors, uvs の後ろに追加してください
+    DirectX::XMFLOAT3 tangents[] =
+    {
+        { 1.0f,  0.0f,  0.0f }, // 左上頂点に対する接線
+        { 1.0f,  0.0f,  0.0f }, // 右上頂点に対する接線
+        { 1.0f,  0.0f,  0.0f }, // 右下頂点に対する接線
+        { 1.0f,  0.0f,  0.0f }  // 左下頂点に対する接線
+    };
+
     // 時計回りが表面（D3D11のデフォルト）となるようにインデックスを設定
     DWORD indices[] =
     {
@@ -293,7 +354,7 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     };
 
     Mesh* pMesh = new Mesh();
-    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,_countof(positions), indices, _countof(indices)))
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,tangents,_countof(positions), indices, _countof(indices)))
     {
         delete pMesh;
         return nullptr;
