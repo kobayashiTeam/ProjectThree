@@ -48,4 +48,6 @@ private:
     ID3D11Buffer* m_pNrmBuffer = nullptr;
     ID3D11Buffer* m_pColorBuffer = nullptr;
     ID3D11Buffer* m_pUvBuffer = nullptr;
+    //test:法線マップ用
+	ID3D11Buffer* m_pTangentBuffer = nullptr;
 };

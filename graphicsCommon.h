@@ -37,6 +37,7 @@ enum class ShaderID {
     ScreenBlit,
     NormalViz,
     PointSprite,
+    NormalMapping,
     // postProcess
     Monochromatic,
     Inversion,

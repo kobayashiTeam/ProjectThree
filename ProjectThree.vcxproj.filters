@@ -216,6 +216,12 @@
     <ClCompile Include="Shaders\LitShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\NormalMappingShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
+    <ClCompile Include="normalMappingMaterial.cpp">
+      <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -334,6 +340,9 @@
     </ClInclude>
     <ClInclude Include="shadowCubeMap.h">
       <Filter>ヘッダー ファイル\light_shadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="normalMappingMaterial.h">
+      <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

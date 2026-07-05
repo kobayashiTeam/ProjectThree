@@ -52,6 +52,11 @@ bool Mesh::Create(
     initData.pSysMem = uvs;
     if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pUvBuffer)))    return false;
 
+    //Tangent
+	//bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
+	//initData.pSysMem = nullptr; // Tangentデータがない場合はnullptrを指定
+	//if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pTangentBuffer))) return false;
+
     // Index
     D3D11_BUFFER_DESC ibd = {};
     ibd.Usage = D3D11_USAGE_DEFAULT;

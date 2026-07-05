@@ -29,6 +29,7 @@ Camera* g_pCamera = nullptr;
 #include"unLitMaterial.h"
 #include"outLineMaterial.h"
 #include"normalVizMaterial.h"
+#include"normalMappingMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
@@ -36,6 +37,7 @@ LitMaterial* g_pLitMaterial = nullptr;
 UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 NormalVizMaterial* g_pNormalVizMaterial = nullptr;
+NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
 Model* g_pMainModel = nullptr;
 Model* g_pMainModel2 = nullptr;
 Model* g_pMainModel3 = nullptr;
@@ -233,6 +235,9 @@ bool InitDevice()
     if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::NormalViz), checker, 2, 2,true)) return false;
     g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
+
+    //normalMappingMaterial
+	//g_pNormalMappingMaterial = new NormalMappingMaterial();
 
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え

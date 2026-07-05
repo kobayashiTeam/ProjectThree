@@ -34,6 +34,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::PointSprite, L"Shaders/PointSpriteShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::NormalMapping, L"Shaders/NormalMappingShader.hlsl")) return false;
         //screenblit
         if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
         //postProcess
@@ -105,6 +106,14 @@ private:
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
+        D3D11_INPUT_ELEMENT_DESC normalMappingLayout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,             D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    1, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,       4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+        };
+
         // IDÇ≈êUÇËï™ÇØ
         const D3D11_INPUT_ELEMENT_DESC* layout = standardLayout;
         UINT layoutCount = 4;
@@ -146,6 +155,10 @@ private:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;
+		case ShaderID::NormalMapping:
+			layout = normalMappingLayout;
+			layoutCount = 5;
+			break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
         case ShaderID::Sepia:

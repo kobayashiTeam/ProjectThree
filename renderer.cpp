@@ -133,7 +133,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_postProcessChain.push_back(m_finalRenderVignettePostProcess);
 
     //最終描画用のquadをここで生成
-    this->createFinalRenderQuad();
+    if (!this->createFinalRenderQuad())return false;
 
     //スカイボックスの初期化
     m_pSkyBox = new SkyBox();

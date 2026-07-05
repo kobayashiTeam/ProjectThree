@@ -169,6 +169,7 @@
     <ClCompile Include="modelResource.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="normalMappingMaterial.cpp" />
     <ClCompile Include="normalVizMaterial.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
@@ -204,6 +205,7 @@
     </ClInclude>
     <ClInclude Include="monochromePostProcess.h" />
     <ClInclude Include="moveGSEffect.h" />
+    <ClInclude Include="normalMappingMaterial.h" />
     <ClInclude Include="normalVizGSEffect.h" />
     <ClInclude Include="normalVizMaterial.h" />
     <ClInclude Include="outLine.h" />
@@ -407,6 +409,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Shaders\ShadowCubeShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Shaders\NormalMappingShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
