@@ -121,13 +121,6 @@ float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
     float currentDepth = length(lightToFrag);
     float closestDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r * farPlane;
     
-    //// 【テスト用】シャドウマップを読まず、ライトからの距離が100以内なら「光が届く(1.0)」とする
-    //if (currentDepth < 100.0f)
-    //{
-    //    return 1.0f; // 光が当たる
-    //}
-    //return 0.0f; // 100より遠いので影（暗闇）にする
-    
     return (currentDepth - 0.05f > closestDepth) ? 0.0f : 1.0f;
 }
 
@@ -201,31 +194,6 @@ float4 PS(PS_INPUT input) : SV_Target
 
     // 最終カラー ＝ 全体の環境光 ＋ 蓄積された直射光
     float3 finalColor = globalAmbient + totalDirectLight;
-    
-    
-    
-
-    ////①
-    //float3 lightToFrag = input.WorldPos - lights[1].position.xyz;
-    //float currentDepth = length(lightToFrag);
-    //float closestDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r * lights[1].farPlane;
-
-    //return float4(
-    //currentDepth-0.05f > closestDepth ? 1.0f : 0.0f, //R
-    //currentDepth-0.05 > closestDepth ? 0.0f : 1.0f, //G
-    //0.0f, 1.0f); //B,α
-    
-    //    //②
-    //    float3 lightToFrag = input.WorldPos - lights[1].position.xyz;
-    //    float currentDepth = length(lightToFrag);
-    //    float rawDepth = shadowCubeMap.Sample(shadowCubeSampler, lightToFrag).r;
-    //    float closestDepth = rawDepth * lights[1].farPlane;
-
-    //// 2つの値を色で並べて確認
-    //// currentDepthを0〜farPlaneで正規化して赤チャンネルに
-    //// closestDepthを0〜farPlaneで正規化して緑チャンネルに
-    //    float norm = lights[1].farPlane;
-    //    return float4(currentDepth / norm, closestDepth / norm, 0.0f, 1.0f);
     
     return float4(finalColor, objectColor.a);
 }
