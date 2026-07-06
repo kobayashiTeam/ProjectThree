@@ -4,6 +4,7 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <cmath>
+#include <DirectXPackedVector.h> // 必要に応じてインクルード 新規
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -212,8 +213,10 @@ bool InitDevice()
     g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     UINT32 white = 0xFFFFFFFF;
+    // HDR用の白（各チャンネル 1.0f の輝度）
+    DirectX::PackedVector::XMHALF4 whiteHDR(10.0f, 1.0f, 1.0f, 1.0f);
     if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
-        , &white, 1, 1,true))//lit
+        , &whiteHDR, 1, 1,true,true))//lit
         return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
@@ -223,7 +226,7 @@ bool InitDevice()
 	    //unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
 	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::UnLit),checker, 2, 2,true))//unlit
+        GetShader(ShaderID::UnLit),checker, 2, 2,true,false))//unlit
 		return false;
 	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
@@ -232,14 +235,14 @@ bool InitDevice()
         //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::Outline),  checker, 2, 2,true))return false;
+        GetShader(ShaderID::Outline),  checker, 2, 2,true,false))return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
 
         //normalvizMaterial
     g_pNormalVizMaterial = new NormalVizMaterial();
     if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::NormalViz), checker, 2, 2,true)) return false;
+        GetShader(ShaderID::NormalViz), checker, 2, 2,true,true)) return false;
     g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
 
         //normalMappingMaterial

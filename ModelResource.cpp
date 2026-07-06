@@ -202,7 +202,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
         //一次元配列４項目だが、sysmemの定義で2*2の行列として解釈してもらう
         UINT32 dummyPixels[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
         LitMaterial* litMat = new LitMaterial();
-        litMat->Initialize(pDevice, pLitShader, dummyPixels, 2, 2,true);
+        litMat->Initialize(pDevice, pLitShader, dummyPixels, 2, 2,true,true);
         litMat->CreateMaterialBuffer(pDevice);
         litMat->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
         newMaterial = litMat;

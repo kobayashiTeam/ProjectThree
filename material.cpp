@@ -7,12 +7,16 @@
 Material::Material() : m_pShader(nullptr), m_pTextureRV(nullptr), m_pSamplerLinear(nullptr) {}
 Material::~Material() { Cleanup(); }
 
-bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader, 
-    const UINT32* pTexturePixels, UINT txtWidth, UINT txtHeight,bool isSRGB)
+bool Material::Initialize(
+    ID3D11Device* pDevice,
+    Shader* pShader,
+    const void* pTexturePixels, // UINT32* から void* に変更（HDRのfloatデータ等も受け取れるようにするため）
+    UINT txtWidth,
+    UINT txtHeight,
+    bool isSRGB,
+    bool isHDR)                 // HDRフラグを追加
 {
     HRESULT hr;
-    ID3DBlob* pVSBlob = nullptr;
-    ID3DBlob* pErrorBlob = nullptr;
 
     // 1. シェーダーポインタを貰うだけ
     m_pShader = pShader;
@@ -20,38 +24,49 @@ bool Material::Initialize(ID3D11Device* pDevice, Shader* pShader,
 
     // 4. テクスチャの作成
     D3D11_TEXTURE2D_DESC td = {};
-    if (isSRGB) {
-        td = {};
-        td.Width = txtWidth;
-        td.Height = txtHeight;
-        td.MipLevels = 1;
-        td.ArraySize = 1;
-        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//caution:ガンマ補正してある、通常テクスチャに適
-        td.SampleDesc.Count = 1;
-        td.Usage = D3D11_USAGE_DEFAULT;
-        td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    td.Width = txtWidth;
+    td.Height = txtHeight;
+    td.MipLevels = 1;
+    td.ArraySize = 1;
+    td.SampleDesc.Count = 1;
+    td.Usage = D3D11_USAGE_DEFAULT;
+    td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    UINT32 bytesPerPixel = 0;
+
+    // --- フォーマットの3分岐処理 ---
+    if (isHDR)
+    {
+        // 【HDRテクスチャ】 1画素あたり16bit float × 4チャンネル = 64bit (8バイト)
+        // HDR画像は常にリニア空間として扱うため、_SRGB版はありません。
+        td.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        bytesPerPixel = sizeof(unsigned short) * 4; // 2バイト * 4 = 8バイト
     }
-    else {
-        td = {};
-        td.Width = txtWidth;
-        td.Height = txtHeight;
-        td.MipLevels = 1;
-        td.ArraySize = 1;
-        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//caution:ガンマ補正しない、データマップに適
-        td.SampleDesc.Count = 1;
-        td.Usage = D3D11_USAGE_DEFAULT;
-        td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    else if (isSRGB)
+    {
+        // 【通常カラー用SDR】 ガンマ補正あり (4バイト)
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        bytesPerPixel = sizeof(UINT32); // 4バイト
+    }
+    else
+    {
+        // 【データ用SDR】 ガンマ補正なし (4バイト)
+        td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        bytesPerPixel = sizeof(UINT32); // 4バイト
     }
 
-	//具体的なテクスチャ内容を渡すための構造体
+    // 具体的なテクスチャ内容を渡すための構造体
     D3D11_SUBRESOURCE_DATA tInitData = {};
     tInitData.pSysMem = pTexturePixels;
-    tInitData.SysMemPitch = txtWidth * sizeof(UINT32);
+    // フォーマットに合わせて1行のバイト数を正しく計算する
+    tInitData.SysMemPitch = txtWidth * bytesPerPixel;
 
     ID3D11Texture2D* pTexture2D = nullptr;
     hr = pDevice->CreateTexture2D(&td, &tInitData, &pTexture2D);
     if (FAILED(hr)) return false;
 
+    // CreateShaderResourceViewの第2引数をnullptrにしているため、
+    // Texture2D側で設定したフォーマット（R16G16B16A16_FLOAT等）が自動的にSRVにも適用されます。
     hr = pDevice->CreateShaderResourceView(pTexture2D, nullptr, &m_pTextureRV);
     pTexture2D->Release(); // SRVを作ったら本体はリリースしてOK
     if (FAILED(hr)) return false;
