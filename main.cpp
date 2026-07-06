@@ -38,6 +38,7 @@ UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
 NormalVizMaterial* g_pNormalVizMaterial = nullptr;
 NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
+LitMaterial* g_pTestLitMaterial = nullptr; // 追加：テスト用LitMaterial
 Model* g_pMainModel = nullptr;
 Model* g_pMainModel2 = nullptr;
 Model* g_pMainModel3 = nullptr;
@@ -247,6 +248,12 @@ bool InitDevice()
     if (!g_pNormalMappingMaterial->InitializeNormalMapFromFile(pDevice,
         L"assets/brick/nor.png"))return false;
 
+    //testLitMaterial
+	g_pTestLitMaterial = new LitMaterial();
+    if (!g_pTestLitMaterial->InitializeFromFile(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Lit),
+        L"assets/brick/diff.png"))return false;
+
     // Model
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え
     g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);//y-1
@@ -260,13 +267,13 @@ bool InitDevice()
     g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
     //Model4
     g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
-    g_pMainModel4->SetPosition(-3.0f, 0.0f, 5.0f);
-    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);
+    g_pMainModel4->SetPosition(-3.0f, 0.0f, -3.0f);//g_pNormalMappingMaterial
+    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);//g_pTestLitMaterial
     //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
     g_pOldCameraBagModel = new Model(pDevice,modelResource);
-    g_pOldCameraBagModel->SetPosition(5.0f,0.0f,3.0f);
+    g_pOldCameraBagModel->SetPosition(5.0f,0.0f,-3.0f);
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
@@ -318,7 +325,7 @@ void Render()
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
-    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);

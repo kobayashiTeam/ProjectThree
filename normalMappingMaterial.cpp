@@ -40,7 +40,7 @@ void NormalMappingMaterial::Bind(ID3D11DeviceContext* pContext)
         pContext->PSSetConstantBuffers(2, 1, &m_pMaterialBuffer);
     }
 
-	//3. NormalMapのSRVとSamplerをピクセルシェーダーにセット
+	//3. NormalMapのSRVをピクセルシェーダーにセット
     if (m_pNormalMapTextureRV) {
         pContext->PSSetShaderResources(1, 1, &m_pNormalMapTextureRV);
     }
