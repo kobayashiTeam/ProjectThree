@@ -64,19 +64,20 @@ bool Renderer::Initialize(Graphics* graphics)
     if (FAILED(hr)) return false;
 
 	// 3. オフスクリーンレンダーターゲットの初期化（テスト）
+		//HDRの実験のため、colorFormatを16bit浮動小数点にしてみる
 	m_offscreenRT = new RenderTarget();
-	if (!m_offscreenRT->Initialize(pDevice, 1280, 720)) {
+	if (!m_offscreenRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
 		return false;
 	}
 
     m_offscreenRTwithMSAA = new RenderTarget();
-    if (!m_offscreenRTwithMSAA->InitializeWithMSAA(pDevice, 1280, 720)) {
+    if (!m_offscreenRTwithMSAA->InitializeWithMSAA(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
 
     //4.オフスクリーンレンダー２号の初期化（２号というか２枚で十分、swapChainで使う）
     m_tmpRT = new RenderTarget();
-    if (!m_tmpRT->Initialize(pDevice, 1280, 720)) {
+    if (!m_tmpRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
 
@@ -243,15 +244,18 @@ bool Renderer::Initialize(Graphics* graphics)
 
 
     //ポストプロセスバッファの初期化
-    // b4用の定数バッファを作成
+        // b5用の定数バッファを作成
     D3D11_BUFFER_DESC desc = {};
     desc.Usage = D3D11_USAGE_DYNAMIC; // 毎フレーム更新できるようにDYNAMIC
     desc.ByteWidth = sizeof(PostProcessConstantBuffer); // 必ず16の倍数になる
     desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    HRESULT hr = pDevice->CreateBuffer(&desc, nullptr, &m_pPostProcessCB);
+    hr = pDevice->CreateBuffer(&desc, nullptr, &m_pPostProcessCB);
     if (FAILED(hr)) return false;
+        
+        //内容を初期設定
+    SetExposure(0.5f);
 
     return true;
 }
@@ -287,7 +291,7 @@ void Renderer::UpdatePerFrameConstantBuffer()
     frameParams.vAttenuation = DirectX::XMFLOAT4(1.0f, 0.09f, 0.032f, 0.0f);
 
     pContext->UpdateSubresource(m_perFrameCB.Get(), 0, nullptr, &frameParams, 0, 0);
-
+    
     // スロット0にバインド
     ID3D11Buffer* cbArray[] = { m_perFrameCB.Get() };
     pContext->VSSetConstantBuffers(0, 1, cbArray);
@@ -424,7 +428,7 @@ void Renderer::Execute()
     pContext->ResolveSubresource(
         offScreenRTTex, 0,           // 転送先：本物の画面
         msaaTex, 0,                 // 転送元：自作MSAAバッファ
-        DXGI_FORMAT_R8G8B8A8_UNORM // フォーマット（お使いのものに合わせる）
+        DXGI_FORMAT_R16G16B16A16_FLOAT // フォーマット（お使いのものに合わせる）
     );
 
     // 登録されたエフェクトを先頭から全自動で実行
@@ -452,6 +456,7 @@ void Renderer::Execute()
     // ==========================================
     m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
     m_blendStates->Bind(pContext, BlendMode::Opaque);
+	UpdatePostProcessConstantBuffer();//ポストプロセス用の定数バッファを更新
 
     m_finalRenderScreenBlitPostProcess->Render(pContext, pCurrentInput);
     m_finalRenderMesh->Render(pContext);
@@ -577,15 +582,19 @@ void Renderer::UpdatePostProcessConstantBuffer()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
-    // HLSLのcbuffer PostProcessBuffer : register(b4) と一致する構造体
-    PostProcessCB postParams;
-    postParams.g_Exposure = m_postProcessData.exposure;
-    postParams.g_PostPad = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    // HLSLのcbuffer PostProcessBuffer : register(b5) と一致する構造体
+    PostProcessConstantBuffer postParams;
+    postParams.exposure = m_postProcessData.exposure;
+    postParams.padding[0] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+    postParams.padding[1] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+    postParams.padding[2] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
 
     // データの転送 (UpdateSubresourceでも、DYNAMICバッファにしてMap/UnmapでもどちらでもOKです)
-    pContext->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &postParams, 0, 0);
+    pContext->UpdateSubresource(m_pPostProcessCB.Get(), 0, nullptr, &postParams, 0, 0);
 
-    // ★ポストプロセス用のピクセルシェーダー（PS）のスロット4にだけバインドする
-    ID3D11Buffer* cbArray[] = { m_postProcessCB.Get() };
-    pContext->PSSetConstantBuffers(4, 1, cbArray);
+    // ★ポストプロセス用のピクセルシェーダー（PS）のスロット5にだけバインドする
+    ID3D11Buffer* cbArray[] = { m_pPostProcessCB.Get() };
+    pContext->VSSetConstantBuffers(5, 1, cbArray);
+    pContext->PSSetConstantBuffers(5, 1, cbArray);
+    pContext->GSSetConstantBuffers(5, 1, cbArray);
 }

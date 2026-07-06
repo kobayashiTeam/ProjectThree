@@ -135,7 +135,7 @@ private:
     ComPtr<ID3D11SamplerState> m_shadowCubeSampler;
 
     //ポストプロセスバッファ、参照
-    ID3D11Buffer* m_pPostProcessCB = nullptr;
+    ComPtr<ID3D11Buffer> m_pPostProcessCB = nullptr;
     PostProcessConstantBuffer m_postProcessData;
 
 };

@@ -27,6 +27,7 @@ public:
 
     //テスト：initialize
     // 1つのメソッドに統合。デフォルトでは深度バッファも作成する設定にする
+
     bool Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
         DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true);
     // ★新しく追加
