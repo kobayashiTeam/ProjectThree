@@ -31,7 +31,8 @@ public:
         DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true);
     // ★新しく追加
     bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
-        DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, bool createDepth=true);
+        DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, 
+        bool createDepth=true);
 
 private:
 	ComPtr<ID3D11Texture2D> m_texture;// カラーバッファー

@@ -63,6 +63,10 @@ public:
     void SubmitShadowPass();
     void UpdatePointLightConstantBuffer();
 
+    //ポストプロセスバッファ
+    void UpdatePostProcessConstantBuffer();
+    void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
+
 private:
     void UpdatePerFrameConstantBuffer();
 
@@ -129,5 +133,9 @@ private:
     ID3D11GeometryShader* m_pShadowCubeGS = nullptr;
         //サンプラー
     ComPtr<ID3D11SamplerState> m_shadowCubeSampler;
+
+    //ポストプロセスバッファ、参照
+    ID3D11Buffer* m_pPostProcessCB = nullptr;
+    PostProcessConstantBuffer m_postProcessData;
 
 };

@@ -99,3 +99,9 @@ struct ShadowCubeCB//b4CBに送る内容。内容が一個（view*Proj行列）しかないのでむき
     DirectX::XMFLOAT3 gLightPos;
     float gFarPlane;
 };
+
+//ポストプロセス用のcb
+struct PostProcessConstantBuffer {
+    float exposure = 1.0f;
+    float padding[3] = { 0.0f, 0.0f, 0.0f }; // 16バイトアライメント
+};

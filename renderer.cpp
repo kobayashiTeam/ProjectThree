@@ -74,7 +74,7 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
 
-    //4.オフスクリーンレンダー２号の初期化（２号というか２枚で十分）
+    //4.オフスクリーンレンダー２号の初期化（２号というか２枚で十分、swapChainで使う）
     m_tmpRT = new RenderTarget();
     if (!m_tmpRT->Initialize(pDevice, 1280, 720)) {
         return false;
@@ -242,6 +242,16 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateSamplerState(&sampDesc, &m_shadowCubeSampler);
 
 
+    //ポストプロセスバッファの初期化
+    // b4用の定数バッファを作成
+    D3D11_BUFFER_DESC desc = {};
+    desc.Usage = D3D11_USAGE_DYNAMIC; // 毎フレーム更新できるようにDYNAMIC
+    desc.ByteWidth = sizeof(PostProcessConstantBuffer); // 必ず16の倍数になる
+    desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+    HRESULT hr = pDevice->CreateBuffer(&desc, nullptr, &m_pPostProcessCB);
+    if (FAILED(hr)) return false;
 
     return true;
 }
@@ -560,4 +570,22 @@ void Renderer::UpdatePointLightConstantBuffer()
 void Renderer::SubmitShadowPass()
 {
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(m_pShadowShader);
+}
+
+
+void Renderer::UpdatePostProcessConstantBuffer()
+{
+    ID3D11DeviceContext* pContext = m_graphics->GetContext();
+
+    // HLSLのcbuffer PostProcessBuffer : register(b4) と一致する構造体
+    PostProcessCB postParams;
+    postParams.g_Exposure = m_postProcessData.exposure;
+    postParams.g_PostPad = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+    // データの転送 (UpdateSubresourceでも、DYNAMICバッファにしてMap/UnmapでもどちらでもOKです)
+    pContext->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &postParams, 0, 0);
+
+    // ★ポストプロセス用のピクセルシェーダー（PS）のスロット4にだけバインドする
+    ID3D11Buffer* cbArray[] = { m_postProcessCB.Get() };
+    pContext->PSSetConstantBuffers(4, 1, cbArray);
 }
