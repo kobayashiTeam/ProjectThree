@@ -30,6 +30,7 @@ Camera* g_pCamera = nullptr;
 #include"outLineMaterial.h"
 #include"normalVizMaterial.h"
 #include"normalMappingMaterial.h"
+#include"parallaxMappingMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
@@ -39,10 +40,12 @@ OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用
 NormalVizMaterial* g_pNormalVizMaterial = nullptr;
 NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
 LitMaterial* g_pTestLitMaterial = nullptr; // 追加：テスト用LitMaterial
+ParallaxMappingMaterial* g_pParallaxMappingMaterial = nullptr; // 追加：ParallaxMappingMaterial
 Model* g_pMainModel = nullptr;
 Model* g_pMainModel2 = nullptr;
 Model* g_pMainModel3 = nullptr;
 Model* g_pMainModel4 = nullptr;//brick
+Model* g_pMainModel5 = nullptr;//parallax
 //oldCamera(modelResource)用モデル
 Model* g_pOldCameraBagModel = nullptr;
 
@@ -205,7 +208,7 @@ bool InitDevice()
     g_pCubeMesh = Mesh::CreateCube(pDevice,1);
 
     // Material
-    //litMaterial
+        //litMaterial
     g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     UINT32 white = 0xFFFFFFFF;
@@ -217,7 +220,7 @@ bool InitDevice()
     //g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
     //g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
 
-	//unLitMaterial
+	    //unLitMaterial
 	g_pUnLitMaterial = new UnLitMaterial();
 	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::UnLit),checker, 2, 2,true))//unlit
@@ -226,50 +229,65 @@ bool InitDevice()
 	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
     //g_pUnLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::PassThrough));
     
-    //outlienMaterial
+        //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::Outline),  checker, 2, 2,true))return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
-    //normalvizMaterial
+
+        //normalvizMaterial
     g_pNormalVizMaterial = new NormalVizMaterial();
     if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::NormalViz), checker, 2, 2,true)) return false;
     g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
 
-    //normalMappingMaterial
+        //normalMappingMaterial
 	g_pNormalMappingMaterial = new NormalMappingMaterial();
         //まずdiffuse画像を設定
     if (!g_pNormalMappingMaterial->InitializeFromFile(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::NormalMapping),
-        L"assets/brick/diff.png"))return false;
+        L"assets/nor/diff.png"))return false;
 	    //次にnormal画像を設定
     if (!g_pNormalMappingMaterial->InitializeNormalMapFromFile(pDevice,
-        L"assets/brick/nor.png"))return false;
+        L"assets/nor/nor.png"))return false;
 
-    //testLitMaterial
+        //testLitMaterial
 	g_pTestLitMaterial = new LitMaterial();
     if (!g_pTestLitMaterial->InitializeFromFile(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Lit),
-        L"assets/brick/diff.png"))return false;
+        L"assets/nor/diff.png"))return false;
+
+        //parallax
+	g_pParallaxMappingMaterial = new ParallaxMappingMaterial();
+	if (!g_pParallaxMappingMaterial->InitializeFromFile(pDevice,
+		ShaderManager::GetInstance().GetShader(ShaderID::ParallaxMapping),
+		L"assets/para/diff.png"))return false;
+            //次にnormal画像を設定
+    if (!g_pParallaxMappingMaterial->InitializeParallaxMapFromFile(pDevice,
+        L"assets/para/normalHeight.png"))return false;
 
     // Model
+        //Model1
     g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え
     g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);//y-1
-    //Model2
+        //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
-    //Model3
+        //Model3
     g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel3->SetPosition(0.0f,-7.0f,5.0f);
     g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
-    //Model4
+        //Model4
     g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
     g_pMainModel4->SetPosition(-3.0f, 0.0f, -3.0f);//g_pNormalMappingMaterial
     g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);//g_pTestLitMaterial
-    //oldCamera(modelResource)
+        //Model5
+	g_pMainModel5 = new Model(pDevice, g_pCubeMesh, g_pParallaxMappingMaterial);
+    g_pMainModel5->SetPosition(3.0f, 0.0f, -3.0f);//g_pNormalMappingMaterial
+    g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);//g_pTestLitMaterial
+        //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
     g_pOldCameraBagModel = new Model(pDevice,modelResource);
@@ -329,6 +347,7 @@ void Render()
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
     g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);
+	g_pRenderer->Submit(g_pMainModel5, RenderPass::Opaque, BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();

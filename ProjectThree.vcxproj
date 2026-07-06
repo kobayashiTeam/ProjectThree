@@ -173,6 +173,7 @@
     <ClCompile Include="normalVizMaterial.cpp" />
     <ClCompile Include="outLine.cpp" />
     <ClCompile Include="outLineMaterial.cpp" />
+    <ClCompile Include="parallaxMappingMaterial.cpp" />
     <ClCompile Include="PointSpriteGSEffect.cpp" />
     <ClCompile Include="postProcess.cpp" />
     <ClCompile Include="rasterizerStates.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="normalVizMaterial.h" />
     <ClInclude Include="outLine.h" />
     <ClInclude Include="outLineMaterial.h" />
+    <ClInclude Include="parallaxMappingMaterial.h" />
     <ClInclude Include="pointSpriteGSEffect.h" />
     <ClInclude Include="postProcess.h" />
     <ClInclude Include="rasterizerStates.h" />
@@ -418,6 +420,11 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Shaders\ParallaxMappingShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

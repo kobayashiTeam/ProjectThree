@@ -222,6 +222,12 @@
     <ClCompile Include="normalMappingMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
+    <ClCompile Include="parallaxMappingMaterial.cpp">
+      <Filter>ソース ファイル\material</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\ParallaxMappingShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -342,6 +348,9 @@
       <Filter>ヘッダー ファイル\light_shadowMap</Filter>
     </ClInclude>
     <ClInclude Include="normalMappingMaterial.h">
+      <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="parallaxMappingMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
   </ItemGroup>

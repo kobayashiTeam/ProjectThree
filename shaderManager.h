@@ -35,6 +35,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::PointSprite, L"Shaders/PointSpriteShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalMapping, L"Shaders/NormalMappingShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::ParallaxMapping, L"Shaders/ParallaxMappingShader.hlsl")) return false;
         //screenblit
         if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
         //postProcess
@@ -156,6 +157,10 @@ private:
             layoutCount = 1;
             break;
 		case ShaderID::NormalMapping:
+			layout = normalMappingLayout;
+			layoutCount = 5;
+			break;
+		case ShaderID::ParallaxMapping:
 			layout = normalMappingLayout;
 			layoutCount = 5;
 			break;

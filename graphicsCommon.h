@@ -38,6 +38,7 @@ enum class ShaderID {
     NormalViz,
     PointSprite,
     NormalMapping,
+	ParallaxMapping,
     // postProcess
     Monochromatic,
     Inversion,
