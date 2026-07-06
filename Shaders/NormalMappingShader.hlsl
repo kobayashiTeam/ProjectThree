@@ -234,6 +234,7 @@ float4 PS(PS_INPUT input) : SV_Target
 
     // 最終的なカラー出力（環境光 ＋ 直射光の総和）
     float3 finalColor = globalAmbient + totalDirectLight;
-    
+    //test
+    //finalColor *= 8.0f;
     return float4(finalColor, objectColor.a);
 }

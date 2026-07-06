@@ -248,5 +248,7 @@ float4 PS(PS_INPUT input) : SV_Target
     }
 
     float3 finalColor = globalAmbient + totalDirectLight;
+    //test
+    //finalColor *= 90.0f;
     return float4(finalColor, objectColor.a);
 }
