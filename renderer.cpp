@@ -582,17 +582,20 @@ void Renderer::UpdatePostProcessConstantBuffer()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
-    // HLSLのcbuffer PostProcessBuffer : register(b5) と一致する構造体
     PostProcessConstantBuffer postParams;
     postParams.exposure = m_postProcessData.exposure;
-    postParams.padding[0] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
-    postParams.padding[1] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
-    postParams.padding[2] = 0.0f;//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+    postParams.padding[0] = 0.0f;
+    postParams.padding[1] = 0.0f;
+    postParams.padding[2] = 0.0f;
 
-    // データの転送 (UpdateSubresourceでも、DYNAMICバッファにしてMap/UnmapでもどちらでもOKです)
-    pContext->UpdateSubresource(m_pPostProcessCB.Get(), 0, nullptr, &postParams, 0, 0);
+    D3D11_MAPPED_SUBRESOURCE mapped = {};
+    HRESULT hr = pContext->Map(m_pPostProcessCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    if (SUCCEEDED(hr))
+    {
+        memcpy(mapped.pData, &postParams, sizeof(PostProcessConstantBuffer));
+        pContext->Unmap(m_pPostProcessCB.Get(), 0);
+    }
 
-    // ★ポストプロセス用のピクセルシェーダー（PS）のスロット5にだけバインドする
     ID3D11Buffer* cbArray[] = { m_pPostProcessCB.Get() };
     pContext->VSSetConstantBuffers(5, 1, cbArray);
     pContext->PSSetConstantBuffers(5, 1, cbArray);

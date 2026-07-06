@@ -1,8 +1,5 @@
 // ScreenBlit.hlsl
 // オフスクリーンTextureをバックバッファにそのまま描き写す（初学者向け単純コピー）
-//inputLauoutは本来最低限のものでいいが、shader側の実装の都合で全シェーダ共通の
-//layoutをつかわなければいけない。ここは仕方なく埋める
-
 // C++（D3D11）側から露出値を制御するための定数バッファ
 // ※まだ定数バッファを用意していない場合は、1.0 などの固定値を直書きしても動作します
 cbuffer PostProcessConfig : register(b5)
@@ -34,34 +31,6 @@ VS_OUTPUT VS(VS_INPUT input)
 Texture2D sceneTexture : register(t0); // オフスクリーンから来たTexture
 SamplerState linearSampler : register(s0);
 
-//最初に使っていたオーソドックス
-//float4 PS(VS_OUTPUT input) : SV_TARGET
-//{
-//    float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
-    
-//    // 将来ここに軽い調整を入れる余地を残す
-//    color.rgb = pow(color.rgb, 1.0 / 2.2); // Gamma修正など
-    
-//    return color;
-//}
-
-
-//g_exposureを使わないテスト版
-//float4 PS(VS_OUTPUT input) : SV_TARGET
-//{
-//    // 1. テクスチャから色をサンプリング
-//    float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
-//    float3 hdrColor = color.rgb;
-
-//    // 2. トーンマッピング（定数バッファを使わず、1.0f でテスト固定）
-//    // ★ g_Exposure の代わりに 1.0f を直書きします
-//    float3 sdrColor = float3(1.0, 1.0, 1.0) - exp(-hdrColor * 1.0f);
-
-//    // 3. ガンマ補正
-//    sdrColor = pow(sdrColor, float3(1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2));
-    
-//    return float4(sdrColor, color.a);
-//}
 
 //g_exposureを使う本番版
 float4 PS(VS_OUTPUT input) : SV_TARGET
@@ -86,16 +55,3 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     return float4(sdrColor, color.a);
 }
 
-//float4 PS(VS_OUTPUT input) : SV_TARGET
-//{
-//    // テクスチャサンプリング（一応書いておきますが今回は使いません）
-//    float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
-
-//    // 【検証処理】g_Exposure の値をそのまま RGB に流し込む
-//    // もし g_Exposure が 0.0 なら、画面は「真っ黒」になります。
-//    // もし g_Exposure が 1.0 なら、画面は「真っ白」になります。
-//    // もし g_Exposure が 0.5 なら、画面は「グレー（灰色）」になります。
-//    float3 debugColor = float3(g_Exposure, g_Exposure, g_Exposure);
-
-//    return float4(debugColor, 1.0f);
-//}
