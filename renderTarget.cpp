@@ -1,4 +1,5 @@
 #include "renderTarget.h"
+#include<vector>
 
 bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
     DXGI_FORMAT colorFormat, bool createDepth)
@@ -177,4 +178,36 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     if (FAILED(hr)) return false;
 
     return true;
+}
+
+
+// RenderTarget.cpp での実装
+void RenderTarget::BindMultiple(
+    ID3D11DeviceContext* context,
+    uint32_t count,
+    RenderTarget** targets,
+    ID3D11DepthStencilView* dsv
+) {
+    if (count == 0 || !targets) return;
+
+    // 1. RTVのポインタ配列を作る
+    std::vector<ID3D11RenderTargetView*> rtvs(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        rtvs[i] = targets[i]->m_rtv.Get();
+    }
+
+    // 2. パイプラインにまとめてバインド
+    // &rtvs[0] で配列の先頭ポインタを渡す
+    context->OMSetRenderTargets(count, &rtvs[0], dsv);
+
+    // 3. ビューポートは「0番目のターゲット」のサイズに合わせる
+    // (MRTの原則として、同時にバインドするRTのサイズは同じであるため)
+    D3D11_VIEWPORT vp{};
+    vp.Width = static_cast<float>(targets[0]->m_width);
+    vp.Height = static_cast<float>(targets[0]->m_height);
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    context->RSSetViewports(1, &vp);
 }

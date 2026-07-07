@@ -228,6 +228,15 @@
     <ClCompile Include="Shaders\ParallaxMappingShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\HorizontalBlurShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\VerticalBlurShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\BloomCombineShader.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -352,6 +361,15 @@
     </ClInclude>
     <ClInclude Include="parallaxMappingMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
+    </ClInclude>
+    <ClInclude Include="HorizontalBlurPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="VerticalBlurPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="bloomCombinePostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

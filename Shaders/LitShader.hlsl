@@ -61,6 +61,13 @@ struct PS_INPUT
     float4 LightSpacePos : TEXCOORD1;
 };
 
+// --- 1. 出力用の構造体を定義する ---
+struct PS_OUTPUT
+{
+    float4 Color : SV_Target0; // 1つ目のRT（通常描画用）
+    float4 Bright : SV_Target1; // 2つ目のRT（Bloom高輝度抽出用）
+};
+
 Texture2D txDiffuse : register(t0);
 SamplerState samLinear : register(s0);
 

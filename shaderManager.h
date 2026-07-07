@@ -45,7 +45,11 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SimpleBoxBlur, L"Shaders/SimpleBoxBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sharpen, L"Shaders/SharpenShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
-        // skybox“à‚É’Ç‰Á
+            //“ÁŽê
+        if (!GetOrCreate(pDevice, ShaderID::HoriBlur, L"Shaders/HorizontalBlurShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::VerBlur, L"Shaders/VerticalBlurShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::BloomCombine, L"Shaders/BloomCombineShader.hlsl")) return false;
+        // skybox
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
         //shadow
         if (!GetOrCreate(pDevice, ShaderID::Shadow, L"Shaders/ShadowShader.hlsl")) return false;
@@ -163,6 +167,18 @@ private:
 		case ShaderID::ParallaxMapping:
 			layout = normalMappingLayout;
 			layoutCount = 5;
+			break;
+        case ShaderID::HoriBlur:
+            layout = standardLayout;
+			layoutCount = 4;
+            break;
+        case ShaderID::VerBlur:
+			layout = standardLayout;
+			layoutCount = 4;
+			break;
+		case ShaderID::BloomCombine:
+			layout = standardLayout;
+			layoutCount = 4;
 			break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:

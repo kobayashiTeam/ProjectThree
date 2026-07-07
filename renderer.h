@@ -29,11 +29,13 @@ class SepiaPostProcess;
 class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
 class VignettePostProcess;
+class HorizontalBlurPostProcess;
+class VerticalBlurPostProcess;
 class SkyBox;
 //test
 class PointSpriteGSEffect;
 class InstancedModel;
-
+class BloomCombinePostProcess;
 
 class Renderer
 {
@@ -87,6 +89,9 @@ private:
 	RenderTarget* m_offscreenRT=nullptr;
     RenderTarget* m_offscreenRTwithMSAA = nullptr;//test,MSAA
     RenderTarget* m_tmpRT = nullptr;//ピンポン設計にするためにもう一枚
+    //test:bloom対応のrt
+	RenderTarget* m_brightRTwithMSAA = nullptr;
+	RenderTarget* m_brightRT = nullptr;
     // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
     std::vector<PostProcess*> m_postProcessChain;
 
@@ -104,6 +109,10 @@ private:
     SimpleBoxBlurPostProcess* m_finalRenderSimpleBoxBluer = nullptr;
     SharpenPostProcess* m_finalRenderSharpenPostProcess = nullptr;
     VignettePostProcess* m_finalRenderVignettePostProcess = nullptr;
+        //新規：手間のかかるblurエフェクト。
+	HorizontalBlurPostProcess* m_finalRenderHorizontalBlurPostProcess = nullptr;
+	VerticalBlurPostProcess* m_finalRenderVerticalBlurPostProcess = nullptr;
+	BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
 
     //スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;

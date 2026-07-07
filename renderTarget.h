@@ -34,6 +34,13 @@ public:
     bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
         DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, 
         bool createDepth=true);
+    //複数のrtを同時にbindするときの静的メソッド
+    static void BindMultiple(
+        ID3D11DeviceContext* context,
+        uint32_t count,
+        RenderTarget** targets,
+        ID3D11DepthStencilView* dsv = nullptr
+    );
 
 private:
 	ComPtr<ID3D11Texture2D> m_texture;// カラーバッファー
