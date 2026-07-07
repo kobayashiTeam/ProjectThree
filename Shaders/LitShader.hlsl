@@ -134,7 +134,7 @@ float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
 // ---------------------------------------------------------
 // ピクセルシェーダー
 // ---------------------------------------------------------
-float4 PS(PS_INPUT input) : SV_Target
+PS_OUTPUT PS(PS_INPUT input)
 {
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
     float4 objectColor = texColor * input.Color * vMaterialColor;
@@ -203,5 +203,31 @@ float4 PS(PS_INPUT input) : SV_Target
     float3 finalColor = globalAmbient + totalDirectLight;
     //test
     //finalColor *= 15.0f;
-    return float4(finalColor, objectColor.a);
+    //return float4(finalColor, objectColor.a);
+    
+    // --- (ここから書き換え) ---
+    
+    // 構造体のインスタンスを作る
+    PS_OUTPUT output;
+
+    // ① 通常カラーを RT[0] 用の変数に代入
+    output.Color = float4(finalColor, objectColor.a);
+
+    // ② 高輝度（Bloom用）の抽出処理をして RT[1] 用の変数に代入
+    // 輝度（明るさ）を計算
+    float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
+    
+    // 1.0 を超えた眩しいピクセルだけを抽出（HDRを想定）
+    if (brightness > 1.0f)
+    {
+        output.Bright = float4(finalColor, 1.0f);
+    }
+    else
+    {
+        // 眩しくない場所は真っ黒にしてボケないようにする
+        output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    // 2つの結果が入った構造体をまとめて返す
+    return output;
 }

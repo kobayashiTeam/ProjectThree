@@ -1,50 +1,44 @@
-#include"postProcess.h"
+#pragma once
+#include "postProcess.h"
+#include <wrl/client.h> // Microsoft::WRL::ComPtr 用
 
+//using Microsoft::WRL::ComPtr;
+
+// Bloom合成用ポストプロセスクラス
 class BloomCombinePostProcess : public PostProcess {
-public:
-    struct PerEffectCB {
-        float intensity; // モノクロの強さ (0.0 = 通常, 1.0 = 完全なモノクロ)
-        float dummy[3];  // 16バイトアライメント用のパディング
-    };
-
 private:
-    ID3D11Buffer* m_pConstantBuffer = nullptr;
-    PerEffectCB   m_cbData;
-    ComPtr<ID3D11ShaderResourceView> m_pBrightBlurSRV;
+    // 事前処理で作成した、完全にボケ上がった高輝度テクスチャのビュー(t1用)
+    ComPtr<ID3D11ShaderResourceView> m_pBrightBlurSRV = nullptr;
 
 public:
-    BloomCombinePostProcess() { m_cbData.intensity = 1.0f; }
-    ~BloomCombinePostProcess() override { if (m_pConstantBuffer) m_pConstantBuffer->Release(); }
+    BloomCombinePostProcess() = default;
+    ~BloomCombinePostProcess() override = default;
 
+    // 定数バッファなど個別の生成物が無いため、Initializeは基底クラスのものをそのまま流用します
     bool Initialize(ID3D11Device* pDevice, Shader* pShader) override {
-        if (!PostProcess::Initialize(pDevice, pShader)) return false;
-
-        // エフェクト専用の定数バッファ（スロット2用など）を作成
-        D3D11_BUFFER_DESC cbd = {};
-        cbd.Usage = D3D11_USAGE_DEFAULT;
-        cbd.ByteWidth = sizeof(PerEffectCB);
-        cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-        HRESULT hr = pDevice->CreateBuffer(&cbd, nullptr, &m_pConstantBuffer);
-        return SUCCEEDED(hr);
+        return PostProcess::Initialize(pDevice, pShader);
     }
 
-    // 外部からモノクロの強さを変えるアクセサ
-    void SetIntensity(float intensity) { m_cbData.intensity = intensity; }
-
-    // Bloom専用のセット関数（基底クラスにはない、独自のメソッド）
+    // ★【重要】チェーンが回る前に、Renderer側からボケ画像をこの窓口に放り込んでもらう
     void SetBrightBlurTexture(ID3D11ShaderResourceView* srv) {
         m_pBrightBlurSRV = srv;
     }
 
     void Render(ID3D11DeviceContext* pContext, RenderTarget* sourceRT) override {
-        // 1. 親クラスの基本バインド（シェーダー、テクスチャ、サンプラー）を呼ぶ
+        if (!pContext) return;
+
+        // 1. 親クラスの基本バインドを呼ぶ
+        // これにより自動的に：
+        // ・合成用シェーダーのバインド
+        // ・sourceRT (これまでのシーン) を「スロット t0 (register(t0))」にバインド
+        // ・クランプサンプラーを「スロット s0 (register(s0))」にバインド
         PostProcess::Render(pContext, sourceRT);
 
-        // 2. 自分専用の定数バッファを更新してスロット2にバインド
-        if (m_pConstantBuffer) {
-            pContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &m_cbData, 0, 0);
-            pContext->PSSetConstantBuffers(2, 1, &m_pConstantBuffer);
+        // 2. 【このクラス固有の処理】
+        // 事前にセットしておいた「ボケ画像」を「スロット t1 (register(t1))」にバインドする！
+        if (m_pBrightBlurSRV) {
+            ID3D11ShaderResourceView* srvArray[] = { m_pBrightBlurSRV.Get() };
+            pContext->PSSetShaderResources(1, 1, srvArray); // 第1引数「1」がスロット t1 を指します
         }
     }
 };

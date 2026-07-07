@@ -93,6 +93,10 @@ bool Renderer::Initialize(Graphics* graphics)
         pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
+	m_blurPingRT = new RenderTarget();
+	if (!m_blurPingRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+		return false;
+	}
 
     //テスト:ポストプロセス
     //simpleBlit
@@ -481,30 +485,26 @@ void Renderer::Execute()
     // 2. 【ここ！】Resolveされて中身が入った m_brightRT を使って、独立してBlurを2回叩く
     // ========================================================
 
-// ─── パスA: 横ボケ ───
-    pCurrentOutput->Clear(pContext);            // 作業用バッファをクリア
-    pCurrentOutput->Bind(pContext);             // 出力先を「作業用バッファ」にセット
+    // ボケ専用のピンポン用ポインタ（m_offscreenRTには絶対に触れさせない）
+    RenderTarget * pBlurInput = m_brightRT;     // 最初の入力：輝度抽出テクスチャ
+    RenderTarget* pBlurOutput = m_tmpRT;        // 作業バッファ1
 
-    // 横ボケシェーダーをセットして、入力に「Resolve済みの高輝度データ」をセットして描画
-    m_finalRenderHorizontalBlurPostProcess->Render(pContext, m_brightRT);
+    // ─── パスA: 横ボケ ───
+    pBlurOutput->Clear(pContext);
+    pBlurOutput->Bind(pContext);
+    m_finalRenderHorizontalBlurPostProcess->Render(pContext, pBlurInput);
     m_finalRenderMesh->Render(pContext);
 
-    std::swap(pCurrentInput, pCurrentOutput);
-
-    pCurrentOutput->Clear(pContext);
-    pCurrentOutput->Bind(pContext);
-
-    // 縦ボケシェーダーに切り替えて、入力に「さっき横ボケした作業バッファ」をセットして描画
-    m_finalRenderVerticalBlurPostProcess->Render(pContext, pCurrentInput);
+    // ─── パスB: 縦ボケ ───
+    m_blurPingRT->Clear(pContext);   // ★新規で用意するバッファ
+    m_blurPingRT->Bind(pContext);
+    m_finalRenderVerticalBlurPostProcess->Render(pContext, pBlurOutput);
     m_finalRenderMesh->Render(pContext);
 
-    std::swap(pCurrentInput, pCurrentOutput);
-
-    // ========================================================
     // 3. 【重要】完成したボケ画像を、Bloom合成エフェクトに仕込む！
-    // ========================================================
-    // 今、pCurrentInput（の中のSRV）には完全にボケ上がった輝度テクスチャが入っています！
-    m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(pCurrentInput->GetSRV());
+    // 完成したボケ画像は m_blurPingRT に入っている
+    m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(m_blurPingRT->GetSRV());
+
 
 
     // 次のチェーン（モノクロやビネットなど）に行くための「お片付け」

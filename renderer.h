@@ -92,6 +92,7 @@ private:
     //test:bloom対応のrt
 	RenderTarget* m_brightRTwithMSAA = nullptr;
 	RenderTarget* m_brightRT = nullptr;
+    RenderTarget* m_blurPingRT = nullptr;//計算の都合でもう一個必要だった
     // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
     std::vector<PostProcess*> m_postProcessChain;
 

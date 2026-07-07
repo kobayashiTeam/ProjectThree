@@ -1,50 +1,22 @@
-#include"postProcess.h"
+#pragma once
+#include "postProcess.h"
 
+// 縦ブラー用ポストプロセスクラス
 class VerticalBlurPostProcess : public PostProcess {
 public:
-    struct PerEffectCB {
-        float intensity; // モノクロの強さ (0.0 = 通常, 1.0 = 完全なモノクロ)
-        float dummy[3];  // 16バイトアライメント用のパディング
-    };
+    VerticalBlurPostProcess() = default;
+    ~VerticalBlurPostProcess() override = default;
 
-private:
-    ID3D11Buffer* m_pConstantBuffer = nullptr;
-    PerEffectCB   m_cbData;
-    ComPtr<ID3D11ShaderResourceView> m_pBrightBlurSRV;
-
-public:
-    VerticalBlurPostProcess() { m_cbData.intensity = 1.0f; }
-    ~VerticalBlurPostProcess() override { if (m_pConstantBuffer) m_pConstantBuffer->Release(); }
-
-    bool Initialize(ID3D11Device* pDevice, Shader* pShader) override {
-        if (!PostProcess::Initialize(pDevice, pShader)) return false;
-
-        // エフェクト専用の定数バッファ（スロット2用など）を作成
-        D3D11_BUFFER_DESC cbd = {};
-        cbd.Usage = D3D11_USAGE_DEFAULT;
-        cbd.ByteWidth = sizeof(PerEffectCB);
-        cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-        HRESULT hr = pDevice->CreateBuffer(&cbd, nullptr, &m_pConstantBuffer);
-        return SUCCEEDED(hr);
-    }
-
-    // 外部からモノクロの強さを変えるアクセサ
-    void SetIntensity(float intensity) { m_cbData.intensity = intensity; }
-
-    // Bloom専用のセット関数（基底クラスにはない、独自のメソッド）
-    void SetBrightBlurTexture(ID3D11ShaderResourceView* srv) {
-        m_pBrightBlurSRV = srv;
-    }
+    // Initialize は基底クラスのものをそのまま利用できるため、
+    // 特に追加の処理がなければ、わざわざオーバーライドして書かなくても大丈夫です。
+    // (Renderer側で m_verticalBlurEffect->Initialize(pDevice, pShader) を呼べば基底のものが走ります)
 
     void Render(ID3D11DeviceContext* pContext, RenderTarget* sourceRT) override {
-        // 1. 親クラスの基本バインド（シェーダー、テクスチャ、サンプラー）を呼ぶ
+        // 基底クラスの Render を呼び出す
+        // これだけで自動的に：
+        // 1. シェーダーのバインド
+        // 2. sourceRT のテクスチャを「スロット t0 (register(t0))」に設定
+        // 3. クランプサンプラーを「スロット s0 (register(s0))」に設定
         PostProcess::Render(pContext, sourceRT);
-
-        // 2. 自分専用の定数バッファを更新してスロット2にバインド
-        if (m_pConstantBuffer) {
-            pContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &m_cbData, 0, 0);
-            pContext->PSSetConstantBuffers(2, 1, &m_pConstantBuffer);
-        }
     }
 };
