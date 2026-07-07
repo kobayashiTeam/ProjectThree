@@ -214,7 +214,7 @@ bool InitDevice()
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     UINT32 white = 0xFFFFFFFF;
     // HDR用の白（各チャンネル 1.0f の輝度）
-    DirectX::PackedVector::XMHALF4 whiteHDR(10.0f, 1.0f, 1.0f, 1.0f);
+    DirectX::PackedVector::XMHALF4 whiteHDR(1.0f, 1.0f, 1.0f, 1.0f);
     if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
         , &whiteHDR, 1, 1,true,true))//lit
         return false;
