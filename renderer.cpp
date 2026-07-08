@@ -245,7 +245,7 @@ bool Renderer::Initialize(Graphics* graphics)
         //ライト生成
     PointLight  pointLight = {};
     pointLight.position = { 5.0f, 5.0f, 3.0f };
-    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
     pointLight.intensity = 1.0f;//0.6f
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
@@ -442,7 +442,7 @@ void Renderer::Execute()
 	m_gBufferDepthOnly->Clear(pContext);
 
     RenderTarget* gbufferTargets[3] = {
-    m_gBufferPosition, m_gBufferNormal, m_gBufferAlbedo
+    m_gBufferAlbedo, m_gBufferNormal, m_gBufferPosition
     };
     ID3D11DepthStencilView* gbufferDSV = m_gBufferDepthOnly ->GetDSV(); // 非MSAA専用の深度
     RenderTarget::BindMultiple(pContext, 3, gbufferTargets, gbufferDSV);
