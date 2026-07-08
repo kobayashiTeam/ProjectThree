@@ -34,6 +34,10 @@ public:
     bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
         DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, 
         bool createDepth=true);
+    // 複数のrtが１つの深度バッファが欲しいとき、こちらで初期化してこれを代表に使う
+        //その場合これのrtvは使わないので最小限のメモリに抑える
+    bool InitializeDepthOnly(ID3D11Device* device, uint32_t width, uint32_t height,
+        DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT);
     //複数のrtを同時にbindするときの静的メソッド
     static void BindMultiple(
         ID3D11DeviceContext* context,

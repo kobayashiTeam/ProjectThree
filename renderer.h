@@ -148,4 +148,13 @@ private:
     ComPtr<ID3D11Buffer> m_pPostProcessCB = nullptr;
     PostProcessConstantBuffer m_postProcessData;
 
+    //test:遅延シェーダ:不透明オブジェクトは以下３つからなるg-bufferに必要情報を保存。
+    RenderTarget* m_gBufferPosition;
+    RenderTarget* m_gBufferNormal;
+    RenderTarget* m_gBufferAlbedo;
+    RenderTarget* m_gBufferDepthOnly;
+        //シェーダ
+	Shader* m_pDeferredGBufferShader = nullptr;
+	Shader* m_pDeferredLightingShader = nullptr;
+
 };

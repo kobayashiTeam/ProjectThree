@@ -26,6 +26,7 @@ enum class RenderPass {
     Opaque,       // 1. 通常の不透明オブジェクト
     Outline,      // 2. 特殊処理：アウトライン
     Transparent,  // 3. 半透明オブジェクト
+    DeferredOpaque, // ★新設：litShader対象のcubeたちはここに登録
     Count
 };
 
@@ -60,7 +61,10 @@ enum class ShaderID {
     ShadowCubeGS,
     //shadow
     Shadow,
-    ShadowCube
+    ShadowCube,
+	//deferred
+    DeferredGB,
+    DeferredLighting
 };
 
 //ライト関連

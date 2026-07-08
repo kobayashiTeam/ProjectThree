@@ -345,12 +345,16 @@ void Render()
     g_pRenderer->BeginFrame(g_pCamera, 0.1f, 0.12f, 0.15f, 1.0f);
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
-    g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);
+    //g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);//空中のcube
+    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);//回転cube
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);
+    //g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);//床
     g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);
 	g_pRenderer->Submit(g_pMainModel5, RenderPass::Opaque, BlendMode::Opaque);
+
+    //test:deferredOpaqueで登録
+    g_pRenderer->Submit(g_pMainModel, RenderPass::DeferredOpaque, BlendMode::Opaque);
+    g_pRenderer->Submit(g_pMainModel3, RenderPass::DeferredOpaque, BlendMode::Opaque);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();

@@ -61,6 +61,9 @@
     <Filter Include="リソース ファイル\shadow">
       <UniqueIdentifier>{05573f1a-48dd-4bee-ad1b-d75dc3db8c07}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\deferred">
+      <UniqueIdentifier>{6f289972-afbc-4500-87d2-d99fb4742acb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -236,6 +239,12 @@
     </ClCompile>
     <ClCompile Include="Shaders\BloomCombineShader.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\DeferredGBufferShader.hlsl">
+      <Filter>リソース ファイル\deferred</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
+      <Filter>リソース ファイル\deferred</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

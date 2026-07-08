@@ -211,3 +211,34 @@ void RenderTarget::BindMultiple(
     vp.TopLeftY = 0.0f;
     context->RSSetViewports(1, &vp);
 }
+
+// RenderTarget.cpp
+bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uint32_t height,
+    DXGI_FORMAT depthFormat)
+{
+    m_width = width;
+    m_height = height;
+    m_hasDepth = true;
+    m_isMSAA = false;
+
+    // 深度テクスチャだけ作成(m_textureやm_rtv, m_srvは一切生成しない)
+    D3D11_TEXTURE2D_DESC depthDesc = {};
+    depthDesc.Width = width;
+    depthDesc.Height = height;
+    depthDesc.MipLevels = 1;
+    depthDesc.ArraySize = 1;
+    depthDesc.Format = depthFormat; // 例: DXGI_FORMAT_D32_FLOAT
+    depthDesc.SampleDesc.Count = 1;
+    depthDesc.Usage = D3D11_USAGE_DEFAULT;
+    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+    HRESULT hr = device->CreateTexture2D(&depthDesc, nullptr, m_depthTexture.GetAddressOf());
+    if (FAILED(hr)) return false;
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+    dsvDesc.Format = depthFormat;
+    dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+    hr = device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsv.GetAddressOf());
+    return SUCCEEDED(hr);
+}

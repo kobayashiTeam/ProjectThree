@@ -205,7 +205,7 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,5
 	dirLight.direction = { 3.0f, -1.0f, 1.0f };//1,-1,0
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.15f;//0.1f
+    dirLight.intensity = 0.55f;//0.15f
         //m_lights要素数登録
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:空にしてみる
@@ -286,6 +286,27 @@ bool Renderer::Initialize(Graphics* graphics)
         
         //内容を初期設定
     SetExposure(0.5f);
+
+    //遅延シェーディング用のバッファの初期化
+    m_gBufferPosition = new RenderTarget();
+    if (!m_gBufferPosition->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+        return false;
+    }
+	m_gBufferNormal = new RenderTarget();
+	if (!m_gBufferNormal->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+		return false;
+	}
+	m_gBufferAlbedo = new RenderTarget();
+    if (!m_gBufferAlbedo->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+        return false;
+    }
+	m_gBufferDepthOnly = new RenderTarget();
+	if (!m_gBufferDepthOnly->InitializeDepthOnly(pDevice, 1280, 720)) {
+		return false;
+	}
+        //シェーダ初期化
+	m_pDeferredGBufferShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredGB);
+	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
 
     return true;
 }
@@ -412,6 +433,45 @@ void Renderer::Execute()
     int opaqueIdx = static_cast<int>(RenderPass::Opaque);
     int outlineIdx = static_cast<int>(RenderPass::Outline);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
+    int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
+
+    //-----新規工程:deferred不透明パス-----
+    m_gBufferPosition->Clear(pContext);
+    m_gBufferNormal->Clear(pContext);
+    m_gBufferAlbedo->Clear(pContext);
+	m_gBufferDepthOnly->Clear(pContext);
+
+    RenderTarget* gbufferTargets[3] = {
+    m_gBufferPosition, m_gBufferNormal, m_gBufferAlbedo
+    };
+    ID3D11DepthStencilView* gbufferDSV = m_gBufferDepthOnly ->GetDSV(); // 非MSAA専用の深度
+    RenderTarget::BindMultiple(pContext, 3, gbufferTargets, gbufferDSV);
+
+    m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
+
+    m_pDeferredGBufferShader->Bind(pContext);  // VS+PS
+    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, true);
+
+        // ===== ここで既存の「裏画面」MRTバインドに戻す =====
+    targets[0] = m_offscreenRTwithMSAA;
+	targets[1] = m_brightRTwithMSAA;
+    dsv = m_offscreenRTwithMSAA->GetDSV();
+    RenderTarget::BindMultiple(pContext, 2, targets, dsv);
+
+    // ===== 【新設】Lighting Pass =====
+    // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10など、シャドウマップとぶつからない番号で)
+    ID3D11ShaderResourceView* gbufferSRVs[3] = {
+     m_gBufferAlbedo->GetSRV(),   // t8
+     m_gBufferNormal->GetSRV(),   // t9
+     m_gBufferPosition->GetSRV()  // t10
+    };
+    pContext->PSSetShaderResources(8, 3, gbufferSRVs);
+
+    m_pDeferredLightingShader->Bind(pContext); // VS+PS(フルスクリーンクアッド用)
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // SV_Depthで書き込むため必要
+    m_finalRenderMesh->Render(pContext);
+
 
     // ─── 工程1: 不透明パス ───
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);

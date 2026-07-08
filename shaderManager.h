@@ -54,6 +54,9 @@ public:
         //shadow
         if (!GetOrCreate(pDevice, ShaderID::Shadow, L"Shaders/ShadowShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::ShadowCube, L"Shaders/ShadowCubeShader.hlsl")) return false;
+        //deferred
+        if (!GetOrCreate(pDevice, ShaderID::DeferredGB, L"Shaders/DeferredGBufferShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::DeferredLighting, L"Shaders/DeferredLightingShader.hlsl")) return false;
         return true;
     }
 
@@ -179,6 +182,14 @@ private:
 		case ShaderID::BloomCombine:
 			layout = standardLayout;
 			layoutCount = 4;
+			break;
+		case ShaderID::DeferredGB:
+			layout = standardLayout;
+			layoutCount = 4;
+			break;
+		case ShaderID::DeferredLighting:
+            layout = screenBlitLayout;
+			layoutCount = 2;
 			break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
