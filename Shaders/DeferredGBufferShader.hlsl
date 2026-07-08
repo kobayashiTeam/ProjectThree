@@ -88,9 +88,10 @@ PS_OUTPUT PS(PS_INPUT input)
 {
     PS_OUTPUT output;
 
+    float4 testColor = float4(1.0f, 1.0f, 1.0f, 1.0f); // デバッグ用の赤色
     // 1. 【基本色の抽出】
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    float4 objectColor = texColor * input.Color * vMaterialColor;
+    float4 objectColor = texColor * input.Color * testColor;//vMaterialColor
     
     // RT0 にマテリアル本来の色をそのまま書き込む
     output.Color = objectColor;

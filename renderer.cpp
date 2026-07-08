@@ -205,7 +205,7 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,5
 	dirLight.direction = { 3.0f, -1.0f, 1.0f };//1,-1,0
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.55f;//0.15f
+    dirLight.intensity = 0.30f;//0.15f
         //m_lights要素数登録
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:空にしてみる
@@ -245,7 +245,7 @@ bool Renderer::Initialize(Graphics* graphics)
         //ライト生成
     PointLight  pointLight = {};
     pointLight.position = { 5.0f, 5.0f, 3.0f };
-    pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
+    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
     pointLight.intensity = 1.0f;//0.6f
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
@@ -450,14 +450,15 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
 
-    m_pDeferredGBufferShader->Bind(pContext);  // VS+PS
-    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    //m_pDeferredGBufferShader->Bind(pContext);  // VS+PS
+    //m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
 
         // ===== ここで既存の「裏画面」MRTバインドに戻す =====
     targets[0] = m_offscreenRTwithMSAA;
 	targets[1] = m_brightRTwithMSAA;
     dsv = m_offscreenRTwithMSAA->GetDSV();
-    RenderTarget::BindMultiple(pContext, 2, targets, dsv);
+    RenderTarget::BindMultiple(pContext, 2, targets, dsv);//test
 
     // ===== 【新設】Lighting Pass =====
     // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10など、シャドウマップとぶつからない番号で)

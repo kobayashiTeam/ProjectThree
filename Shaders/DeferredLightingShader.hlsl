@@ -1,5 +1,5 @@
 // ---------------------------------------------------------
-// ’è”ƒoƒbƒtƒ@iŠù‘¶‚Ì\‘¢‚ğ‚»‚Ì‚Ü‚ÜˆÛj
+// å®šæ•°ãƒãƒƒãƒ•ã‚¡ï¼ˆæ—¢å­˜ã®æ§‹é€ ã‚’ãã®ã¾ã¾ç¶­æŒï¼‰
 // ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
@@ -11,8 +11,8 @@ cbuffer PerFrameBuffer : register(b0)
     float4 vAttenuation;
 };
 
-// ¦‘æ2ƒpƒX‚Å‚ÍŒÂ•ÊƒƒbƒVƒ…‚ğƒŒƒ“ƒ_ƒŠƒ“ƒO‚µ‚È‚¢‚½‚ßA
-//  PerObjectBuffer (b1) ‚â PerMaterialBuffer (b2) ‚Íg—p‚µ‚Ü‚¹‚ñB
+// â€»ç¬¬2ãƒ‘ã‚¹ã§ã¯å€‹åˆ¥ãƒ¡ãƒƒã‚·ãƒ¥ã‚’ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã—ãªã„ãŸã‚ã€
+//  PerObjectBuffer (b1) ã‚„ PerMaterialBuffer (b2) ã¯ä½¿ç”¨ã—ã¾ã›ã‚“ã€‚
 
 struct LightData
 {
@@ -34,13 +34,13 @@ cbuffer LightBuffer : register(b3)
 };
 
 // ---------------------------------------------------------
-// “üo—Í\‘¢‘Ì
+// å…¥å‡ºåŠ›æ§‹é€ ä½“
 // ---------------------------------------------------------
-// C++‘¤‚©‚ç‚Í‰æ–Ê‘S‘Ì‚ÌlŠpŒ`i2ƒ|ƒŠƒSƒ“j‚Ì’¸“_ƒf[ƒ^‚ğ—¬‚µ‚İ‚Ü‚·
+// C++å´ã‹ã‚‰ã¯ç”»é¢å…¨ä½“ã®å››è§’å½¢ï¼ˆ2ãƒãƒªã‚´ãƒ³ï¼‰ã®é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã‚’æµã—è¾¼ã¿ã¾ã™
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float2 Tex : TEXCOORD0; // ƒXƒNƒŠ[ƒ“‘S‘Ì‚ğ•¢‚¤UVÀ•W
+    float2 Tex : TEXCOORD0; // ã‚¹ã‚¯ãƒªãƒ¼ãƒ³å…¨ä½“ã‚’è¦†ã†UVåº§æ¨™
 };
 
 struct PS_INPUT
@@ -49,37 +49,38 @@ struct PS_INPUT
     float2 Tex : TEXCOORD0;
 };
 
-// o—ÍiŒ³‚ÌƒVƒF[ƒ_[“¯—lABloom—p‚Ì‚‹P“x’Šo•t‚«ƒ}ƒ‹ƒ`ƒ^[ƒQƒbƒgj
+// å‡ºåŠ›ï¼ˆå…ƒã®ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼åŒæ§˜ã€Bloomç”¨ã®é«˜è¼åº¦æŠ½å‡ºä»˜ããƒãƒ«ãƒã‚¿ãƒ¼ã‚²ãƒƒãƒˆï¼‰
 struct PS_OUTPUT
 {
-    float4 Color : SV_Target0; // ƒoƒbƒNƒoƒbƒtƒ@‚Ö‚ÌÅIƒJƒ‰[
-    float4 Bright : SV_Target1; // Bloom‚‹P“x’Šo—p
+    float4 Color : SV_Target0; // ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡ã¸ã®æœ€çµ‚ã‚«ãƒ©ãƒ¼
+    float4 Bright : SV_Target1; // Bloomé«˜è¼åº¦æŠ½å‡ºç”¨
+    float Depth : SV_Depth; // â† è¿½åŠ 
 };
 
 // ---------------------------------------------------------
-// ƒeƒNƒXƒ`ƒƒEƒTƒ“ƒvƒ‰[ƒXƒƒbƒgİ’è
+// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ»ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ã‚¹ãƒ­ãƒƒãƒˆè¨­å®š
 // ---------------------------------------------------------
-// Šù‘¶‚Ì txDiffuse(t0), shadowMap(t3), shadowCubeMap(t4) ‚Æ”í‚ç‚È‚¢‚æ‚¤”z’u
-Texture2D gBufferAlbedo : register(t8); // G-Buffer 0: F
-Texture2D gBufferNormal : register(t9); // G-Buffer 1: –@ü
-Texture2D gBufferPosition : register(t10); // G-Buffer 2: ƒ[ƒ‹ƒhÀ•W
+// æ—¢å­˜ã® txDiffuse(t0), shadowMap(t3), shadowCubeMap(t4) ã¨è¢«ã‚‰ãªã„ã‚ˆã†é…ç½®
+Texture2D gBufferAlbedo : register(t8); // G-Buffer 0: è‰²
+Texture2D gBufferNormal : register(t9); // G-Buffer 1: æ³•ç·š
+Texture2D gBufferPosition : register(t10); // G-Buffer 2: ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™
 
 SamplerState samLinear : register(s0);
 
-// ƒVƒƒƒhƒEƒ}ƒbƒvŠÖ˜AiŠù‘¶‚Ìw’èƒXƒƒbƒg‚ğˆÛj
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—é–¢é€£ï¼ˆæ—¢å­˜ã®æŒ‡å®šã‚¹ãƒ­ãƒƒãƒˆã‚’ç¶­æŒï¼‰
 Texture2D shadowMap : register(t3);
 TextureCube shadowCubeMap : register(t4);
 SamplerComparisonState shadowSampler : register(s1);
 SamplerState shadowCubeSampler : register(s2);
 
 // ---------------------------------------------------------
-// ’¸“_ƒVƒF[ƒ_[ (VS)
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ (VS)
 // ---------------------------------------------------------
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
     
-    // “ü—Í’¸“_‚ÍC++‘¤‚ÅË‰e‹óŠÔiX: -1~1, Y: -1~1j‚ÌlŠpŒ`‚ğ‘z’è
+    // å…¥åŠ›é ‚ç‚¹ã¯C++å´ã§å°„å½±ç©ºé–“ï¼ˆX: -1~1, Y: -1~1ï¼‰ã®å››è§’å½¢ã‚’æƒ³å®š
     output.Pos = input.Pos;
     output.Tex = input.Tex;
     
@@ -87,7 +88,7 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ƒVƒƒƒhƒEŒvZiŠù‘¶‚ÌƒƒWƒbƒN‚ğ‚»‚Ì‚Ü‚ÜˆÚAj
+// ã‚·ãƒ£ãƒ‰ã‚¦è¨ˆç®—ï¼ˆæ—¢å­˜ã®ãƒ­ã‚¸ãƒƒã‚¯ã‚’ãã®ã¾ã¾ç§»æ¤ï¼‰
 // ---------------------------------------------------------
 float ShadowCalculation_Directional(float4 lightSpacePos)
 {
@@ -109,29 +110,29 @@ float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
 }
 
 // ---------------------------------------------------------
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_[ (PS)
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ (PS)
 // ---------------------------------------------------------
 PS_OUTPUT PS(PS_INPUT input)
 {
-    // --- 1. G-Buffer ‚©‚çŒ»İ‚ÌƒsƒNƒZƒ‹‚ÌuŞ—¿v‚ğƒTƒ“ƒvƒŠƒ“ƒO ---
+    // --- 1. G-Buffer ã‹ã‚‰ç¾åœ¨ã®ãƒ”ã‚¯ã‚»ãƒ«ã®ã€Œææ–™ã€ã‚’ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚° ---
     float4 albedoData = gBufferAlbedo.Sample(samLinear, input.Tex);
     float4 normalData = gBufferNormal.Sample(samLinear, input.Tex);
     float4 positionData = gBufferPosition.Sample(samLinear, input.Tex);
 
-    // [“xƒoƒbƒtƒ@‚ğ‚·‚è”²‚¯‚½”wŒiiSkybox“™‚ğ•`‚©‚È‚¢ê‡j‚Íƒ‰ƒCƒgŒvZ‚ğƒXƒLƒbƒv
+    // æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã‚’ã™ã‚ŠæŠœã‘ãŸèƒŒæ™¯ï¼ˆSkyboxç­‰ã‚’æã‹ãªã„å ´åˆï¼‰ã¯ãƒ©ã‚¤ãƒˆè¨ˆç®—ã‚’ã‚¹ã‚­ãƒƒãƒ—
     if (positionData.w == 0.0f)
     {
         discard;
     }
 
     float3 worldPos = positionData.xyz;
-    float4 objectColor = albedoData; // Œ³‚Ì•¨‘Ì‚ÌFiƒeƒNƒXƒ`ƒƒ~ƒ}ƒeƒŠƒAƒ‹ƒJƒ‰[”½‰fÏ‚İj
+    float4 objectColor = albedoData; // å…ƒã®ç‰©ä½“ã®è‰²ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£Ã—ãƒãƒ†ãƒªã‚¢ãƒ«ã‚«ãƒ©ãƒ¼åæ˜ æ¸ˆã¿ï¼‰
 
-    // [0, 1]‚ÉƒpƒbƒLƒ“ƒO‚³‚ê‚Ä‚¢‚½–@üƒxƒNƒgƒ‹‚ğ [-1, 1] ‚Ì‹óŠÔ‚É•œŒ³
+    // [0, 1]ã«ãƒ‘ãƒƒã‚­ãƒ³ã‚°ã•ã‚Œã¦ã„ãŸæ³•ç·šãƒ™ã‚¯ãƒˆãƒ«ã‚’ [-1, 1] ã®ç©ºé–“ã«å¾©å…ƒ
     float3 normal = normalize(normalData.xyz * 2.0f - 1.0f);
     float3 viewDir = normalize(vEyePos.xyz - worldPos);
 
-    // --- 2. ƒ‰ƒCƒgŒvZiŒ³‚Ìƒ‹[ƒvˆ—‚ğ‚»‚Á‚­‚è‚»‚Ì‚Ü‚ÜÀsj ---
+    // --- 2. ãƒ©ã‚¤ãƒˆè¨ˆç®—ï¼ˆå…ƒã®ãƒ«ãƒ¼ãƒ—å‡¦ç†ã‚’ãã£ãã‚Šãã®ã¾ã¾å®Ÿè¡Œï¼‰ ---
     float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
     float3 totalDirectLight = float3(0.0f, 0.0f, 0.0f);
 
@@ -155,11 +156,10 @@ PS_OUTPUT PS(PS_INPUT input)
             (vAttenuation.x + vAttenuation.y * distance + vAttenuation.z * distance * distance);
         }
 
-        // --- ƒVƒƒƒhƒEŒvZi•K—v‚ÈÀ•WŒn‚Í‚±‚±‚Å‚»‚Ì“s“x¶¬j ---
+        // --- ã‚·ãƒ£ãƒ‰ã‚¦è¨ˆç®—ï¼ˆå¿…è¦ãªåº§æ¨™ç³»ã¯ã“ã“ã§ãã®éƒ½åº¦ç”Ÿæˆï¼‰ ---
         float shadow = 1.0f;
         if (lights[i].type == 0)
         {
-            // Directionalƒ‰ƒCƒg—p‚Ìƒ‰ƒCƒg‹óŠÔÀ•W‚ğƒ[ƒ‹ƒhÀ•W‚©‚ç•œŒ³‚µ‚ÄŒvZ
             float4 lightSpacePos = mul(float4(worldPos, 1.0f), lights[i].lightSpaceMatrix);
             shadow = ShadowCalculation_Directional(lightSpacePos);
         }
@@ -183,14 +183,14 @@ PS_OUTPUT PS(PS_INPUT input)
         totalDirectLight += diffuse * objectColor.xyz + specular;
     }
 
-    // ÅIƒJƒ‰[‡¬
+    // æœ€çµ‚ã‚«ãƒ©ãƒ¼åˆæˆ
     float3 finalColor = globalAmbient + totalDirectLight;
-    
-    // --- 3. ƒuƒ‹[ƒ€—pƒ}ƒ‹ƒ`ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒgo—Í ---
+
+    // --- 3. ãƒ–ãƒ«ãƒ¼ãƒ ç”¨ãƒãƒ«ãƒãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆå‡ºåŠ› ---
     PS_OUTPUT output;
     output.Color = float4(finalColor, objectColor.a);
 
-    // ‹P“xi–¾‚é‚³j‚ğŒvZ‚µ‚ÄBloom’Šo
+    // è¼åº¦ï¼ˆæ˜ã‚‹ã•ï¼‰ã‚’è¨ˆç®—ã—ã¦BloomæŠ½å‡º
     float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0f)
     {
@@ -201,7 +201,12 @@ PS_OUTPUT PS(PS_INPUT input)
         output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    //test
-    output.Color = float4(1.0f,0.0f,0.0f,1.0f);
+    // --- 4. æ·±åº¦ã®å†æ§‹æˆï¼ˆDepth Resolveï¼‰ ---
+    // ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ã‚’ Viewâ†’Projection ã§å†åº¦ã‚¯ãƒªãƒƒãƒ—ç©ºé–“ã«å¤‰æ›ã—ã€
+    // ã€Œæœ¬æ¥ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒæŒã£ã¦ã„ãŸã¯ãšã®æ·±åº¦ã€ã‚’SV_Depthã¨ã—ã¦æ›¸ãæˆ»ã™
+    float4 clipPos = mul(float4(worldPos, 1.0f), mView);
+    clipPos = mul(clipPos, mProjection);
+    output.Depth = clipPos.z / clipPos.w; // NDCæ·±åº¦ (0.0ã€œ1.0)
+
     return output;
 }

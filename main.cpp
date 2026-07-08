@@ -32,6 +32,7 @@ Camera* g_pCamera = nullptr;
 #include"normalVizMaterial.h"
 #include"normalMappingMaterial.h"
 #include"parallaxMappingMaterial.h"
+#include"deferredCBMaterial.h"
 #include "model.h"
 
 Mesh* g_pCubeMesh = nullptr;
@@ -42,6 +43,7 @@ NormalVizMaterial* g_pNormalVizMaterial = nullptr;
 NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
 LitMaterial* g_pTestLitMaterial = nullptr; // 追加：テスト用LitMaterial
 ParallaxMappingMaterial* g_pParallaxMappingMaterial = nullptr; // 追加：ParallaxMappingMaterial
+DeferredCBMaterial* g_pDeferredCBMaterial = nullptr; // 追加：DeferredCBMaterial
 Model* g_pMainModel = nullptr;
 Model* g_pMainModel2 = nullptr;
 Model* g_pMainModel3 = nullptr;
@@ -215,11 +217,10 @@ bool InitDevice()
     UINT32 white = 0xFFFFFFFF;
     // HDR用の白（各チャンネル 1.0f の輝度）
     DirectX::PackedVector::XMHALF4 whiteHDR(1.0f, 1.0f, 1.0f, 1.0f);
-    if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Lit)
-        , &whiteHDR, 1, 1,true,true))//lit
-        return false;
+    if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
+        GetShader(ShaderID::Lit), &whiteHDR, 1, 1,true,true)) return false;
     g_pLitMaterial->CreateMaterialBuffer(pDevice);
-    g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);//8,6,2,1
+    g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
     //g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
     //g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
 
@@ -270,26 +271,33 @@ bool InitDevice()
     if (!g_pParallaxMappingMaterial->InitializeParallaxMapFromFile(pDevice,
         L"assets/para/normalHeight.png"))return false;
 
+	    //deferredCBMaterial
+	g_pDeferredCBMaterial = new DeferredCBMaterial();
+    if (!g_pDeferredCBMaterial ->Initialize(pDevice, ShaderManager::
+        GetInstance().GetShader(ShaderID::DeferredGB), &whiteHDR, 1, 1, true, true)) return false;
+    g_pDeferredCBMaterial->CreateMaterialBuffer(pDevice);
+    g_pDeferredCBMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
+    
     // Model
         //Model1
-    g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);//litmaterialを切り替え
-    g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);//y-1
+    g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pDeferredCBMaterial );//deferredへ
+    g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);
         //Model2
 	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
 	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
     g_pMainModel2->SetTransparent(true);
         //Model3
-    g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pLitMaterial);
+    g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pDeferredCBMaterial);//deferredへ
     g_pMainModel3->SetPosition(0.0f,-7.0f,5.0f);
     g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
         //Model4
     g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
-    g_pMainModel4->SetPosition(-3.0f, 0.0f, -3.0f);//g_pNormalMappingMaterial
-    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);//g_pTestLitMaterial
+    g_pMainModel4->SetPosition(-3.0f, 0.0f, -3.0f);
+    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);
         //Model5
 	g_pMainModel5 = new Model(pDevice, g_pCubeMesh, g_pParallaxMappingMaterial);
-    g_pMainModel5->SetPosition(3.0f, 0.0f, -3.0f);//g_pNormalMappingMaterial
-    g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);//g_pTestLitMaterial
+    g_pMainModel5->SetPosition(3.0f, 0.0f, -3.0f);
+    g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);
         //oldCamera(modelResource)
     modelResource = new ModelResource();
     modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
