@@ -156,5 +156,7 @@ private:
         //シェーダ
 	Shader* m_pDeferredGBufferShader = nullptr;
 	Shader* m_pDeferredLightingShader = nullptr;
+        //サンプラー
+    ComPtr<ID3D11SamplerState> m_gBufferDepthSampler; // ★追加
 
 };

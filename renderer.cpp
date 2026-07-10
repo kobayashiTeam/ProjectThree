@@ -202,10 +202,10 @@ bool Renderer::Initialize(Graphics* graphics)
     // Renderer初期化時など
     DirectionalLight dirLight = {};
     dirLight.type = LightType::Directional;
-    dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,5
-	dirLight.direction = { 3.0f, -1.0f, 1.0f };//1,-1,0
+    dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,-10
+	dirLight.direction = { 3.0f, -1.0f, 1.0f };//
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.30f;//0.15f
+    dirLight.intensity = 1.30f;//0.15f
         //m_lights要素数登録
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:空にしてみる
@@ -246,7 +246,7 @@ bool Renderer::Initialize(Graphics* graphics)
     PointLight  pointLight = {};
     pointLight.position = { 5.0f, 5.0f, 3.0f };
     pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
-    pointLight.intensity = 1.0f;//0.6f
+    pointLight.intensity = 100.0f;//0.6f
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
     m_pointLights.push_back(pointLight);
@@ -307,6 +307,21 @@ bool Renderer::Initialize(Graphics* graphics)
         //シェーダ初期化
 	m_pDeferredGBufferShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredGB);
 	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
+
+        //専用サンプラー初期化
+    // Renderer::Initialize() などの中
+    D3D11_SAMPLER_DESC pointDesc = {};
+    pointDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // 深度は補間NG、点サンプル必須
+    pointDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    pointDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    pointDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    pointDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    pointDesc.MinLOD = 0;
+    pointDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
+    if (FAILED(hr)) return false;
+
 
     return true;
 }
@@ -384,9 +399,11 @@ void Renderer::Execute()
     //pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
     // ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
     // 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
-    SubmitShadowPass();//対象renderQueueのコマンド内容を変える
+    //SubmitShadowPass();//対象renderQueueのコマンド内容を変える
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].
-        Execute(pContext, m_perFrameCB.Get(), m_blendStates,false);
+        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates,false);
+    m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
+        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowMaps[0].EndRender(pContext);
     // オーバーライドをリセット
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
@@ -398,6 +415,8 @@ void Renderer::Execute()
     pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
     //pContext->PSSetShader(nullptr, nullptr, 0);
     m_renderQueues[static_cast<int>(RenderPass::Opaque)].
+        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
         ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowCubeMaps[0].EndRender(pContext);
 
@@ -458,18 +477,21 @@ void Renderer::Execute()
     targets[0] = m_offscreenRTwithMSAA;
 	targets[1] = m_brightRTwithMSAA;
     dsv = m_offscreenRTwithMSAA->GetDSV();
-    RenderTarget::BindMultiple(pContext, 2, targets, dsv);//test
+    RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
     // ===== 【新設】Lighting Pass =====
     // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10など、シャドウマップとぶつからない番号で)
-    ID3D11ShaderResourceView* gbufferSRVs[3] = {
+    ID3D11ShaderResourceView* gbufferSRVs[4] = {
      m_gBufferAlbedo->GetSRV(),   // t8
      m_gBufferNormal->GetSRV(),   // t9
-     m_gBufferPosition->GetSRV()  // t10
+     m_gBufferPosition->GetSRV(),  // t10
+     m_gBufferDepthOnly->GetSRV()   //t11
     };
-    pContext->PSSetShaderResources(8, 3, gbufferSRVs);
+    pContext->PSSetShaderResources(8, 4, gbufferSRVs);
 
     m_pDeferredLightingShader->Bind(pContext); // VS+PS(フルスクリーンクアッド用)
+    ID3D11SamplerState* pointSampler = m_gBufferDepthSampler.Get();
+    pContext->PSSetSamplers(3, 1, &pointSampler); // ★追加
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // SV_Depthで書き込むため必要
     m_finalRenderMesh->Render(pContext);
 
@@ -492,6 +514,19 @@ void Renderer::Execute()
         m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
         m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
 
+        //test:深度
+       /* float depthClear = 1.0f;
+
+        pContext->ClearDepthStencilView(
+            m_offscreenRTwithMSAA->GetDSV(),
+            D3D11_CLEAR_DEPTH,
+            depthClear,
+            0
+        );*/
+        //test:ごちゃごちゃしたシェーダセットを一掃
+        pContext->VSSetShader(nullptr,nullptr,0);
+        pContext->PSSetShader(nullptr, nullptr, 0);
+        pContext->GSSetShader(nullptr, nullptr, 0);
         // 描画実行
         m_pSkyBox->Draw(pContext, m_currentCamera->GetViewMatrix(), m_currentCamera->GetProjectionMatrix());
     }

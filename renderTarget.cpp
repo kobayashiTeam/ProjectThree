@@ -96,7 +96,7 @@ void RenderTarget::Clear(ID3D11DeviceContext* context, const float* color) {
 		context->ClearRenderTargetView(m_rtv.Get(), color);
 	}
 	else {
-		float defaultColor[4] = { 0, 0, 0, 1 }; // 黒で初期化
+		float defaultColor[4] = { 0, 0, 0, 0 }; // 黒で初期化//w=0
 		context->ClearRenderTargetView(m_rtv.Get(), defaultColor);
 	}
 	// 2. 深度バッファのクリア（存在する場合のみ）
@@ -227,18 +227,33 @@ bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uin
     depthDesc.Height = height;
     depthDesc.MipLevels = 1;
     depthDesc.ArraySize = 1;
-    depthDesc.Format = depthFormat; // 例: DXGI_FORMAT_D32_FLOAT
+    //depthDesc.Format = depthFormat; // 例: DXGI_FORMAT_D32_FLOAT
+    depthDesc.Format = DXGI_FORMAT_R32_TYPELESS; // Typelessにする
     depthDesc.SampleDesc.Count = 1;
     depthDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    //depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // 両方立てる
 
     HRESULT hr = device->CreateTexture2D(&depthDesc, nullptr, m_depthTexture.GetAddressOf());
     if (FAILED(hr)) return false;
 
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-    dsvDesc.Format = depthFormat;
+    //dsvDesc.Format = depthFormat;
+    dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsv.GetAddressOf());
     return SUCCEEDED(hr);
+
+    // ----- SRV作成（★追記部分） -----
+   // Lighting Passなどでこの深度をテクスチャとして読み込むために必要
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // SRV側はFloatとして解釈
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = device->CreateShaderResourceView(m_depthTexture.Get(), &srvDesc, m_srv.GetAddressOf());
+    if (FAILED(hr)) return false;
+
+	return true;    
 }

@@ -36,11 +36,10 @@ cbuffer LightBuffer : register(b3)
 // ---------------------------------------------------------
 // 入出力構造体
 // ---------------------------------------------------------
-// C++側からは画面全体の四角形（2ポリゴン）の頂点データを流し込みます
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float2 Tex : TEXCOORD0; // スクリーン全体を覆うUV座標
+    float2 Tex : TEXCOORD0;
 };
 
 struct PS_INPUT
@@ -49,23 +48,23 @@ struct PS_INPUT
     float2 Tex : TEXCOORD0;
 };
 
-// 出力（元のシェーダー同様、Bloom用の高輝度抽出付きマルチターゲット）
 struct PS_OUTPUT
 {
-    float4 Color : SV_Target0; // バックバッファへの最終カラー
-    float4 Bright : SV_Target1; // Bloom高輝度抽出用
-    float Depth : SV_Depth; // ← 追加
+    float4 Color : SV_Target0;
+    float4 Bright : SV_Target1;
+    float Depth : SV_Depth;
 };
 
 // ---------------------------------------------------------
 // テクスチャ・サンプラースロット設定
 // ---------------------------------------------------------
-// 既存の txDiffuse(t0), shadowMap(t3), shadowCubeMap(t4) と被らないよう配置
 Texture2D gBufferAlbedo : register(t8); // G-Buffer 0: 色
 Texture2D gBufferNormal : register(t9); // G-Buffer 1: 法線
 Texture2D gBufferPosition : register(t10); // G-Buffer 2: ワールド座標
+Texture2D gBufferDepth : register(t11); // ★追加: G-Bufferのジオメトリパスで書かれた本物の深度
 
 SamplerState samLinear : register(s0);
+SamplerState samPoint : register(s3); // ★追加: 深度サンプリング用（補間で値が歪むのを防ぐ）
 
 // シャドウマップ関連（既存の指定スロットを維持）
 Texture2D shadowMap : register(t3);
@@ -79,11 +78,8 @@ SamplerState shadowCubeSampler : register(s2);
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
-    
-    // 入力頂点はC++側で射影空間（X: -1~1, Y: -1~1）の四角形を想定
     output.Pos = input.Pos;
     output.Tex = input.Tex;
-    
     return output;
 }
 
@@ -119,31 +115,32 @@ PS_OUTPUT PS(PS_INPUT input)
     float4 normalData = gBufferNormal.Sample(samLinear, input.Tex);
     float4 positionData = gBufferPosition.Sample(samLinear, input.Tex);
 
-    // 深度バッファをすり抜けた背景（Skybox等を描かない場合）はライト計算をスキップ
+    // 何も描かれていない背景ピクセルはライト計算をスキップし、
+    // SV_Depthも一切書き込まない（discardすればここで処理終了、
+    // 元々m_offscreenRTwithMSAAにあった深度[Clear直後の1.0]がそのまま保持される）
     if (positionData.w == 0.0f)
     {
         discard;
     }
 
     float3 worldPos = positionData.xyz;
-    float4 objectColor = albedoData; // 元の物体の色（テクスチャ×マテリアルカラー反映済み）
+    float4 objectColor = albedoData;
 
-    // [0, 1]にパッキングされていた法線ベクトルを [-1, 1] の空間に復元
     float3 normal = normalize(normalData.xyz * 2.0f - 1.0f);
     float3 viewDir = normalize(vEyePos.xyz - worldPos);
 
-    // --- 2. ライト計算（元のループ処理をそっくりそのまま実行） ---
+    // --- 2. ライト計算（変更なし） ---
     float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
     float3 totalDirectLight = float3(0.0f, 0.0f, 0.0f);
 
     for (int i = 0; i < lightCount; i++)
     {
         float3 lightDir;
-        if (lights[i].type == 0) // Directional
+        if (lights[i].type == 0)
         {
             lightDir = normalize(-lights[i].direction.xyz);
         }
-        else if (lights[i].type == 1) // Point
+        else if (lights[i].type == 1)
         {
             lightDir = normalize(lights[i].position.xyz - worldPos);
         }
@@ -156,7 +153,6 @@ PS_OUTPUT PS(PS_INPUT input)
             (vAttenuation.x + vAttenuation.y * distance + vAttenuation.z * distance * distance);
         }
 
-        // --- シャドウ計算（必要な座標系はここでその都度生成） ---
         float shadow = 1.0f;
         if (lights[i].type == 0)
         {
@@ -168,11 +164,9 @@ PS_OUTPUT PS(PS_INPUT input)
             shadow = ShadowCalculation_Point(worldPos, lights[i].position.xyz, lights[i].farPlane);
         }
 
-        // Diffuse
         float diff = max(dot(normal, lightDir), 0.0f);
         float3 diffuse = diff * lights[i].color.xyz * lights[i].intensity;
 
-        // Specular
         float3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0f), 32.0f);
         float3 specular = 0.5f * spec * lights[i].color.xyz * lights[i].intensity;
@@ -183,14 +177,12 @@ PS_OUTPUT PS(PS_INPUT input)
         totalDirectLight += diffuse * objectColor.xyz + specular;
     }
 
-    // 最終カラー合成
     float3 finalColor = globalAmbient + totalDirectLight;
 
     // --- 3. ブルーム用マルチレンダーターゲット出力 ---
     PS_OUTPUT output;
     output.Color = float4(finalColor, objectColor.a);
 
-    // 輝度（明るさ）を計算してBloom抽出
     float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0f)
     {
@@ -201,12 +193,10 @@ PS_OUTPUT PS(PS_INPUT input)
         output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    // --- 4. 深度の再構成（Depth Resolve） ---
-    // ワールド座標を View→Projection で再度クリップ空間に変換し、
-    // 「本来このオブジェクトが持っていたはずの深度」をSV_Depthとして書き戻す
-    float4 clipPos = mul(float4(worldPos, 1.0f), mView);
-    clipPos = mul(clipPos, mProjection);
-    output.Depth = clipPos.z / clipPos.w; // NDC深度 (0.0〜1.0)
+    // --- 4. 深度：再構成せず、G-Bufferジオメトリパスで書かれた本物の深度をそのまま転写 ---
+    // mView/mProjectionによる再計算は不要かつ誤差の元だったため削除。
+    // ジオメトリパス時点で既に正しい深度が確定しているので、それをコピーするだけでよい。
+    output.Depth = gBufferDepth.Sample(samPoint, input.Tex).r;
 
     return output;
 }
