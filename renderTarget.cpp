@@ -237,15 +237,17 @@ bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uin
     HRESULT hr = device->CreateTexture2D(&depthDesc, nullptr, m_depthTexture.GetAddressOf());
     if (FAILED(hr)) return false;
 
+	//DSVの作成
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     //dsvDesc.Format = depthFormat;
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsv.GetAddressOf());
-    return SUCCEEDED(hr);
+    if (FAILED(hr)) return false;   // ★ここでは早期returnせず、失敗時のみfalseで抜ける
 
     // ----- SRV作成（★追記部分） -----
+    // 
    // Lighting Passなどでこの深度をテクスチャとして読み込むために必要
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // SRV側はFloatとして解釈

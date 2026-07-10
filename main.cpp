@@ -354,7 +354,7 @@ void Render()
 
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     //g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);//空中のcube
-    g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);//回転cube
+    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);//回転cube
     //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
     //g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);//床
     g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);

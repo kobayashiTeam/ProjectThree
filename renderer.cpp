@@ -205,7 +205,7 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,-10
 	dirLight.direction = { 3.0f, -1.0f, 1.0f };//
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 1.30f;//0.15f
+    dirLight.intensity = 0.40f;//0.15f
         //m_lights要素数登録
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:空にしてみる
@@ -245,8 +245,8 @@ bool Renderer::Initialize(Graphics* graphics)
         //ライト生成
     PointLight  pointLight = {};
     pointLight.position = { 5.0f, 5.0f, 3.0f };
-    pointLight.color = { 1.0f, 0.0f, 1.0f, 1.0f };
-    pointLight.intensity = 100.0f;//0.6f
+    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    pointLight.intensity = 0.4f;//0.6f
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
     m_pointLights.push_back(pointLight);

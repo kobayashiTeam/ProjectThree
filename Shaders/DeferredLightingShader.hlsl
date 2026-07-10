@@ -198,5 +198,9 @@ PS_OUTPUT PS(PS_INPUT input)
     // ジオメトリパス時点で既に正しい深度が確定しているので、それをコピーするだけでよい。
     output.Depth = gBufferDepth.Sample(samPoint, input.Tex).r;
 
+    //test
+    //float d = gBufferDepth.Sample(samPoint, input.Tex).r;
+    //output.Color = float4(d, d, d, 1.0f);
+    //output.Depth = d; // そのまま
     return output;
 }
