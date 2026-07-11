@@ -28,6 +28,7 @@
 #include"HorizontalBlurPostProcess.h"
 #include"VerticalBlurPostProcess.h"
 #include"bloomCombinePostProcess.h"
+#include<random>
 
 Renderer::~Renderer()
 {
@@ -322,8 +323,26 @@ bool Renderer::Initialize(Graphics* graphics)
     hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
     if (FAILED(hr)) return false;
 
+    
+    //SSAO
+        //rtの初期化（後で確認）
+    m_ssaoRawRT = new RenderTarget();
+    if (!m_ssaoRawRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+        return false;
+    }
+    m_ssaoBlurRT = new RenderTarget();
+    if (!m_ssaoBlurRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+        return false;
+    }
+        //ノイズテクスチャの生成
+    if (!initSSAO(pDevice))return false;
+
+        //サンプラーの生成
+	initSSAOSampler(pDevice);
+	    //半球サンプルの定数バッファ生成
 
     return true;
+
 }
 
 void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
@@ -469,25 +488,52 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
 
-    //m_pDeferredGBufferShader->Bind(pContext);  // VS+PS
-    //m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, true);
     m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
 
-        // ===== ここで既存の「裏画面」MRTバインドに戻す =====
+
+    // ==========================================
+    // 【★ここに新設！】SSAO 生成 ＆ SSAOブラー パス
+    // ==========================================
+    // 1. SSAO用のテンポラリRT（非MSAA）をクリアしてバインド
+    m_ssaoRawRT->Clear(pContext);
+    m_ssaoRawRT->Bind(pContext); // 深度は不要（nullptr）でも都合上できてしまう？
+    
+    // 2. G-Buffer（Albedo以外）をSRVとしてセット。ノイズテクスチャ、半球サンプル、ビュー行列をセット
+    ID3D11ShaderResourceView* ssaoInputs[3] = {
+        m_gBufferNormal->GetSRV(),
+        m_gBufferPosition->GetSRV(),
+        m_ssaoNoiseTextureSRV.Get() // ランダム回転用ノイズ
+    };
+    pContext->PSSetShaderResources(0, 3, ssaoInputs);
+    // 3. フルスクリーンクアッド（m_finalRenderMesh）でSSAOシェーダーを実行 → m_ssaoRawRT へ
+    m_pSSAOShader->Bind(pContext);
+    m_finalRenderMesh->Render(pContext);
+    // 4. m_ssaoRawRT を入力にして、エッジ保存ブラーを実行 → m_ssaoBlurRT（完成品）へ
+    m_ssaoBlurRT->Clear(pContext);
+    m_ssaoBlurRT->Bind(pContext);
+
+    auto* rawSsaoSRV = m_ssaoRawRT->GetSRV();
+    pContext->PSSetShaderResources(0, 1, &rawSsaoSRV);
+
+    m_pSSAOBlurShader->Bind(pContext);
+    m_finalRenderMesh->Render(pContext);
+
+    // ===== ここで既存の「裏画面」MRTバインドに戻す =====
     targets[0] = m_offscreenRTwithMSAA;
 	targets[1] = m_brightRTwithMSAA;
     dsv = m_offscreenRTwithMSAA->GetDSV();
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
     // ===== 【新設】Lighting Pass =====
-    // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10など、シャドウマップとぶつからない番号で)
-    ID3D11ShaderResourceView* gbufferSRVs[4] = {
+    // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10,t11,t12など、シャドウマップとぶつからない番号で)
+    ID3D11ShaderResourceView* gbufferSRVs[5] = {
      m_gBufferAlbedo->GetSRV(),   // t8
      m_gBufferNormal->GetSRV(),   // t9
      m_gBufferPosition->GetSRV(),  // t10
-     m_gBufferDepthOnly->GetSRV()   //t11
+     m_gBufferDepthOnly->GetSRV(),   //t11
+     m_ssaoBlurRT->GetSRV()       // ★t12 にSSAOを滑り込ませる！
     };
-    pContext->PSSetShaderResources(8, 4, gbufferSRVs);
+    pContext->PSSetShaderResources(8, 5, gbufferSRVs);
 
     m_pDeferredLightingShader->Bind(pContext); // VS+PS(フルスクリーンクアッド用)
     ID3D11SamplerState* pointSampler = m_gBufferDepthSampler.Get();
@@ -514,15 +560,6 @@ void Renderer::Execute()
         m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
         m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
 
-        //test:深度
-       /* float depthClear = 1.0f;
-
-        pContext->ClearDepthStencilView(
-            m_offscreenRTwithMSAA->GetDSV(),
-            D3D11_CLEAR_DEPTH,
-            depthClear,
-            0
-        );*/
         //test:ごちゃごちゃしたシェーダセットを一掃
         pContext->VSSetShader(nullptr,nullptr,0);
         pContext->PSSetShader(nullptr, nullptr, 0);
@@ -783,4 +820,104 @@ void Renderer::UpdatePostProcessConstantBuffer()
     pContext->VSSetConstantBuffers(5, 1, cbArray);
     pContext->PSSetConstantBuffers(5, 1, cbArray);
     pContext->GSSetConstantBuffers(5, 1, cbArray);
+}
+
+
+bool Renderer::initSSAO(ID3D11Device* pDevice) {
+
+    ID3D11Texture2D* m_pNoiseTexture = nullptr;
+    // 1. もとになるノイズ色（ベクトル）配列をプログラム内で生成
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+
+    // 4x4 = 16画素分のデータ。高精度なFLOATフォーマットを使うため DirectX::XMFLOAT4 を使用
+    DirectX::XMFLOAT4 noiseValues[16];
+    for (int i = 0; i < 16; ++i)
+    {
+        noiseValues[i].x = dis(gen); // -1.0 ～ 1.0 のランダム
+        noiseValues[i].y = dis(gen); // -1.0 ～ 1.0 のランダム
+        noiseValues[i].z = 0.0f;     // 接空間のZ（法線方向）は回転させないので 0
+        noiseValues[i].w = 0.0f;     // 未使用
+    }
+
+    // 2. テクスチャの設定（ID3D11Texture2D）を定義
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = 4;                       // 4マス
+    texDesc.Height = 4;                       // 4マス
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // 浮動小数点の高精度フォーマット
+    texDesc.SampleDesc.Count = 1;
+    texDesc.SampleDesc.Quality = 0;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;     // GPUから読み込むだけなのでDEFAULT
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE; // シェーダーに渡す用
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+
+    // 作成と同時に、さっき作った配列データを初期データとして流し込む
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = noiseValues;
+    initData.SysMemPitch = 4 * sizeof(DirectX::XMFLOAT4); // 横1行分のバイト数
+    initData.SysMemSlicePitch = 0;
+
+    HRESULT hr = pDevice->CreateTexture2D(&texDesc, &initData, &m_pNoiseTexture);
+    if (FAILED(hr)) return false;
+
+    // 3. テクスチャをもとにSRVを定義・作成
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = texDesc.Format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+
+    hr = pDevice->CreateShaderResourceView(m_pNoiseTexture, &srvDesc, &m_ssaoNoiseTextureSRV);
+    if (FAILED(hr)) return false;
+
+    return true;
+}
+
+
+bool Renderer::initSSAOSampler(ID3D11Device* pDevice) {
+
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+
+    // ---------------------------------------------------------
+    // ① samPointClamp (点サンプリング / 範囲外クランプ)
+    // ---------------------------------------------------------
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Point指定
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // Clamp指定
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamPointClamp);
+    if (FAILED(hr)) return false;
+
+    // ---------------------------------------------------------
+    // ② samPointWrap (点サンプリング / 範囲外ラップ・タイリング)
+    // ---------------------------------------------------------
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Point指定
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // Wrap指定 (タイリング用)
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamPointWrap);
+    if (FAILED(hr)) return false;
+
+    // ---------------------------------------------------------
+    // ③ samLinearClamp (線形サンプリング / 範囲外クランプ)
+    // ---------------------------------------------------------
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // Linear指定 (ぼかし用)
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;     // Clamp指定
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamLinearClamp);
+    if (FAILED(hr)) return false;
+
+    return true;
 }

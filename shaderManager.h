@@ -45,7 +45,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SimpleBoxBlur, L"Shaders/SimpleBoxBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sharpen, L"Shaders/SharpenShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
-            //“ÁŽê
+            //“ÁŽêBloom
         if (!GetOrCreate(pDevice, ShaderID::HoriBlur, L"Shaders/HorizontalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::VerBlur, L"Shaders/VerticalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::BloomCombine, L"Shaders/BloomCombineShader.hlsl")) return false;
@@ -57,6 +57,9 @@ public:
         //deferred
         if (!GetOrCreate(pDevice, ShaderID::DeferredGB, L"Shaders/DeferredGBufferShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::DeferredLighting, L"Shaders/DeferredLightingShader.hlsl")) return false;
+        //SSAO
+        if (!GetOrCreate(pDevice, ShaderID::SSAO, L"Shaders/SSAOShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::SSAOBlur, L"Shaders/SSAOBlurShader.hlsl")) return false;
         return true;
     }
 
@@ -189,6 +192,14 @@ private:
 			break;
 		case ShaderID::DeferredLighting:
             layout = screenBlitLayout;
+			layoutCount = 2;
+			break;
+		case ShaderID::SSAO:
+			layout = screenBlitLayout;
+			layoutCount = 2;
+			break;
+		case ShaderID::SSAOBlur:
+			layout = screenBlitLayout;
 			layoutCount = 2;
 			break;
         case ShaderID::Monochromatic:

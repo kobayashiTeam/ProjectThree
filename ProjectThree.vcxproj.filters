@@ -64,6 +64,9 @@
     <Filter Include="リソース ファイル\deferred">
       <UniqueIdentifier>{6f289972-afbc-4500-87d2-d99fb4742acb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\ssao">
+      <UniqueIdentifier>{57a6071e-4348-4e85-82f1-53deb007a547}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -390,6 +393,12 @@
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SSAOShader.hlsl">
+      <Filter>リソース ファイル\ssao</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SSAOBlurShader.hlsl">
+      <Filter>リソース ファイル\ssao</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

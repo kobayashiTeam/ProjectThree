@@ -64,7 +64,10 @@ enum class ShaderID {
     ShadowCube,
 	//deferred
     DeferredGB,
-    DeferredLighting
+    DeferredLighting,
+    //SSAO
+	SSAO,
+    SSAOBlur
 };
 
 //ƒ‰ƒCƒgŠÖ˜A

@@ -69,6 +69,9 @@ public:
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
 
+	//SSAO
+    bool initSSAO(ID3D11Device* pDevice);
+
 private:
     void UpdatePerFrameConstantBuffer();
 
@@ -158,5 +161,19 @@ private:
 	Shader* m_pDeferredLightingShader = nullptr;
         //サンプラー
     ComPtr<ID3D11SamplerState> m_gBufferDepthSampler; // ★追加
+
+
+    //SSAO(アンビエントオカルージョン光)
+        //rt
+    RenderTarget* m_ssaoRawRT;
+    RenderTarget* m_ssaoBlurRT;
+        //ノイズテクスチャのsrv
+	ComPtr<ID3D11ShaderResourceView> m_ssaoNoiseTextureSRV;
+	    //半球サンプルの定数バッファ
+    ComPtr<ID3D11Buffer> m_ssaoCB = nullptr;
+        //SSAO作成シェーダ
+	Shader* m_pSSAOShader = nullptr;
+	    //SSAOブラーシェーダ
+	Shader* m_pSSAOBlurShader = nullptr;
 
 };
