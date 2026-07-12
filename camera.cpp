@@ -13,7 +13,7 @@ Camera::Camera(float width, float height)
     //行列を作る関数。
     m_projection = 
         XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), width / height, 0.01f, 1000.0f);//100
-    m_eyePos = XMFLOAT4(0.0f, 5.0f,-5.0f, 0.0f);//0,0,-10
+    m_eyePos = XMFLOAT4(0.0f, 0.0f,-10.0f, 0.0f);//0,0,-10
 
     //yaw,pitchを初期化
     m_yaw = XMConvertToRadians(90.0f);  // +Z方向;    // 左右（ラジアン）
