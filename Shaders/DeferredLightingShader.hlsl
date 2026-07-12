@@ -1,3 +1,7 @@
+// =========================================================
+// ディファードライティング ＋ SSAO合成ピクセルシェーダー
+// =========================================================
+
 // ---------------------------------------------------------
 // 定数バッファ（既存の構造をそのまま維持）
 // ---------------------------------------------------------
@@ -10,9 +14,6 @@ cbuffer PerFrameBuffer : register(b0)
     float4 vEyePos;
     float4 vAttenuation;
 };
-
-// ※第2パスでは個別メッシュをレンダリングしないため、
-//  PerObjectBuffer (b1) や PerMaterialBuffer (b2) は使用しません。
 
 struct LightData
 {
@@ -61,10 +62,11 @@ struct PS_OUTPUT
 Texture2D gBufferAlbedo : register(t8); // G-Buffer 0: 色
 Texture2D gBufferNormal : register(t9); // G-Buffer 1: 法線
 Texture2D gBufferPosition : register(t10); // G-Buffer 2: ワールド座標
-Texture2D gBufferDepth : register(t11); // ★追加: G-Bufferのジオメトリパスで書かれた本物の深度
+Texture2D gBufferDepth : register(t11); // G-Bufferのジオメトリパスで書かれた本物の深度
+Texture2D txSSAOBlur : register(t12); // ★追加: ブラー済みの完成版SSAOマップ
 
 SamplerState samLinear : register(s0);
-SamplerState samPoint : register(s3); // ★追加: 深度サンプリング用（補間で値が歪むのを防ぐ）
+SamplerState samPoint : register(s3); // 深度およびSSAOサンプリング用（値を歪ませないため）
 
 // シャドウマップ関連（既存の指定スロットを維持）
 Texture2D shadowMap : register(t3);
@@ -84,7 +86,7 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// シャドウ計算（既存のロジックをそのまま移植）
+// シャドウ計算（既存のロジックをそのまま維持）
 // ---------------------------------------------------------
 float ShadowCalculation_Directional(float4 lightSpacePos)
 {
@@ -115,9 +117,7 @@ PS_OUTPUT PS(PS_INPUT input)
     float4 normalData = gBufferNormal.Sample(samLinear, input.Tex);
     float4 positionData = gBufferPosition.Sample(samLinear, input.Tex);
 
-    // 何も描かれていない背景ピクセルはライト計算をスキップし、
-    // SV_Depthも一切書き込まない（discardすればここで処理終了、
-    // 元々m_offscreenRTwithMSAAにあった深度[Clear直後の1.0]がそのまま保持される）
+    // 何も描かれていない背景ピクセルはライト計算をスキップ
     if (positionData.w == 0.0f)
     {
         discard;
@@ -129,8 +129,13 @@ PS_OUTPUT PS(PS_INPUT input)
     float3 normal = normalize(normalData.xyz * 2.0f - 1.0f);
     float3 viewDir = normalize(vEyePos.xyz - worldPos);
 
-    // --- 2. ライト計算（変更なし） ---
-    float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
+    // ★追加：SSAOマップからオクルージョン値（0.0～1.0）をサンプリング
+    // 値がブレるのを防ぐため、深度と同じ samPoint サンプラーを使用します
+    float ssao = txSSAOBlur.Sample(samPoint, input.Tex).r;
+
+    // --- 2. ライト計算（SSAOを環境光に適用） ---
+    // 全体環境光（globalAmbient）に対して SSAO値を掛け算し、角や隙間を暗くします
+    float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz * ssao;
     float3 totalDirectLight = float3(0.0f, 0.0f, 0.0f);
 
     for (int i = 0; i < lightCount; i++)
@@ -177,11 +182,15 @@ PS_OUTPUT PS(PS_INPUT input)
         totalDirectLight += diffuse * objectColor.xyz + specular;
     }
 
+    // 環境光（SSAO適用済）と直接光を合計
     float3 finalColor = globalAmbient + totalDirectLight;
 
     // --- 3. ブルーム用マルチレンダーターゲット出力 ---
+    // (※ブルームの光漏れ判定[Bright]にも、SSAOが反映された最終カラーを用います)
     PS_OUTPUT output;
     output.Color = float4(finalColor, objectColor.a);
+    // デバッグ: SSAOの値だけを出力してみる
+    //output.Color = float4(ssao, ssao, ssao, 1.0f);
 
     float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0f)
@@ -193,14 +202,8 @@ PS_OUTPUT PS(PS_INPUT input)
         output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    // --- 4. 深度：再構成せず、G-Bufferジオメトリパスで書かれた本物の深度をそのまま転写 ---
-    // mView/mProjectionによる再計算は不要かつ誤差の元だったため削除。
-    // ジオメトリパス時点で既に正しい深度が確定しているので、それをコピーするだけでよい。
+    // --- 4. 深度の転写（変更なし） ---
     output.Depth = gBufferDepth.Sample(samPoint, input.Tex).r;
 
-    //test
-    //float d = gBufferDepth.Sample(samPoint, input.Tex).r;
-    //output.Color = float4(d, d, d, 1.0f);
-    //output.Depth = d; // そのまま
     return output;
 }

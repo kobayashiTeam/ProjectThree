@@ -288,7 +288,7 @@ bool InitDevice()
     g_pMainModel2->SetTransparent(true);
         //Model3
     g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pDeferredCBMaterial);//deferredへ
-    g_pMainModel3->SetPosition(0.0f,-7.0f,5.0f);
+    g_pMainModel3->SetPosition(0.0f,-6.2f,5.0f);//y-7
     g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
         //Model4
     g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
@@ -339,7 +339,7 @@ void UpdateScene()
     g_pCamera->UpdateDirection(deltaYaw, deltaPitch);
 
     // モデル回転
-    g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
+    //g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
 }
 
 // =============================================

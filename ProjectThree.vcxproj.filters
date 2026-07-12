@@ -252,6 +252,12 @@
     <ClCompile Include="deferredCBMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\SSAOBlurShader.hlsl">
+      <Filter>リソース ファイル\ssao</Filter>
+    </ClCompile>
+    <ClCompile Include="Shaders\SSAOShader.hlsl">
+      <Filter>リソース ファイル\ssao</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -393,12 +399,6 @@
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\SSAOShader.hlsl">
-      <Filter>リソース ファイル\ssao</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\SSAOBlurShader.hlsl">
-      <Filter>リソース ファイル\ssao</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

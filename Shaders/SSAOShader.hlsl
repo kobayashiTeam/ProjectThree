@@ -68,9 +68,9 @@ Texture2D txPosition : register(t1); // G-Buffer: ワールド空間の座標
 Texture2D txNoise : register(t2); // 4x4のランダムベクトル(回転用)
 
 // G-Bufferはピクセル単位で正確に読みたいのでPointサンプリング、UV範囲外はClamp
-SamplerState samPointClamp : register(s0);
+SamplerState samPointClamp : register(s4);
 // ノイズテクスチャは画面全体に敷き詰める（タイリングする）のでWrap設定が必要
-SamplerState samPointWrap : register(s1);
+SamplerState samPointWrap : register(s5);
 
 // ---------------------------------------------------------
 // 入出力構造体
@@ -110,6 +110,7 @@ float4 PS(PS_INPUT input) : SV_Target
     // 1. G-Bufferから情報を取得 (World Space)
     float3 worldPos = txPosition.Sample(samPointClamp, input.Tex).xyz;
     float3 worldNormal = txNormal.Sample(samPointClamp, input.Tex).xyz;
+    //float3 worldNormal = normalize(txNormal.Sample(samPointClamp, input.Tex).xyz * 2.0f - 1.0f);
     
     // ※もし背景（モデルがない場所）ならSSAOは計算せず白(1.0)を返す
     // 深度値や、Normalがゼロベクトルかどうか等で判定できます（ここでは単純な0判定）
@@ -153,18 +154,17 @@ float4 PS(PS_INPUT input) : SV_Target
         // ※DirectXはY軸が下向きなので反転させる (-0.5)
         float2 sampleUV = offset.xy * float2(0.5f, -0.5f) + 0.5f;
         
-        // 7. サンプルしたUVの位置にある「実際のワールド座標」を取得し、View空間のZ深度に変換
-        float3 sampleWorldPos = txPosition.SampleLevel(samPointClamp, sampleUV, 0).xyz;
+        // ★変更: 背景かどうかを先にチェック
+        float4 sampleData = txPosition.SampleLevel(samPointClamp, sampleUV, 0);
+        if (sampleData.w == 0.0f)
+        {
+            continue; // 背景は遮蔽判定に使わない
+        }
+        float3 sampleWorldPos = sampleData.xyz;
         float sampleDepth = mul(float4(sampleWorldPos, 1.0f), mView).z;
-        
-        // 8. 遮蔽判定
-        // レンジチェック：手前にある物体が遠くの物体に間違って影を落とさないための処理
-        // (abs(viewPos.z - sampleDepth) < radius) ならば、判定を有効にする
+    
         float rangeCheck = smoothstep(0.0f, 1.0f, radius / abs(viewPos.z - sampleDepth));
-        
-        // サンプル点のZが、実際のZよりも奥(カメラから遠い＝値が大きい)なら遮蔽されている
-        // ※DirectXのView空間（右手/左手）によりますが、一般的にカメラ前方はZ値が大きい(または小さい)。
-        // 左手系(Zがプラスに伸びる)の場合： sampleDepth < samplePos.z なら遮蔽。
+    
         if (sampleDepth <= samplePos.z - bias)
         {
             occlusion += 1.0f * rangeCheck;

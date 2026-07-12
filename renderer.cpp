@@ -206,7 +206,7 @@ bool Renderer::Initialize(Graphics* graphics)
     dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,-10
 	dirLight.direction = { 3.0f, -1.0f, 1.0f };//
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.40f;//0.15f
+    dirLight.intensity = 0.80f;//0.15f
         //m_lights要素数登録
     m_directionalLights.reserve(MAX_LIGHTS);
     m_directionalLights.push_back(dirLight);//test:空にしてみる
@@ -245,9 +245,9 @@ bool Renderer::Initialize(Graphics* graphics)
     pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
         //ライト生成
     PointLight  pointLight = {};
-    pointLight.position = { 5.0f, 5.0f, 3.0f };
+    pointLight.position = { 5.0f, 5.0f, 3.0f };//5,5,3
     pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    pointLight.intensity = 0.4f;//0.6f
+    pointLight.intensity = 1.0f;//0.6f
         //m_lights要素数登録
     m_pointLights.reserve(MAX_LIGHTS);
     m_pointLights.push_back(pointLight);
@@ -336,10 +336,13 @@ bool Renderer::Initialize(Graphics* graphics)
     }
         //ノイズテクスチャの生成
     if (!initSSAO(pDevice))return false;
-
         //サンプラーの生成
 	initSSAOSampler(pDevice);
 	    //半球サンプルの定数バッファ生成
+    initSSAOConstantBuffer(pDevice);
+	    //シェーダの取得
+	m_pSSAOShader = ShaderManager::GetInstance().GetShader(ShaderID::SSAO);
+	m_pSSAOBlurShader = ShaderManager::GetInstance().GetShader(ShaderID::SSAOBlur);
 
     return true;
 
@@ -498,13 +501,18 @@ void Renderer::Execute()
     m_ssaoRawRT->Clear(pContext);
     m_ssaoRawRT->Bind(pContext); // 深度は不要（nullptr）でも都合上できてしまう？
     
-    // 2. G-Buffer（Albedo以外）をSRVとしてセット。ノイズテクスチャ、半球サンプル、ビュー行列をセット
+    // 2. G-Buffer（Albedo以外）をSRVとしてセット。
+    // ノイズテクスチャ、半球サンプル、ビュー行列、サンプラーをセット
     ID3D11ShaderResourceView* ssaoInputs[3] = {
         m_gBufferNormal->GetSRV(),
         m_gBufferPosition->GetSRV(),
         m_ssaoNoiseTextureSRV.Get() // ランダム回転用ノイズ
     };
     pContext->PSSetShaderResources(0, 3, ssaoInputs);
+    // s0 と s1 にそれぞれのサンプラーをセット
+    ID3D11SamplerState* ssaoSamplers[] = { m_pSamPointClamp, m_pSamPointWrap };
+    pContext->PSSetSamplers(4, 2, ssaoSamplers);
+	updateSSAOConstantBuffer(pContext); // 半球サンプルをcbufferに送る
     // 3. フルスクリーンクアッド（m_finalRenderMesh）でSSAOシェーダーを実行 → m_ssaoRawRT へ
     m_pSSAOShader->Bind(pContext);
     m_finalRenderMesh->Render(pContext);
@@ -514,6 +522,9 @@ void Renderer::Execute()
 
     auto* rawSsaoSRV = m_ssaoRawRT->GetSRV();
     pContext->PSSetShaderResources(0, 1, &rawSsaoSRV);
+
+    // s0 に Linearカラー用のサンプラーをセット
+    pContext->PSSetSamplers(4, 1, &m_pSamLinearClamp);
 
     m_pSSAOBlurShader->Bind(pContext);
     m_finalRenderMesh->Render(pContext);
@@ -920,4 +931,73 @@ bool Renderer::initSSAOSampler(ID3D11Device* pDevice) {
     if (FAILED(hr)) return false;
 
     return true;
+}
+
+
+bool Renderer::initSSAOConstantBuffer(ID3D11Device* pDevice)
+{
+
+    // ★ここで実際の画面解像度（ビューポートの横幅・縦幅）を使って計算する
+    float windowWidth = 1280.0f; // 実際のゲーム画面の横幅
+    float windowHeight = 720.0f; // 実際のゲーム画面の縦幅
+    // --- 64個のサンプルベクトルの生成ロジック ---
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+    std::uniform_real_distribution<float> disZ(0.0f, 1.0f); // Zは半球なので0～1
+
+    for (int i = 0; i < 64; ++i)
+    {
+        DirectX::XMVECTOR sample = DirectX::XMVectorSet(dis(gen), dis(gen), disZ(gen), 0.0f);
+        sample = DirectX::XMVector3Normalize(sample); // 正規化
+
+        // 中心に近づくほど密集させるスケール処理
+        float scale = (float)i / 64.0f;
+        // 線形補間 (0.1f ～ 1.0f の間で二次関数的に配分)
+        scale = 0.1f + (scale * scale) * (1.0f - 0.1f);
+        sample = DirectX::XMVectorScale(sample, scale);
+
+        DirectX::XMStoreFloat4(&m_ssaoParamData.samples[i], sample);
+    }
+
+    // --- 固定パラメータの初期値設定 ---
+    m_ssaoParamData.noiseScale = DirectX::XMFLOAT2(windowWidth / 4.0f, windowHeight / 4.0f); // 画面解像度に合わせて後で更新も可
+    m_ssaoParamData.radius = 0.40f;   // 遮蔽を調べる半径（ゲームのスケールに合わせて要調整）
+    m_ssaoParamData.bias = 0.03f; // ニキビのようなアーティファクトを防ぐバイアス0.025
+
+    // --- Dynamic定数バッファの作成 ---
+    D3D11_BUFFER_DESC cbDesc = {};
+    cbDesc.ByteWidth = sizeof(SSAOParam);
+    cbDesc.Usage = D3D11_USAGE_DYNAMIC;         // CPUから頻繁に書き換える
+    cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // 定数バッファとして使用
+    cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;       // CPUからの書き込み許可
+    cbDesc.MiscFlags = 0;
+    cbDesc.StructureByteStride = 0;
+
+    HRESULT hr = pDevice->CreateBuffer(&cbDesc, nullptr, &m_ssaoCB);
+    if (FAILED(hr)) return false;
+
+    // 前述のノイズテクスチャ生成などもここに続く...
+    return true;
+}
+
+
+void Renderer::updateSSAOConstantBuffer(ID3D11DeviceContext* pContext) {
+
+    // イマジナリー仕様：もしリアルタイムにImGui等で radius や bias をイジるなら
+    // ここで m_ssaoParamData.radius = imgui_value; のように更新してからMapします
+
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    // GPUの書き込みが終わるのを待たずに新しいバッファを割り当てる DISCARD を指定
+    HRESULT hr = pContext->Map(m_ssaoCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (SUCCEEDED(hr))
+    {
+        // CPU側のデータをバッファへコピー
+        memcpy(mappedResource.pData, &m_ssaoParamData, sizeof(SSAOParam));
+        pContext->Unmap(m_ssaoCB.Get(), 0);
+    }
+
+    // ピクセルシェーダーのスロット 6 に定数バッファをセット！
+    pContext->PSSetConstantBuffers(6, 1, m_ssaoCB.GetAddressOf());
+
 }

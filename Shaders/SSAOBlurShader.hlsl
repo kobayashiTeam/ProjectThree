@@ -22,7 +22,7 @@ struct PS_INPUT
 // リソース (テクスチャとサンプラー)
 // ---------------------------------------------------------
 Texture2D txInputSSAO : register(t0); // 前パスで生成した生のSSAOマップ (R8_UNORM等)
-SamplerState samLinearClamp : register(s0); // ぼかし処理のためLinearサンプラーを使用
+SamplerState samLinearClamp : register(s4); // ぼかし処理のためLinearサンプラーを使用
 
 // ---------------------------------------------------------
 // 頂点シェーダー (フルスクリーンクアッド用)

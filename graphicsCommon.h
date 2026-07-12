@@ -115,3 +115,12 @@ struct PostProcessConstantBuffer {
     float exposure = 1.0f;
     float padding[3] = { 0.0f, 0.0f, 0.0f }; // 16バイトアライメント
 };
+
+// SSAOパラメータ用構造体 (16バイトアライメントを保証)
+struct SSAOParam
+{
+    DirectX::XMFLOAT4 samples[64]; // 16バイト * 64 = 1024バイト
+    DirectX::XMFLOAT2 noiseScale;  // 8バイト
+    float             radius;      // 4バイト
+    float             bias;        // 4バイト  (合計 16バイト)
+}; // 全体で 1040 バイト (16の倍数なので完全に安全です)
