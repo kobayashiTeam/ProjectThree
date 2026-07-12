@@ -218,6 +218,7 @@
     <ClInclude Include="parallaxMappingMaterial.h" />
     <ClInclude Include="pointSpriteGSEffect.h" />
     <ClInclude Include="postProcess.h" />
+    <ClInclude Include="postProcessChain.h" />
     <ClInclude Include="rasterizerStates.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />

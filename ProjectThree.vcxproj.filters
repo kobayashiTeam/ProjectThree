@@ -395,6 +395,9 @@
     <ClInclude Include="deferredCBMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
+    <ClInclude Include="postProcessChain.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">

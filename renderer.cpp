@@ -29,6 +29,9 @@
 #include"VerticalBlurPostProcess.h"
 #include"bloomCombinePostProcess.h"
 #include<random>
+//test
+#include"postProcessChain.h"
+#include"bloomBlurPass.h"
 
 Renderer::~Renderer()
 {
@@ -163,6 +166,23 @@ bool Renderer::Initialize(Graphics* graphics)
     m_postProcessChain.push_back(m_finalRenderVignettePostProcess);
         //test:blur参加
 	m_postProcessChain.push_back(m_finalRenderBloomCombinePostProcess);
+
+	//正式にクラス化したPostProcessChainの生成、初期化
+        //ScreenBlitPostProcess（最終転写用）とHorizontalBlur/VerticalBlur（Bloomの中間ブラー用）は
+	    //特殊なのでchainに加えない。個別に使う
+        //各postprocessはrendererメンバである必要もなくなり、add時に生成、代入
+	m_postProcessChain2 = new PostProcessChain();
+    m_postProcessChain2->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
+    m_postProcessChain2->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
+    m_postProcessChain2->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
+    m_postProcessChain2->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
+    m_postProcessChain2->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
+    m_postProcessChain2->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
+    m_postProcessChain2->AddEffect<BloomCombinePostProcess>(pDevice, ShaderID::BloomCombine, true);
+
+        //bloomBlurだけpostprocesschainパスとは別パスとして別クラスに生成
+	m_bloomBlurPass = new BloomBlurPass();
+	m_bloomBlurPass->Initialize(pDevice, 1280, 720);
 
     //最終描画用のquadをここで生成
     if (!this->createFinalRenderQuad())return false;
