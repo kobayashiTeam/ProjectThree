@@ -174,22 +174,6 @@ bool Renderer::Initialize(Graphics* graphics)
         //内容を初期設定
     SetExposure(0.5f);
 
-    //遅延シェーディング用のバッファの初期化
-	//m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
-
- //       //専用サンプラー初期化
- //   D3D11_SAMPLER_DESC pointDesc = {};
- //   pointDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // 深度は補間NG、点サンプル必須
- //   pointDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
- //   pointDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
- //   pointDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
- //   pointDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
- //   pointDesc.MinLOD = 0;
- //   pointDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
- //   hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
- //   if (FAILED(hr)) return false;
-
 	//DeferredLightingPassの初期化
 	m_deferredLightingPass = new DeferredLightingPass();
 	m_deferredLightingPass->Initialize(pDevice);
