@@ -32,6 +32,7 @@
 //test
 #include"postProcessChain.h"
 #include"bloomBlurPass.h"
+#include"gBufferPass.h"
 
 Renderer::~Renderer()
 {
@@ -251,28 +252,11 @@ bool Renderer::Initialize(Graphics* graphics)
     SetExposure(0.5f);
 
     //遅延シェーディング用のバッファの初期化
-    m_gBufferPosition = new RenderTarget();
-    if (!m_gBufferPosition->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
-	m_gBufferNormal = new RenderTarget();
-	if (!m_gBufferNormal->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-		return false;
-	}
-	m_gBufferAlbedo = new RenderTarget();
-    if (!m_gBufferAlbedo->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
-	m_gBufferDepthOnly = new RenderTarget();
-	if (!m_gBufferDepthOnly->InitializeDepthOnly(pDevice, 1280, 720)) {
-		return false;
-	}
         //シェーダ初期化
 	m_pDeferredGBufferShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredGB);
 	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
 
         //専用サンプラー初期化
-    // Renderer::Initialize() などの中
     D3D11_SAMPLER_DESC pointDesc = {};
     pointDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // 深度は補間NG、点サンプル必須
     pointDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -285,6 +269,9 @@ bool Renderer::Initialize(Graphics* graphics)
     hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
     if (FAILED(hr)) return false;
 
+	//GBufferPassの初期化
+	m_gBufferPass = new GBufferPass();
+	m_gBufferPass->Initialize(pDevice, 1280, 720);
     
     //SSAO
         //rtの初期化（後で確認）
@@ -439,16 +426,7 @@ void Renderer::Execute()
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
 
     //-----新規工程:deferred不透明パス-----
-    m_gBufferPosition->Clear(pContext);
-    m_gBufferNormal->Clear(pContext);
-    m_gBufferAlbedo->Clear(pContext);
-	m_gBufferDepthOnly->Clear(pContext);
-
-    RenderTarget* gbufferTargets[3] = {
-    m_gBufferAlbedo, m_gBufferNormal, m_gBufferPosition
-    };
-    ID3D11DepthStencilView* gbufferDSV = m_gBufferDepthOnly ->GetDSV(); // 非MSAA専用の深度
-    RenderTarget::BindMultiple(pContext, 3, gbufferTargets, gbufferDSV);
+    m_gBufferPass->Begin(pContext);
 
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
@@ -466,8 +444,8 @@ void Renderer::Execute()
     // 2. G-Buffer（Albedo以外）をSRVとしてセット。
     // ノイズテクスチャ、半球サンプル、ビュー行列、サンプラーをセット
     ID3D11ShaderResourceView* ssaoInputs[3] = {
-        m_gBufferNormal->GetSRV(),
-        m_gBufferPosition->GetSRV(),
+        m_gBufferPass->GetNormalSRV(),//m_gBufferNormal->GetSRV()
+        m_gBufferPass->GetPositionSRV(),//m_gBufferPosition->GetSRV()
         m_ssaoNoiseTextureSRV.Get() // ランダム回転用ノイズ
     };
     pContext->PSSetShaderResources(0, 3, ssaoInputs);
@@ -500,10 +478,10 @@ void Renderer::Execute()
     // ===== 【新設】Lighting Pass =====
     // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10,t11,t12など、シャドウマップとぶつからない番号で)
     ID3D11ShaderResourceView* gbufferSRVs[5] = {
-     m_gBufferAlbedo->GetSRV(),   // t8
-     m_gBufferNormal->GetSRV(),   // t9
-     m_gBufferPosition->GetSRV(),  // t10
-     m_gBufferDepthOnly->GetSRV(),   //t11
+     m_gBufferPass->GetAlbedoSRV(),   // t8//m_gBufferAlbedo->GetSRV()
+     m_gBufferPass->GetNormalSRV(),   // t9//m_gBufferNormal->GetSRV()
+     m_gBufferPass->GetPositionSRV(),  // t10//m_gBufferPosition->GetSRV()
+     m_gBufferPass->GetDepthSRV(),   //t11//m_gBufferDepthOnly->GetSRV()
      m_ssaoBlurRT->GetSRV()       // ★t12 にSSAOを滑り込ませる！
     };
     pContext->PSSetShaderResources(8, 5, gbufferSRVs);

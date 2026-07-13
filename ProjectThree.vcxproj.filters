@@ -404,6 +404,9 @@
     <ClInclude Include="bloomBlurPass.h">
       <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
+    <ClInclude Include="gBufferPass.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">

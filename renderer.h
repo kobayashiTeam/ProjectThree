@@ -38,6 +38,7 @@ class InstancedModel;
 class BloomCombinePostProcess;
 class PostProcessChain;
 class BloomBlurPass;;
+class GBufferPass;
 
 class Renderer
 {
@@ -103,9 +104,7 @@ private:
 	RenderTarget* m_brightRTwithMSAA = nullptr;
 	RenderTarget* m_brightRT = nullptr;
     RenderTarget* m_blurPingRT = nullptr;//計算の都合でもう一個必要だった
-    // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
-    //std::vector<PostProcess*> m_postProcessChain;
-
+   
 
     //ポストプロセス後に描画するQuadのmodel
     //Model* m_finalRenderQuad = nullptr;
@@ -116,8 +115,6 @@ private:
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
    
         //新規：手間のかかるblurエフェクト。
-	HorizontalBlurPostProcess* m_finalRenderHorizontalBlurPostProcess = nullptr;
-	VerticalBlurPostProcess* m_finalRenderVerticalBlurPostProcess = nullptr;
 	BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
         //テスト；postprocessを担当するクラス
 	PostProcessChain* m_postProcessChain = nullptr;
@@ -158,10 +155,6 @@ private:
     PostProcessConstantBuffer m_postProcessData;
 
     //test:遅延シェーダ:不透明オブジェクトは以下３つからなるg-bufferに必要情報を保存。
-    RenderTarget* m_gBufferPosition;
-    RenderTarget* m_gBufferNormal;
-    RenderTarget* m_gBufferAlbedo;
-    RenderTarget* m_gBufferDepthOnly;
         //シェーダ
 	Shader* m_pDeferredGBufferShader = nullptr;
 	Shader* m_pDeferredLightingShader = nullptr;
@@ -186,5 +179,8 @@ private:
     ID3D11SamplerState* m_pSamPointClamp = nullptr; // SSAO用: G-Buffer読込
     ID3D11SamplerState* m_pSamPointWrap = nullptr; // SSAO用: ノイズタイリング
     ID3D11SamplerState* m_pSamLinearClamp = nullptr; // ブラー用: 線形補間ぼかし
+
+    //新規：Gbuffer
+	GBufferPass* m_gBufferPass = nullptr;
 
 };
