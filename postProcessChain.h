@@ -5,6 +5,7 @@
 #include"graphicsCommon.h"
 #include"renderTarget.h"
 #include"postProcess.h"
+#include"mesh.h"
 
 class PostProcessChain {
 public:
@@ -14,13 +15,31 @@ public:
         effect->Initialize(device, ShaderManager::GetInstance().GetShader(shaderID));
         effect->SetActive(activeByDefault);
         m_effects.push_back(effect);
-        return effect; // 後で個別に触りたい場合のために返しておく
+        return effect;
     }
 
-    void Render(ID3D11DeviceContext* ctx, RenderTarget* source) {
-        for (auto* fx : m_effects) {
-            if (fx->IsActive()) fx->Render(ctx, source /* 実際はpingpong管理が必要 */);
+    // 戻り値：チェーンを抜けた後、最新の絵がどっちのRTに入っているか
+    RenderTarget* Render(
+        ID3D11DeviceContext* ctx, 
+        RenderTarget* input, 
+        RenderTarget* output, 
+        Mesh* fullscreenQuad) {
+
+        RenderTarget* pCurrentInput = input;
+        RenderTarget* pCurrentOutput = output;
+
+        for (PostProcess* fx : m_effects) {
+            if (!fx->IsActive()) continue;
+
+            pCurrentOutput->Clear(ctx);
+            pCurrentOutput->Bind(ctx);
+
+            fx->Render(ctx, pCurrentInput);
+            fullscreenQuad->Render(ctx);
+
+            std::swap(pCurrentInput, pCurrentOutput);
         }
+        return pCurrentInput; // 最後のswapの後、"最新の絵"はinput側に来ている
     }
 
 private:

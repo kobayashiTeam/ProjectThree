@@ -67,6 +67,9 @@
     <Filter Include="リソース ファイル\ssao">
       <UniqueIdentifier>{57a6071e-4348-4e85-82f1-53deb007a547}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\pass">
+      <UniqueIdentifier>{f91c9bc3-7a19-43b8-83ec-798e9811fbbb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -397,6 +400,9 @@
     </ClInclude>
     <ClInclude Include="postProcessChain.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="bloomBlurPass.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

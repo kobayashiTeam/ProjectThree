@@ -36,6 +36,8 @@ class SkyBox;
 class PointSpriteGSEffect;
 class InstancedModel;
 class BloomCombinePostProcess;
+class PostProcessChain;
+class BloomBlurPass;;
 
 class Renderer
 {
@@ -102,7 +104,7 @@ private:
 	RenderTarget* m_brightRT = nullptr;
     RenderTarget* m_blurPingRT = nullptr;//計算の都合でもう一個必要だった
     // ★【核心】このフレームで「実行する予定の全エフェクト」を並べるコンテナ
-    std::vector<PostProcess*> m_postProcessChain;
+    //std::vector<PostProcess*> m_postProcessChain;
 
 
     //ポストプロセス後に描画するQuadのmodel
@@ -112,16 +114,15 @@ private:
     Shader* m_finalRenderShader = nullptr;
     //test:postProcessクラス
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;//simpleBlit
-    MonochromePostProcess* m_finalRenderMonochromePostProcess = nullptr;//monochrome
-    InversionPostProcess* m_finalRenderInversionPostProcess = nullptr;//inversion
-    SepiaPostProcess* m_finalRenderSepiaPostProcess = nullptr;
-    SimpleBoxBlurPostProcess* m_finalRenderSimpleBoxBluer = nullptr;
-    SharpenPostProcess* m_finalRenderSharpenPostProcess = nullptr;
-    VignettePostProcess* m_finalRenderVignettePostProcess = nullptr;
+   
         //新規：手間のかかるblurエフェクト。
 	HorizontalBlurPostProcess* m_finalRenderHorizontalBlurPostProcess = nullptr;
 	VerticalBlurPostProcess* m_finalRenderVerticalBlurPostProcess = nullptr;
 	BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
+        //テスト；postprocessを担当するクラス
+	PostProcessChain* m_postProcessChain = nullptr;
+        //例外的なbloomBlurは専門パスとして別クラスに
+	BloomBlurPass* m_bloomBlurPass = nullptr;
 
     //スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;

@@ -107,78 +107,20 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
     m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
-    //monochrome
-    m_finalRenderMonochromePostProcess = new MonochromePostProcess();
-    m_finalRenderMonochromePostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Monochromatic));
-        //テスト：効果オフ
-    m_finalRenderMonochromePostProcess->SetActive(false);
-    //Inversion
-    m_finalRenderInversionPostProcess = new InversionPostProcess();
-    m_finalRenderInversionPostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Inversion));
-        //テスト：効果オフ
-    m_finalRenderInversionPostProcess->SetActive(false);
-    //sepia
-    m_finalRenderSepiaPostProcess = new SepiaPostProcess();
-    m_finalRenderSepiaPostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Sepia));
-        //テスト：効果オフ
-    m_finalRenderSepiaPostProcess->SetActive(false);
-    //simpleBoxBlur
-    m_finalRenderSimpleBoxBluer = new SimpleBoxBlurPostProcess();
-    m_finalRenderSimpleBoxBluer->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::SimpleBoxBlur));
-        //テスト：効果オフ
-    m_finalRenderSimpleBoxBluer->SetActive(false);
-    //sharpen
-    m_finalRenderSharpenPostProcess = new SharpenPostProcess();
-    m_finalRenderSharpenPostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Sharpen));
-        //テスト：効果オフ
-    m_finalRenderSharpenPostProcess->SetActive(false);
-    //vignette
-    m_finalRenderVignettePostProcess = new VignettePostProcess();
-    m_finalRenderVignettePostProcess->Initialize(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Vignette));
-        //テスト：効果オフ
-    m_finalRenderVignettePostProcess->SetActive(false);
-    //HoriBlur
-	m_finalRenderHorizontalBlurPostProcess = new HorizontalBlurPostProcess();
-	m_finalRenderHorizontalBlurPostProcess->Initialize(pDevice,
-		ShaderManager::GetInstance().GetShader(ShaderID::HoriBlur));
-	//VerBlur
-	m_finalRenderVerticalBlurPostProcess = new VerticalBlurPostProcess();
-	m_finalRenderVerticalBlurPostProcess->Initialize(pDevice,
-		ShaderManager::GetInstance().GetShader(ShaderID::VerBlur));
-	//BloomCombine
-	m_finalRenderBloomCombinePostProcess = new BloomCombinePostProcess();
-	m_finalRenderBloomCombinePostProcess->Initialize(pDevice,
-		ShaderManager::GetInstance().GetShader(ShaderID::BloomCombine));
+ 
 
-    //自動実行チェーン（配列）に、適用したい「順番通り」に登録する
-        // ※ 最終転写用のBlitは「画面に出力する特殊枠」にするため、ここには入れません
-    m_postProcessChain.push_back(m_finalRenderMonochromePostProcess);
-    m_postProcessChain.push_back(m_finalRenderInversionPostProcess);
-    m_postProcessChain.push_back(m_finalRenderSepiaPostProcess);
-    m_postProcessChain.push_back(m_finalRenderSimpleBoxBluer);
-    m_postProcessChain.push_back(m_finalRenderSharpenPostProcess);
-    m_postProcessChain.push_back(m_finalRenderVignettePostProcess);
-        //test:blur参加
-	m_postProcessChain.push_back(m_finalRenderBloomCombinePostProcess);
-
-	//正式にクラス化したPostProcessChainの生成、初期化
+   //正式にクラス化したPostProcessChainの生成、初期化
         //ScreenBlitPostProcess（最終転写用）とHorizontalBlur/VerticalBlur（Bloomの中間ブラー用）は
 	    //特殊なのでchainに加えない。個別に使う
         //各postprocessはrendererメンバである必要もなくなり、add時に生成、代入
-	m_postProcessChain2 = new PostProcessChain();
-    m_postProcessChain2->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
-    m_postProcessChain2->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
-    m_postProcessChain2->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
-    m_postProcessChain2->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
-    m_postProcessChain2->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
-    m_postProcessChain2->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
-    m_postProcessChain2->AddEffect<BloomCombinePostProcess>(pDevice, ShaderID::BloomCombine, true);
+	m_postProcessChain = new PostProcessChain();
+    m_postProcessChain->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
+    m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
+    m_postProcessChain->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
+    m_postProcessChain->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
+    m_postProcessChain->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
+    m_postProcessChain->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
+    m_finalRenderBloomCombinePostProcess= m_postProcessChain->AddEffect<BloomCombinePostProcess>(pDevice, ShaderID::BloomCombine, true);
 
         //bloomBlurだけpostprocesschainパスとは別パスとして別クラスに生成
 	m_bloomBlurPass = new BloomBlurPass();
@@ -653,21 +595,11 @@ void Renderer::Execute()
     RenderTarget * pBlurInput = m_brightRT;     // 最初の入力：輝度抽出テクスチャ
     RenderTarget* pBlurOutput = m_tmpRT;        // 作業バッファ1
 
-    // ─── パスA: 横ボケ ───
-    pBlurOutput->Clear(pContext);
-    pBlurOutput->Bind(pContext);
-    m_finalRenderHorizontalBlurPostProcess->Render(pContext, pBlurInput);
-    m_finalRenderMesh->Render(pContext);
-
-    // ─── パスB: 縦ボケ ───
-    m_blurPingRT->Clear(pContext);   // ★新規で用意するバッファ
-    m_blurPingRT->Bind(pContext);
-    m_finalRenderVerticalBlurPostProcess->Render(pContext, pBlurOutput);
-    m_finalRenderMesh->Render(pContext);
-
-    // 3. 【重要】完成したボケ画像を、Bloom合成エフェクトに仕込む！
-    // 完成したボケ画像は m_blurPingRT に入っている
-    m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(m_blurPingRT->GetSRV());
+    //// 3. 【重要】完成したボケ画像を、Bloom合成エフェクトに仕込む！
+    // Bloom下ごしらえ（前回の話）
+    ID3D11ShaderResourceView* bloomSRV = m_bloomBlurPass->Execute(
+        pContext, m_brightRT,m_finalRenderMesh);
+    m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(bloomSRV);
 
 
 
@@ -683,22 +615,9 @@ void Renderer::Execute()
     // ========================================================
     // 4. ポストプロセス・ピンポン・チェーン
     // ========================================================
-    for (PostProcess* effect : m_postProcessChain)
-    {
-        // 無効化されているエフェクト（例: 今は狂気度が低いからモノクロOFFなど）はスキップ
-        if (!effect->IsActive()) continue;
-
-        // 出力先をバインドしてクリア
-        pCurrentOutput->Clear(pContext);
-        pCurrentOutput->Bind(pContext);
-
-        // 描画（入力テクスチャを渡して、Quadを描画）
-        effect->Render(pContext, pCurrentInput);
-        m_finalRenderMesh->Render(pContext);
-
-        // 自動でピンポン（入力と出力を入れ替える）
-        std::swap(pCurrentInput, pCurrentOutput);
-    }
+    //// チェーン実行。戻り値が「最終的にどのRTに絵が入っているか」を教えてくれる
+        RenderTarget * finalResult = m_postProcessChain->Render(
+            pContext, m_offscreenRT, m_tmpRT, m_finalRenderMesh);
     
     //return;
 
@@ -709,7 +628,7 @@ void Renderer::Execute()
     m_blendStates->Bind(pContext, BlendMode::Opaque);
 	UpdatePostProcessConstantBuffer();//ポストプロセス用の定数バッファを更新
 
-    m_finalRenderScreenBlitPostProcess->Render(pContext, pCurrentInput);
+    m_finalRenderScreenBlitPostProcess->Render(pContext, finalResult);//pCurrentInput
     m_finalRenderMesh->Render(pContext);
     
 }

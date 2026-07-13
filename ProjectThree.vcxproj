@@ -189,6 +189,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blendStates.h" />
+    <ClInclude Include="bloomBlurPass.h" />
     <ClInclude Include="bloomCombinePostProcess.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="deferredCBMaterial.h" />
