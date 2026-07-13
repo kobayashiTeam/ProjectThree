@@ -185,6 +185,7 @@
     <ClCompile Include="shadowCubeMap.cpp" />
     <ClCompile Include="shadowMap.cpp" />
     <ClCompile Include="skyBox.cpp" />
+    <ClCompile Include="ssaoPass.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +235,7 @@
     <ClInclude Include="sharpenPostProcess.h" />
     <ClInclude Include="simpleBoxBlurPostProcess.h" />
     <ClInclude Include="skyBox.h" />
+    <ClInclude Include="ssaoPass.h" />
     <ClInclude Include="unLitMaterial.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="VerticalBlurPostProcess.h" />
@@ -251,11 +253,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Shaders\ScreenBlit.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Shaders\Shader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

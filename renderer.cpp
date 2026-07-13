@@ -33,6 +33,7 @@
 #include"postProcessChain.h"
 #include"bloomBlurPass.h"
 #include"gBufferPass.h"
+#include"ssaoPass.h"
 
 Renderer::~Renderer()
 {
@@ -274,24 +275,8 @@ bool Renderer::Initialize(Graphics* graphics)
 	m_gBufferPass->Initialize(pDevice, 1280, 720);
     
     //SSAO
-        //rtの初期化（後で確認）
-    m_ssaoRawRT = new RenderTarget();
-    if (!m_ssaoRawRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
-    m_ssaoBlurRT = new RenderTarget();
-    if (!m_ssaoBlurRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
-        //ノイズテクスチャの生成
-    if (!initSSAO(pDevice))return false;
-        //サンプラーの生成
-	initSSAOSampler(pDevice);
-	    //半球サンプルの定数バッファ生成
-    initSSAOConstantBuffer(pDevice);
-	    //シェーダの取得
-	m_pSSAOShader = ShaderManager::GetInstance().GetShader(ShaderID::SSAO);
-	m_pSSAOBlurShader = ShaderManager::GetInstance().GetShader(ShaderID::SSAOBlur);
+	m_ssaoPass = new SSAOPass();
+	m_ssaoPass->Initialize(pDevice, 1280, 720);
 
     return true;
 
@@ -437,37 +422,12 @@ void Renderer::Execute()
     // ==========================================
     // 【★ここに新設！】SSAO 生成 ＆ SSAOブラー パス
     // ==========================================
-    // 1. SSAO用のテンポラリRT（非MSAA）をクリアしてバインド
-    m_ssaoRawRT->Clear(pContext);
-    m_ssaoRawRT->Bind(pContext); // 深度は不要（nullptr）でも都合上できてしまう？
     
-    // 2. G-Buffer（Albedo以外）をSRVとしてセット。
-    // ノイズテクスチャ、半球サンプル、ビュー行列、サンプラーをセット
-    ID3D11ShaderResourceView* ssaoInputs[3] = {
-        m_gBufferPass->GetNormalSRV(),//m_gBufferNormal->GetSRV()
-        m_gBufferPass->GetPositionSRV(),//m_gBufferPosition->GetSRV()
-        m_ssaoNoiseTextureSRV.Get() // ランダム回転用ノイズ
-    };
-    pContext->PSSetShaderResources(0, 3, ssaoInputs);
-    // s0 と s1 にそれぞれのサンプラーをセット
-    ID3D11SamplerState* ssaoSamplers[] = { m_pSamPointClamp, m_pSamPointWrap };
-    pContext->PSSetSamplers(4, 2, ssaoSamplers);
-	updateSSAOConstantBuffer(pContext); // 半球サンプルをcbufferに送る
-    // 3. フルスクリーンクアッド（m_finalRenderMesh）でSSAOシェーダーを実行 → m_ssaoRawRT へ
-    m_pSSAOShader->Bind(pContext);
-    m_finalRenderMesh->Render(pContext);
-    // 4. m_ssaoRawRT を入力にして、エッジ保存ブラーを実行 → m_ssaoBlurRT（完成品）へ
-    m_ssaoBlurRT->Clear(pContext);
-    m_ssaoBlurRT->Bind(pContext);
-
-    auto* rawSsaoSRV = m_ssaoRawRT->GetSRV();
-    pContext->PSSetShaderResources(0, 1, &rawSsaoSRV);
-
-    // s0 に Linearカラー用のサンプラーをセット
-    pContext->PSSetSamplers(4, 1, &m_pSamLinearClamp);
-
-    m_pSSAOBlurShader->Bind(pContext);
-    m_finalRenderMesh->Render(pContext);
+    ID3D11ShaderResourceView* ssaoSRV =m_ssaoPass->Execute(
+        pContext, 
+        m_gBufferPass->GetNormalSRV(), 
+        m_gBufferPass->GetPositionSRV(), 
+        m_finalRenderMesh);
 
     // ===== ここで既存の「裏画面」MRTバインドに戻す =====
     targets[0] = m_offscreenRTwithMSAA;
@@ -482,7 +442,7 @@ void Renderer::Execute()
      m_gBufferPass->GetNormalSRV(),   // t9//m_gBufferNormal->GetSRV()
      m_gBufferPass->GetPositionSRV(),  // t10//m_gBufferPosition->GetSRV()
      m_gBufferPass->GetDepthSRV(),   //t11//m_gBufferDepthOnly->GetSRV()
-     m_ssaoBlurRT->GetSRV()       // ★t12 にSSAOを滑り込ませる！
+     ssaoSRV       // ★t12 にSSAOを滑り込ませる！
     };
     pContext->PSSetShaderResources(8, 5, gbufferSRVs);
 
@@ -748,173 +708,4 @@ void Renderer::UpdatePostProcessConstantBuffer()
     pContext->VSSetConstantBuffers(5, 1, cbArray);
     pContext->PSSetConstantBuffers(5, 1, cbArray);
     pContext->GSSetConstantBuffers(5, 1, cbArray);
-}
-
-
-bool Renderer::initSSAO(ID3D11Device* pDevice) {
-
-    ID3D11Texture2D* m_pNoiseTexture = nullptr;
-    // 1. もとになるノイズ色（ベクトル）配列をプログラム内で生成
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
-
-    // 4x4 = 16画素分のデータ。高精度なFLOATフォーマットを使うため DirectX::XMFLOAT4 を使用
-    DirectX::XMFLOAT4 noiseValues[16];
-    for (int i = 0; i < 16; ++i)
-    {
-        noiseValues[i].x = dis(gen); // -1.0 ～ 1.0 のランダム
-        noiseValues[i].y = dis(gen); // -1.0 ～ 1.0 のランダム
-        noiseValues[i].z = 0.0f;     // 接空間のZ（法線方向）は回転させないので 0
-        noiseValues[i].w = 0.0f;     // 未使用
-    }
-
-    // 2. テクスチャの設定（ID3D11Texture2D）を定義
-    D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width = 4;                       // 4マス
-    texDesc.Height = 4;                       // 4マス
-    texDesc.MipLevels = 1;
-    texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // 浮動小数点の高精度フォーマット
-    texDesc.SampleDesc.Count = 1;
-    texDesc.SampleDesc.Quality = 0;
-    texDesc.Usage = D3D11_USAGE_DEFAULT;     // GPUから読み込むだけなのでDEFAULT
-    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE; // シェーダーに渡す用
-    texDesc.CPUAccessFlags = 0;
-    texDesc.MiscFlags = 0;
-
-    // 作成と同時に、さっき作った配列データを初期データとして流し込む
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem = noiseValues;
-    initData.SysMemPitch = 4 * sizeof(DirectX::XMFLOAT4); // 横1行分のバイト数
-    initData.SysMemSlicePitch = 0;
-
-    HRESULT hr = pDevice->CreateTexture2D(&texDesc, &initData, &m_pNoiseTexture);
-    if (FAILED(hr)) return false;
-
-    // 3. テクスチャをもとにSRVを定義・作成
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = texDesc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.MipLevels = 1;
-
-    hr = pDevice->CreateShaderResourceView(m_pNoiseTexture, &srvDesc, &m_ssaoNoiseTextureSRV);
-    if (FAILED(hr)) return false;
-
-    return true;
-}
-
-
-bool Renderer::initSSAOSampler(ID3D11Device* pDevice) {
-
-    HRESULT hr = S_OK;
-    D3D11_SAMPLER_DESC sampDesc = {};
-
-    // ---------------------------------------------------------
-    // ① samPointClamp (点サンプリング / 範囲外クランプ)
-    // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Point指定
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // Clamp指定
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampDesc.MinLOD = 0;
-    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamPointClamp);
-    if (FAILED(hr)) return false;
-
-    // ---------------------------------------------------------
-    // ② samPointWrap (点サンプリング / 範囲外ラップ・タイリング)
-    // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Point指定
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // Wrap指定 (タイリング用)
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-
-    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamPointWrap);
-    if (FAILED(hr)) return false;
-
-    // ---------------------------------------------------------
-    // ③ samLinearClamp (線形サンプリング / 範囲外クランプ)
-    // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // Linear指定 (ぼかし用)
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;     // Clamp指定
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-
-    hr = pDevice->CreateSamplerState(&sampDesc, &m_pSamLinearClamp);
-    if (FAILED(hr)) return false;
-
-    return true;
-}
-
-
-bool Renderer::initSSAOConstantBuffer(ID3D11Device* pDevice)
-{
-
-    // ★ここで実際の画面解像度（ビューポートの横幅・縦幅）を使って計算する
-    float windowWidth = 1280.0f; // 実際のゲーム画面の横幅
-    float windowHeight = 720.0f; // 実際のゲーム画面の縦幅
-    // --- 64個のサンプルベクトルの生成ロジック ---
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
-    std::uniform_real_distribution<float> disZ(0.0f, 1.0f); // Zは半球なので0～1
-
-    for (int i = 0; i < 64; ++i)
-    {
-        DirectX::XMVECTOR sample = DirectX::XMVectorSet(dis(gen), dis(gen), disZ(gen), 0.0f);
-        sample = DirectX::XMVector3Normalize(sample); // 正規化
-
-        // 中心に近づくほど密集させるスケール処理
-        float scale = (float)i / 64.0f;
-        // 線形補間 (0.1f ～ 1.0f の間で二次関数的に配分)
-        scale = 0.1f + (scale * scale) * (1.0f - 0.1f);
-        sample = DirectX::XMVectorScale(sample, scale);
-
-        DirectX::XMStoreFloat4(&m_ssaoParamData.samples[i], sample);
-    }
-
-    // --- 固定パラメータの初期値設定 ---
-    m_ssaoParamData.noiseScale = DirectX::XMFLOAT2(windowWidth / 4.0f, windowHeight / 4.0f); // 画面解像度に合わせて後で更新も可
-    m_ssaoParamData.radius = 0.40f;   // 遮蔽を調べる半径（ゲームのスケールに合わせて要調整）
-    m_ssaoParamData.bias = 0.03f; // ニキビのようなアーティファクトを防ぐバイアス0.025
-
-    // --- Dynamic定数バッファの作成 ---
-    D3D11_BUFFER_DESC cbDesc = {};
-    cbDesc.ByteWidth = sizeof(SSAOParam);
-    cbDesc.Usage = D3D11_USAGE_DYNAMIC;         // CPUから頻繁に書き換える
-    cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // 定数バッファとして使用
-    cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;       // CPUからの書き込み許可
-    cbDesc.MiscFlags = 0;
-    cbDesc.StructureByteStride = 0;
-
-    HRESULT hr = pDevice->CreateBuffer(&cbDesc, nullptr, &m_ssaoCB);
-    if (FAILED(hr)) return false;
-
-    // 前述のノイズテクスチャ生成などもここに続く...
-    return true;
-}
-
-
-void Renderer::updateSSAOConstantBuffer(ID3D11DeviceContext* pContext) {
-
-    // イマジナリー仕様：もしリアルタイムにImGui等で radius や bias をイジるなら
-    // ここで m_ssaoParamData.radius = imgui_value; のように更新してからMapします
-
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    // GPUの書き込みが終わるのを待たずに新しいバッファを割り当てる DISCARD を指定
-    HRESULT hr = pContext->Map(m_ssaoCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-    if (SUCCEEDED(hr))
-    {
-        // CPU側のデータをバッファへコピー
-        memcpy(mappedResource.pData, &m_ssaoParamData, sizeof(SSAOParam));
-        pContext->Unmap(m_ssaoCB.Get(), 0);
-    }
-
-    // ピクセルシェーダーのスロット 6 に定数バッファをセット！
-    pContext->PSSetConstantBuffers(6, 1, m_ssaoCB.GetAddressOf());
-
 }

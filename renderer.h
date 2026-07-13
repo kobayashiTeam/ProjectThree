@@ -39,6 +39,7 @@ class BloomCombinePostProcess;
 class PostProcessChain;
 class BloomBlurPass;;
 class GBufferPass;
+class SSAOPass;
 
 class Renderer
 {
@@ -72,13 +73,6 @@ public:
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
 
-	//SSAO
-        //ノイズテクスチャんの生成メソッド
-    bool initSSAO(ID3D11Device* pDevice);
-    bool initSSAOSampler(ID3D11Device* pDevice);
-	    //cbufferの更新メソッド
-    bool initSSAOConstantBuffer(ID3D11Device* pDevice);
-    void updateSSAOConstantBuffer(ID3D11DeviceContext* pContext);
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -162,25 +156,9 @@ private:
     ComPtr<ID3D11SamplerState> m_gBufferDepthSampler; // ★追加
 
 
-    //SSAO(アンビエントオカルージョン光)
-        //rt
-    RenderTarget* m_ssaoRawRT;
-    RenderTarget* m_ssaoBlurRT;
-        //ノイズテクスチャのsrv
-	ComPtr<ID3D11ShaderResourceView> m_ssaoNoiseTextureSRV;
-	    //半球サンプルの定数バッファ,c側データ
-    ComPtr<ID3D11Buffer> m_ssaoCB = nullptr;
-    SSAOParam     m_ssaoParamData;          // CPU側のデータ保持用
-        //SSAO作成シェーダ
-	Shader* m_pSSAOShader = nullptr;
-	    //SSAOブラーシェーダ
-	Shader* m_pSSAOBlurShader = nullptr;
-        // SSAO関連で必要になる3つのサンプラー
-    ID3D11SamplerState* m_pSamPointClamp = nullptr; // SSAO用: G-Buffer読込
-    ID3D11SamplerState* m_pSamPointWrap = nullptr; // SSAO用: ノイズタイリング
-    ID3D11SamplerState* m_pSamLinearClamp = nullptr; // ブラー用: 線形補間ぼかし
-
     //新規：Gbuffer
 	GBufferPass* m_gBufferPass = nullptr;
+    //新規：SSAOPass
+	SSAOPass* m_ssaoPass = nullptr;
 
 };

@@ -70,6 +70,9 @@
     <Filter Include="ヘッダー ファイル\pass">
       <UniqueIdentifier>{f91c9bc3-7a19-43b8-83ec-798e9811fbbb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\pass">
+      <UniqueIdentifier>{99b19932-08db-4813-b054-7f61a63286e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -130,9 +133,6 @@
       <Filter>リソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Shaders\ScreenBlit.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\Shader.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="skyBox.cpp">
@@ -260,6 +260,9 @@
     </ClCompile>
     <ClCompile Include="Shaders\SSAOShader.hlsl">
       <Filter>リソース ファイル\ssao</Filter>
+    </ClCompile>
+    <ClCompile Include="ssaoPass.cpp">
+      <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -405,6 +408,9 @@
       <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
     <ClInclude Include="gBufferPass.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
+    <ClInclude Include="ssaoPass.h">
       <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
   </ItemGroup>
