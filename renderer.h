@@ -65,10 +65,6 @@ public:
 
     //defaultRTに戻してから描画するQuadオブジェクト
     bool createFinalRenderQuad();
-    //ライト
-    void UpdateLightDataConstantBuffer();
-    void SubmitShadowPass();
-    void UpdatePointLightConstantBuffer();
 
     //ポストプロセスバッファ
     void UpdatePostProcessConstantBuffer();

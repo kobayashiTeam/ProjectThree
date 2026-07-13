@@ -175,7 +175,6 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //遅延シェーディング用のバッファの初期化
         //シェーダ初期化
-	m_pDeferredGBufferShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredGB);
 	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
 
         //専用サンプラー初期化
@@ -306,10 +305,10 @@ void Renderer::Execute()
 
 
     //-----Lighting Pass-----
-    m_shadowSystem->BindForLighting(pContext);  // 内部でSRVとサンプラーをセット済み
+    m_shadowSystem->BindForLighting(pContext);  // シャドウマップ関連の設定
 
     //-----新規工程:deferred不透明パス-----
-    m_gBufferPass->Begin(pContext);
+	m_gBufferPass->Begin(pContext);             // G-Bufferのレンダーターゲットに切り替え
 
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
@@ -433,10 +432,9 @@ void Renderer::Execute()
 
     //// 3. 【重要】完成したボケ画像を、Bloom合成エフェクトに仕込む！
     // Bloom下ごしらえ（前回の話）
-    ID3D11ShaderResourceView* bloomSRV = m_bloomBlurPass->Execute(
-        pContext, m_brightRT,m_finalRenderMesh);
+    ID3D11ShaderResourceView* bloomSRV = 
+        m_bloomBlurPass->Execute( pContext, m_brightRT,m_finalRenderMesh);
     m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(bloomSRV);
-
 
 
     // 次のチェーン（モノクロやビネットなど）に行くための「お片付け」
@@ -503,13 +501,6 @@ bool Renderer::createFinalRenderQuad() {
     if (!m_finalRenderMesh)return false;
 
     return true;
-}
-
-
-// シャドウパス用にキューに積むとき
-void Renderer::SubmitShadowPass()
-{
-    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(m_pShadowShader);
 }
 
 
