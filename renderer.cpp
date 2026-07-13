@@ -174,7 +174,6 @@ bool Renderer::Initialize(Graphics* graphics)
     SetExposure(0.5f);
 
     //遅延シェーディング用のバッファの初期化
-        //シェーダ初期化
 	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
 
         //専用サンプラー初期化
