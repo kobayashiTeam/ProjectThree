@@ -422,6 +422,9 @@
     <ClInclude Include="deferredLightingPass.h">
       <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
+    <ClInclude Include="resourceManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">

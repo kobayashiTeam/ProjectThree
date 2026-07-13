@@ -85,6 +85,7 @@ Renderer* g_pRenderer = nullptr;
 
 //モデルリソース
 #include"ModelResource.h"
+#include"resourceManager.h"
 ModelResource* modelResource = nullptr;
 
 //ジオメトリクラス
@@ -300,9 +301,10 @@ bool InitDevice()
     g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);
         //oldCamera(modelResource)
     modelResource = new ModelResource();
-    modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
+    //modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
+	modelResource = ResourceManager::GetInstance().GetModel(pDevice,L"assets/oldCamera/scene.gltf");
     g_pOldCameraBagModel = new Model(pDevice,modelResource);
-    g_pOldCameraBagModel->SetPosition(5.0f,0.0f,-3.0f);
+    g_pOldCameraBagModel->SetPosition(0.0f,0.0f,-5.0f);//5,0,-3
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
@@ -355,7 +357,7 @@ void Render()
     // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
     //g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);//空中のcube
     //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);//回転cube
-    //g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);
+    g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);//camera
     //g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);//床
     g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);
 	g_pRenderer->Submit(g_pMainModel5, RenderPass::Opaque, BlendMode::Opaque);

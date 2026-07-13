@@ -228,6 +228,7 @@
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="renderTarget.h" />
+    <ClInclude Include="resourceManager.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="sepiaPostProcess.h" />
     <ClInclude Include="shader.h" />
