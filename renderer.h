@@ -40,6 +40,7 @@ class PostProcessChain;
 class BloomBlurPass;;
 class GBufferPass;
 class SSAOPass;
+class ShadowSystem;
 
 class Renderer
 {
@@ -159,5 +160,8 @@ private:
 	GBufferPass* m_gBufferPass = nullptr;
     //新規：SSAOPass
 	SSAOPass* m_ssaoPass = nullptr;
+
+	//新規：ShadowSystem
+	ShadowSystem* m_shadowSystem = nullptr;
 
 };

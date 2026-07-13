@@ -264,6 +264,9 @@
     <ClCompile Include="ssaoPass.cpp">
       <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
+    <ClCompile Include="shadowSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -412,6 +415,9 @@
     </ClInclude>
     <ClInclude Include="ssaoPass.h">
       <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
+    <ClInclude Include="shadowSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

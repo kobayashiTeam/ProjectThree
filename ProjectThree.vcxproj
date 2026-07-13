@@ -184,6 +184,7 @@
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="shadowCubeMap.cpp" />
     <ClCompile Include="shadowMap.cpp" />
+    <ClCompile Include="shadowSystem.cpp" />
     <ClCompile Include="skyBox.cpp" />
     <ClCompile Include="ssaoPass.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="shaderManager.h" />
     <ClInclude Include="shadowCubeMap.h" />
     <ClInclude Include="shadowMap.h" />
+    <ClInclude Include="shadowSystem.h" />
     <ClInclude Include="sharpenPostProcess.h" />
     <ClInclude Include="simpleBoxBlurPostProcess.h" />
     <ClInclude Include="skyBox.h" />

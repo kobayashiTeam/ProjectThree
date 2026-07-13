@@ -34,6 +34,7 @@
 #include"bloomBlurPass.h"
 #include"gBufferPass.h"
 #include"ssaoPass.h"
+#include"shadowSystem.h"
 
 Renderer::~Renderer()
 {
@@ -182,7 +183,6 @@ bool Renderer::Initialize(Graphics* graphics)
         //shadowシェーダ設定
     m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::Shadow);
         //サンプラー生成
-    // Renderer初期化時に作成
     D3D11_SAMPLER_DESC sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
@@ -234,6 +234,10 @@ bool Renderer::Initialize(Graphics* graphics)
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     pDevice->CreateSamplerState(&sampDesc, &m_shadowCubeSampler);
 
+    //新規:ShadowSystem生成初期化
+	m_shadowSystem = new ShadowSystem();
+	m_shadowSystem->Initialize(pDevice);
+
 
     //ポストプロセスバッファの初期化
         // b5用の定数バッファを作成
@@ -281,6 +285,8 @@ bool Renderer::Initialize(Graphics* graphics)
 
 void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
 {
+	ID3D11DeviceContext* pContext = m_graphics->GetContext();
+
     m_currentCamera = camera;
     m_graphics->BeginScene(r, g, b, a);
 
@@ -290,9 +296,11 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // フレームごとの定数バッファ更新(b0)
     UpdatePerFrameConstantBuffer();
         //DirectionalLightも共通なので送る(b3)
-    UpdateLightDataConstantBuffer();
+    //UpdateLightDataConstantBuffer();
+	m_shadowSystem->UpdateLightDataConstantBuffer(pContext);
         //PointLightも送る(b4)
-    UpdatePointLightConstantBuffer();
+    //UpdatePointLightConstantBuffer();
+    m_shadowSystem->UpdatePointLightConstantBuffer(pContext);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -344,34 +352,47 @@ void Renderer::Execute()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
+    int opaqueIdx = static_cast<int>(RenderPass::Opaque);
+    int outlineIdx = static_cast<int>(RenderPass::Outline);
+    int transparentIdx = static_cast<int>(RenderPass::Transparent);
+    int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
     // ===== 1パス目：シャドウマップ生成 =====
     // ===== DirectionalLight のシャドウパス =====
-    m_shadowMaps[0].BeginRender(pContext);
-    // シャドウ用VSをバインド
-    m_pShadowShader->Bind(pContext);
-    //pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
-    // ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
-    // 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
-    //SubmitShadowPass();//対象renderQueueのコマンド内容を変える
-    m_renderQueues[static_cast<int>(RenderPass::Opaque)].
-        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates,false);
-    m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
-        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_shadowMaps[0].EndRender(pContext);
-    // オーバーライドをリセット
-    m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
+    //m_shadowMaps[0].BeginRender(pContext);
+    //// シャドウ用VSをバインド
+    //m_pShadowShader->Bind(pContext);
+    ////pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
+    //// ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
+    //// 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
+    ////SubmitShadowPass();//対象renderQueueのコマンド内容を変える
+    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].
+    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates,false);
+    //m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
+    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    //m_shadowMaps[0].EndRender(pContext);
+    //// オーバーライドをリセット
+    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
+    // ===== シャドウマップ生成 =====
+    m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
+    m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_shadowSystem->EndDirectionalPass(pContext);
 
 
     // ===== PointLight のシャドウパス =====
-    m_shadowCubeMaps[0].BeginRender(pContext);
-    m_pShadowCubeShader->Bind(pContext);  // VS+PS
-    pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
-    //pContext->PSSetShader(nullptr, nullptr, 0);
-    m_renderQueues[static_cast<int>(RenderPass::Opaque)].
-        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
-        ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_shadowCubeMaps[0].EndRender(pContext);
+    //m_shadowCubeMaps[0].BeginRender(pContext);
+    //m_pShadowCubeShader->Bind(pContext);  // VS+PS
+    //pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
+    ////pContext->PSSetShader(nullptr, nullptr, 0);
+    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].
+    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    //m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
+    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    //m_shadowCubeMaps[0].EndRender(pContext);
+    m_shadowSystem->BeginPointPass(pContext);
+    m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+    m_shadowSystem->EndPointPass(pContext);
 
     // ==========================================
     // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
@@ -390,22 +411,24 @@ void Renderer::Execute()
     //staticメソッドで綺麗にバインド！
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
     // Directionalライトの為のシャドウマップをt3に、比較用サンプラーもバインド
-    auto* srv = m_shadowMaps[0].GetSRV();
-    pContext->PSSetShaderResources(3, 1, &srv);
-    ID3D11SamplerState* sampler = m_shadowSampler.Get();
-    pContext->PSSetSamplers(1, 1, &sampler); 
-    //Pointライトの為のシャドウマップをt4に、キューブ用サンプラーもバインド
-    srv = m_shadowCubeMaps[0].GetSRV();
-    pContext->PSSetShaderResources(4,1,&srv);
-    sampler = m_shadowCubeSampler.Get();
-    pContext->PSSetSamplers(2,1,&sampler);
+    //auto* srv = m_shadowMaps[0].GetSRV();
+    //pContext->PSSetShaderResources(3, 1, &srv);
+    //ID3D11SamplerState* sampler = m_shadowSampler.Get();
+    //pContext->PSSetSamplers(1, 1, &sampler); 
+    ////Pointライトの為のシャドウマップをt4に、キューブ用サンプラーもバインド
+    //srv = m_shadowCubeMaps[0].GetSRV();
+    //pContext->PSSetShaderResources(4,1,&srv);
+    //sampler = m_shadowCubeSampler.Get();
+    //pContext->PSSetSamplers(2,1,&sampler);
+	m_shadowSystem->BindForLighting(pContext);  // 内部でSRVとサンプラーをセット済み
+
 
 	//2. 各パスのキューを、適切なステートをセットしてから実行する
 
-    int opaqueIdx = static_cast<int>(RenderPass::Opaque);
+    /*int opaqueIdx = static_cast<int>(RenderPass::Opaque);
     int outlineIdx = static_cast<int>(RenderPass::Outline);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
-    int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
+    int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);*/
 
     //-----新規工程:deferred不透明パス-----
     m_gBufferPass->Begin(pContext);
