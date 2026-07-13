@@ -122,27 +122,6 @@ private:
     //instancedModel
     InstancedModel* m_pInstancedModel = nullptr;
 
-    //Light
-        //共用
-    ComPtr<ID3D11Buffer> m_lightCB;//種類を問わず全てのライトをここに入れる。LitShaderのPSで使う
-    //DirectionalLight
-    std::vector<DirectionalLight> m_directionalLights;
-    //shadowMap
-    std::vector<ShadowMap> m_shadowMaps;
-    Shader* m_pShadowShader = nullptr;
-    // Renderer.hに追加、shadow用サンプラーは１つの共用でいい
-    ComPtr<ID3D11SamplerState> m_shadowSampler;
-
-    //test:PointLight
-    std::vector<PointLight> m_pointLights;
-    ComPtr<ID3D11Buffer>m_pointLightCB;
-        //shadowMap
-    std::vector<ShadowCubeMap> m_shadowCubeMaps;
-    Shader* m_pShadowCubeShader = nullptr;
-        //ジオメトリシェーダ
-    ID3D11GeometryShader* m_pShadowCubeGS = nullptr;
-        //サンプラー
-    ComPtr<ID3D11SamplerState> m_shadowCubeSampler;
 
     //ポストプロセスバッファ、参照
     ComPtr<ID3D11Buffer> m_pPostProcessCB = nullptr;

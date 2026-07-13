@@ -154,86 +154,6 @@ bool Renderer::Initialize(Graphics* graphics)
     if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 27))return false;
     
 
-    //ライト①（Directional）
-        //cb生成
-    D3D11_BUFFER_DESC bd = {};
-    bd.ByteWidth = sizeof(LightBufferCB);
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    pDevice->CreateBuffer(&bd, nullptr, &m_lightCB);
-        //ライト生成
-    // Renderer初期化時など
-    DirectionalLight dirLight = {};
-    dirLight.type = LightType::Directional;
-    dirLight.position = { -3.0f, 5.0f, -10.0f };//-3,5,-10
-	dirLight.direction = { 3.0f, -1.0f, 1.0f };//
-    dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.80f;//0.15f
-        //m_lights要素数登録
-    m_directionalLights.reserve(MAX_LIGHTS);
-    m_directionalLights.push_back(dirLight);//test:空にしてみる
-
-    //シャドウマップ(Directional Light)
-    ShadowMap shadowMap;
-    shadowMap.Initialize(pDevice,2048);
-    shadowMap.setLight(&m_directionalLights[0]);
-        //ライトとの組み合わせ、事前に配列予約
-    m_shadowMaps.reserve(MAX_LIGHTS);
-    m_shadowMaps.push_back(shadowMap);
-        //shadowシェーダ設定
-    m_pShadowShader = ShaderManager::GetInstance().GetShader(ShaderID::Shadow);
-        //サンプラー生成
-    D3D11_SAMPLER_DESC sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-    sampDesc.BorderColor[0] = 1.0f; // 範囲外は影なし
-    sampDesc.BorderColor[1] = 1.0f;
-    sampDesc.BorderColor[2] = 1.0f;
-    sampDesc.BorderColor[3] = 1.0f;
-    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-
-    pDevice->CreateSamplerState(&sampDesc, &m_shadowSampler);
-
-
-    //ライト②（Point）
-        //cb生成
-    bd = {};
-    bd.ByteWidth = sizeof(ShadowCubeCB);
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    pDevice->CreateBuffer(&bd, nullptr, &m_pointLightCB);
-        //ライト生成
-    PointLight  pointLight = {};
-    pointLight.position = { 5.0f, 5.0f, 3.0f };//5,5,3
-    pointLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    pointLight.intensity = 1.0f;//0.6f
-        //m_lights要素数登録
-    m_pointLights.reserve(MAX_LIGHTS);
-    m_pointLights.push_back(pointLight);
-        //シャドウキューブマップ（Point Light）
-    ShadowCubeMap shadowCubeMap;
-    shadowCubeMap.Initialize(pDevice,2048);
-    shadowCubeMap.SetLight(&pointLight);
-        //ライトとの組み合わせ、事前に配列予約
-    m_shadowCubeMaps.reserve(MAX_LIGHTS);
-    m_shadowCubeMaps.push_back(shadowCubeMap);
-        //shadowシェーダ設定
-    m_pShadowCubeShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
-        //GS設定
-    m_pShadowCubeGS = ShaderManager::GetInstance().getGS(ShaderID::ShadowCubeGS);
-        //通常サンプラー生成
-    sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampDesc.MinLOD = 0;
-    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    pDevice->CreateSamplerState(&sampDesc, &m_shadowCubeSampler);
-
     //新規:ShadowSystem生成初期化
 	m_shadowSystem = new ShadowSystem();
 	m_shadowSystem->Initialize(pDevice);
@@ -296,10 +216,8 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // フレームごとの定数バッファ更新(b0)
     UpdatePerFrameConstantBuffer();
         //DirectionalLightも共通なので送る(b3)
-    //UpdateLightDataConstantBuffer();
 	m_shadowSystem->UpdateLightDataConstantBuffer(pContext);
         //PointLightも送る(b4)
-    //UpdatePointLightConstantBuffer();
     m_shadowSystem->UpdatePointLightConstantBuffer(pContext);
 }
 
@@ -358,21 +276,6 @@ void Renderer::Execute()
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
     // ===== 1パス目：シャドウマップ生成 =====
     // ===== DirectionalLight のシャドウパス =====
-    //m_shadowMaps[0].BeginRender(pContext);
-    //// シャドウ用VSをバインド
-    //m_pShadowShader->Bind(pContext);
-    ////pContext->PSSetShader(nullptr, nullptr, 0);//二度手間だが一度セットした空PSを外す
-    //// ライトのView/Projをcbufferに送る（LightBufferはすでにb3にある）
-    //// 不透明オブジェクトのみ描画（PerObjectCBだけ更新すればOK）
-    ////SubmitShadowPass();//対象renderQueueのコマンド内容を変える
-    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].
-    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates,false);
-    //m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
-    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    //m_shadowMaps[0].EndRender(pContext);
-    //// オーバーライドをリセット
-    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(nullptr);
-    // ===== シャドウマップ生成 =====
     m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
     m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
@@ -380,15 +283,6 @@ void Renderer::Execute()
 
 
     // ===== PointLight のシャドウパス =====
-    //m_shadowCubeMaps[0].BeginRender(pContext);
-    //m_pShadowCubeShader->Bind(pContext);  // VS+PS
-    //pContext->GSSetShader(m_pShadowCubeGS,nullptr,0);// GS(直接代入)
-    ////pContext->PSSetShader(nullptr, nullptr, 0);
-    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].
-    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    //m_renderQueues[static_cast<int>(RenderPass::DeferredOpaque)].
-    //    ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    //m_shadowCubeMaps[0].EndRender(pContext);
     m_shadowSystem->BeginPointPass(pContext);
     m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
@@ -407,28 +301,12 @@ void Renderer::Execute()
     };
     // 深度バッファは代表して1つ目のものから取得して渡す
     ID3D11DepthStencilView* dsv = m_offscreenRTwithMSAA->GetDSV();
-    //m_offscreenRTwithMSAA->Bind(pContext); // ※前回統合した自作のレンダーターゲット
     //staticメソッドで綺麗にバインド！
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
-    // Directionalライトの為のシャドウマップをt3に、比較用サンプラーもバインド
-    //auto* srv = m_shadowMaps[0].GetSRV();
-    //pContext->PSSetShaderResources(3, 1, &srv);
-    //ID3D11SamplerState* sampler = m_shadowSampler.Get();
-    //pContext->PSSetSamplers(1, 1, &sampler); 
-    ////Pointライトの為のシャドウマップをt4に、キューブ用サンプラーもバインド
-    //srv = m_shadowCubeMaps[0].GetSRV();
-    //pContext->PSSetShaderResources(4,1,&srv);
-    //sampler = m_shadowCubeSampler.Get();
-    //pContext->PSSetSamplers(2,1,&sampler);
-	m_shadowSystem->BindForLighting(pContext);  // 内部でSRVとサンプラーをセット済み
 
 
-	//2. 各パスのキューを、適切なステートをセットしてから実行する
-
-    /*int opaqueIdx = static_cast<int>(RenderPass::Opaque);
-    int outlineIdx = static_cast<int>(RenderPass::Outline);
-    int transparentIdx = static_cast<int>(RenderPass::Transparent);
-    int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);*/
+    //-----Lighting Pass-----
+    m_shadowSystem->BindForLighting(pContext);  // 内部でSRVとサンプラーをセット済み
 
     //-----新規工程:deferred不透明パス-----
     m_gBufferPass->Begin(pContext);
@@ -628,81 +506,10 @@ bool Renderer::createFinalRenderQuad() {
 }
 
 
-void Renderer::UpdateLightDataConstantBuffer()
-{
-    LightBufferCB cb = {};
-
-    // Directional
-    for (int i = 0; i < (int)m_directionalLights.size() && cb.lightCount < MAX_LIGHTS; i++)
-    {
-        const DirectionalLight& L = m_directionalLights[i];
-        auto& dst = cb.lights[cb.lightCount];
-        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
-        dst.direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
-        dst.color = L.color;
-        dst.intensity = L.intensity;
-        dst.type = (int)LightType::Directional;
-        dst.farPlane = 0.0f;  // 未使用
-        DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
-        dst.lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
-        cb.lightCount++;
-    }
-
-    // Pointを続けて詰める
-    for (int i = 0; i < (int)m_pointLights.size() && cb.lightCount < MAX_LIGHTS; i++)
-    {
-        const PointLight& L = m_pointLights[i];
-        auto& dst = cb.lights[cb.lightCount];
-        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
-        dst.color = L.color;
-        dst.intensity = L.intensity;
-        dst.type = (int)LightType::Point;
-        dst.farPlane = L.farPlane;
-        // lightSpaceMatrixは未使用なのでゼロのまま
-        cb.lightCount++;
-    }
-
-    auto* ctx = m_graphics->GetContext();
-    ctx->UpdateSubresource(m_lightCB.Get(), 0, nullptr, &cb, 0, 0);
-
-    ID3D11Buffer* cbArray[] = { m_lightCB.Get() };
-    ctx->VSSetConstantBuffers(3, 1, cbArray);
-    ctx->PSSetConstantBuffers(3, 1, cbArray);
-}
-
-
-void Renderer::UpdatePointLightConstantBuffer()
-{
-    if (m_pointLights.empty()) return;
-
-    ShadowCubeCB cb = {};
-    const PointLight& L = m_pointLights[0];  // 今は1灯固定
-
-    cb.gLightPos = L.position;
-    cb.gFarPlane = L.farPlane;
-
-    // 6面分のViewProj行列
-    DirectX::XMMATRIX proj = L.GetProjectionMatrix();
-    for (int i = 0; i < 6; i++)
-    {
-        DirectX::XMMATRIX vp = L.GetViewMatrix(i) * proj;
-        cb.gLightViewProj[i] = DirectX::XMMatrixTranspose(vp);
-    }
-
-    auto* ctx = m_graphics->GetContext();
-    ctx->UpdateSubresource(m_pointLightCB.Get(), 0, nullptr, &cb, 0, 0);
-
-    ID3D11Buffer* cbArray[] = { m_pointLightCB.Get() };
-    ctx->VSSetConstantBuffers(4, 1, cbArray);
-    ctx->GSSetConstantBuffers(4, 1, cbArray);  // GSにも忘れず
-    ctx->PSSetConstantBuffers(4, 1, cbArray);
-}
-
-
 // シャドウパス用にキューに積むとき
 void Renderer::SubmitShadowPass()
 {
-    m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(m_pShadowShader);
+    //m_renderQueues[static_cast<int>(RenderPass::Opaque)].SetOverrideVS(m_pShadowShader);
 }
 
 
