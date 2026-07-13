@@ -195,6 +195,7 @@
     <ClInclude Include="bloomCombinePostProcess.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="deferredCBMaterial.h" />
+    <ClInclude Include="deferredLightingPass.h" />
     <ClInclude Include="depthStencilStates.h" />
     <ClInclude Include="gBufferPass.h" />
     <ClInclude Include="graphics.h" />

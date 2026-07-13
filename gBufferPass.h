@@ -1,3 +1,4 @@
+#pragma once
 // GBufferPass.h
 #include<d3d11.h>
 #include"renderTarget.h"

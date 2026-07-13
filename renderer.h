@@ -41,6 +41,7 @@ class BloomBlurPass;;
 class GBufferPass;
 class SSAOPass;
 class ShadowSystem;
+class DeferredLightingPass;
 
 class Renderer
 {
@@ -133,9 +134,10 @@ private:
 
     //新規：Gbuffer
 	GBufferPass* m_gBufferPass = nullptr;
+	//新規:DeferredLightingPass
+	DeferredLightingPass* m_deferredLightingPass = nullptr;
     //新規：SSAOPass
 	SSAOPass* m_ssaoPass = nullptr;
-
 	//新規：ShadowSystem
 	ShadowSystem* m_shadowSystem = nullptr;
 

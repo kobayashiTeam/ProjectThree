@@ -35,6 +35,7 @@
 #include"gBufferPass.h"
 #include"ssaoPass.h"
 #include"shadowSystem.h"
+#include"deferredLightingPass.h"
 
 Renderer::~Renderer()
 {
@@ -174,20 +175,24 @@ bool Renderer::Initialize(Graphics* graphics)
     SetExposure(0.5f);
 
     //遅延シェーディング用のバッファの初期化
-	m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
+	//m_pDeferredLightingShader = ShaderManager::GetInstance().GetShader(ShaderID::DeferredLighting);
 
-        //専用サンプラー初期化
-    D3D11_SAMPLER_DESC pointDesc = {};
-    pointDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // 深度は補間NG、点サンプル必須
-    pointDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    pointDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    pointDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    pointDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    pointDesc.MinLOD = 0;
-    pointDesc.MaxLOD = D3D11_FLOAT32_MAX;
+ //       //専用サンプラー初期化
+ //   D3D11_SAMPLER_DESC pointDesc = {};
+ //   pointDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // 深度は補間NG、点サンプル必須
+ //   pointDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+ //   pointDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+ //   pointDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+ //   pointDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+ //   pointDesc.MinLOD = 0;
+ //   pointDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-    hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
-    if (FAILED(hr)) return false;
+ //   hr = pDevice->CreateSamplerState(&pointDesc, m_gBufferDepthSampler.GetAddressOf());
+ //   if (FAILED(hr)) return false;
+
+	//DeferredLightingPassの初期化
+	m_deferredLightingPass = new DeferredLightingPass();
+	m_deferredLightingPass->Initialize(pDevice);
 
 	//GBufferPassの初期化
 	m_gBufferPass = new GBufferPass();
@@ -306,7 +311,7 @@ void Renderer::Execute()
     //-----Lighting Pass-----
     m_shadowSystem->BindForLighting(pContext);  // シャドウマップ関連の設定
 
-    //-----新規工程:deferred不透明パス-----
+    //-----deferred不透明パス-----
 	m_gBufferPass->Begin(pContext);             // G-Bufferのレンダーターゲットに切り替え
 
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
@@ -332,21 +337,7 @@ void Renderer::Execute()
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
     // ===== 【新設】Lighting Pass =====
-    // G-Buffer 3枚をSRVとしてバインド(t8,t9,t10,t11,t12など、シャドウマップとぶつからない番号で)
-    ID3D11ShaderResourceView* gbufferSRVs[5] = {
-     m_gBufferPass->GetAlbedoSRV(),   // t8//m_gBufferAlbedo->GetSRV()
-     m_gBufferPass->GetNormalSRV(),   // t9//m_gBufferNormal->GetSRV()
-     m_gBufferPass->GetPositionSRV(),  // t10//m_gBufferPosition->GetSRV()
-     m_gBufferPass->GetDepthSRV(),   //t11//m_gBufferDepthOnly->GetSRV()
-     ssaoSRV       // ★t12 にSSAOを滑り込ませる！
-    };
-    pContext->PSSetShaderResources(8, 5, gbufferSRVs);
-
-    m_pDeferredLightingShader->Bind(pContext); // VS+PS(フルスクリーンクアッド用)
-    ID3D11SamplerState* pointSampler = m_gBufferDepthSampler.Get();
-    pContext->PSSetSamplers(3, 1, &pointSampler); // ★追加
-    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // SV_Depthで書き込むため必要
-    m_finalRenderMesh->Render(pContext);
+    m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh);
 
 
     // ─── 工程1: 不透明パス ───

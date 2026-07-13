@@ -1,3 +1,4 @@
+#pragma once
 // ShadowSystem.h
 #include<d3d11.h>
 #include<vector>
