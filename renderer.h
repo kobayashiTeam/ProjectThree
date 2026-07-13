@@ -97,7 +97,6 @@ private:
     //test:bloom対応のrt
 	RenderTarget* m_brightRTwithMSAA = nullptr;
 	RenderTarget* m_brightRT = nullptr;
-    RenderTarget* m_blurPingRT = nullptr;//計算の都合でもう一個必要だった
    
 
     //ポストプロセス後に描画するQuadのmodel
@@ -126,9 +125,9 @@ private:
         //共用
     ComPtr<ID3D11Buffer> m_lightCB;//種類を問わず全てのライトをここに入れる。LitShaderのPSで使う
     //DirectionalLight
-    std::vector<DirectionalLight>     m_directionalLights;
+    std::vector<DirectionalLight> m_directionalLights;
     //shadowMap
-    std::vector<ShadowMap>     m_shadowMaps;
+    std::vector<ShadowMap> m_shadowMaps;
     Shader* m_pShadowShader = nullptr;
     // Renderer.hに追加、shadow用サンプラーは１つの共用でいい
     ComPtr<ID3D11SamplerState> m_shadowSampler;

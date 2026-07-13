@@ -99,10 +99,7 @@ bool Renderer::Initialize(Graphics* graphics)
         pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
-	m_blurPingRT = new RenderTarget();
-	if (!m_blurPingRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-		return false;
-	}
+	
 
     //テスト:ポストプロセス
     //simpleBlit
@@ -612,7 +609,7 @@ void Renderer::UpdateLightDataConstantBuffer()
 {
     LightBufferCB cb = {};
 
-    // Directionalを先に詰める
+    // Directional
     for (int i = 0; i < (int)m_directionalLights.size() && cb.lightCount < MAX_LIGHTS; i++)
     {
         const DirectionalLight& L = m_directionalLights[i];
