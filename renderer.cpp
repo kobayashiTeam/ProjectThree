@@ -261,6 +261,7 @@ void Renderer::Execute()
     int outlineIdx = static_cast<int>(RenderPass::Outline);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
+
     // ===== 1パス目：シャドウマップ生成 =====
     // ===== DirectionalLight のシャドウパス =====
     m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
@@ -305,7 +306,7 @@ void Renderer::Execute()
 
 
     // ==========================================
-    // 【★ここに新設！】SSAO 生成 ＆ SSAOブラー パス
+    // SSAO 生成 ＆ SSAOブラー パス
     // ==========================================
     
     ID3D11ShaderResourceView* ssaoSRV =m_ssaoPass->Execute(

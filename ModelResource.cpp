@@ -167,7 +167,6 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
 
     // --- マテリアル（テクスチャ）の本連動 ---
     Material* newMaterial = nullptr;
-    //Shader* pLitShader = pShaderManager->GetOrCreate(pDevice, L"LitShader.hlsl");
     Shader* pLitShader = ShaderManager::GetInstance().GetShader(ShaderID::Lit);
 
     if (mesh->mMaterialIndex >= 0) {

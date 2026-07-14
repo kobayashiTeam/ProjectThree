@@ -73,6 +73,12 @@
     <Filter Include="ソース ファイル\pass">
       <UniqueIdentifier>{99b19932-08db-4813-b054-7f61a63286e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\scene">
+      <UniqueIdentifier>{3fc0c84c-7a4c-4d59-bf06-e6cbf921c5ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\scene">
+      <UniqueIdentifier>{92b2dacd-6a91-4d1b-b57e-afe960ca8177}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -267,6 +273,9 @@
     <ClCompile Include="shadowSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="testScene.cpp">
+      <Filter>ソース ファイル\scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -424,6 +433,15 @@
     </ClInclude>
     <ClInclude Include="resourceManager.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="gameObject.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="testScene.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="iScene.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

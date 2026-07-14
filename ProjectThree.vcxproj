@@ -187,6 +187,7 @@
     <ClCompile Include="shadowSystem.cpp" />
     <ClCompile Include="skyBox.cpp" />
     <ClCompile Include="ssaoPass.cpp" />
+    <ClCompile Include="testScene.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="deferredCBMaterial.h" />
     <ClInclude Include="deferredLightingPass.h" />
     <ClInclude Include="depthStencilStates.h" />
+    <ClInclude Include="gameObject.h" />
     <ClInclude Include="gBufferPass.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="graphicsCommon.h" />
@@ -204,6 +206,7 @@
     <ClInclude Include="HorizontalBlurPostProcess.h" />
     <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionPostProcess.h" />
+    <ClInclude Include="iScene.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="litMaterial.h" />
     <ClInclude Include="material.h" />
@@ -229,6 +232,7 @@
     <ClInclude Include="renderQueue.h" />
     <ClInclude Include="renderTarget.h" />
     <ClInclude Include="resourceManager.h" />
+    <ClInclude Include="testScene.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="sepiaPostProcess.h" />
     <ClInclude Include="shader.h" />

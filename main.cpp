@@ -96,6 +96,10 @@ MoveGSEffect* g_pMoveGSEffect = nullptr;
 #include"normalVizGSEffect.h"
 NormalVizGSEffect* g_pNormalVizGSEffect = nullptr;
 
+//gameObject
+#include"testScene.h"
+TestScene g_scene;
+
 //input関連
 // WndProcの上あたりに追加
 bool g_keyLeft = false;
@@ -301,10 +305,9 @@ bool InitDevice()
     g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);
         //oldCamera(modelResource)
     modelResource = new ModelResource();
-    //modelResource->LoadFromFile(pDevice,&ShaderManager::GetInstance(), L"assets/oldCamera/scene.gltf");
 	modelResource = ResourceManager::GetInstance().GetModel(pDevice,L"assets/oldCamera/scene.gltf");
     g_pOldCameraBagModel = new Model(pDevice,modelResource);
-    g_pOldCameraBagModel->SetPosition(0.0f,0.0f,-5.0f);//5,0,-3
+    g_pOldCameraBagModel->SetPosition(-3.0f,0.0f,20.0f);//5,0,-3
 
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
@@ -319,6 +322,11 @@ bool InitDevice()
     if (!g_pRenderer->Initialize(g_pGraphics)) {
         return false;
     }
+
+    //新規：g_scene
+	g_scene.SetDevice(pDevice);
+    g_scene.Enter();
+
     
     return true;
 }
@@ -341,7 +349,10 @@ void UpdateScene()
     g_pCamera->UpdateDirection(deltaYaw, deltaPitch);
 
     // モデル回転
-    //g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
+    g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
+
+    // ★Sceneのゲームロジック更新はここで呼ぶ
+    g_scene.Update(0.016f);//0.016
 }
 
 // =============================================
@@ -354,17 +365,8 @@ void Render()
     // 2. 描画開始（クリア処理や定数バッファのセットを内部で自動化）
     g_pRenderer->BeginFrame(g_pCamera, 0.1f, 0.12f, 0.15f, 1.0f);
 
-    // 3. モデルの登録（距離計算はRendererが裏で自動でやってくれる）
-    //g_pRenderer->Submit(g_pMainModel, RenderPass::Opaque,BlendMode::Opaque);//空中のcube
-    //g_pRenderer->Submit(g_pMainModel2, RenderPass::Transparent,BlendMode::AlphaBlend);//回転cube
-    g_pRenderer->Submit(g_pOldCameraBagModel,RenderPass::Opaque,BlendMode::Opaque);//camera
-    //g_pRenderer->Submit(g_pMainModel3,RenderPass::Opaque,BlendMode::Opaque);//床
-    g_pRenderer->Submit(g_pMainModel4, RenderPass::Opaque, BlendMode::Opaque);
-	g_pRenderer->Submit(g_pMainModel5, RenderPass::Opaque, BlendMode::Opaque);
-
-    //test:deferredOpaqueで登録
-    g_pRenderer->Submit(g_pMainModel, RenderPass::DeferredOpaque, BlendMode::Opaque);
-    g_pRenderer->Submit(g_pMainModel3, RenderPass::DeferredOpaque, BlendMode::Opaque);
+    //★これまで6行あったSubmit列挙が1行に
+    g_scene.Submit(g_pRenderer);
 
     // 4. レンダーキューの実行（適切なステートで一括描画）
     g_pRenderer->Execute();
