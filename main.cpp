@@ -35,22 +35,7 @@ Camera* g_pCamera = nullptr;
 #include"deferredCBMaterial.h"
 #include "model.h"
 
-Mesh* g_pCubeMesh = nullptr;
-LitMaterial* g_pLitMaterial = nullptr; 
-UnLitMaterial* g_pUnLitMaterial = nullptr; // 追加：UnLitMaterial
 OutLineMaterial* g_pOutlineMaterial = nullptr; // 追加：アウトライン用マテリアル
-NormalVizMaterial* g_pNormalVizMaterial = nullptr;
-NormalMappingMaterial* g_pNormalMappingMaterial = nullptr;
-LitMaterial* g_pTestLitMaterial = nullptr; // 追加：テスト用LitMaterial
-ParallaxMappingMaterial* g_pParallaxMappingMaterial = nullptr; // 追加：ParallaxMappingMaterial
-DeferredCBMaterial* g_pDeferredCBMaterial = nullptr; // 追加：DeferredCBMaterial
-Model* g_pMainModel = nullptr;
-Model* g_pMainModel2 = nullptr;
-Model* g_pMainModel3 = nullptr;
-Model* g_pMainModel4 = nullptr;//brick
-Model* g_pMainModel5 = nullptr;//parallax
-//oldCamera(modelResource)用モデル
-Model* g_pOldCameraBagModel = nullptr;
 
 // 定数バッファ
 ID3D11Buffer* g_pConstantBuffer = nullptr;
@@ -63,23 +48,17 @@ float g_Time = 0.0f;
 
 //レンダーキュー
 #include"renderQueue.h"
-
 //計算にまつわるutilityクラスもinclude
 #include"mathUtils.h"
-
 //ラスタライザーステート
 #include"rasterizerStates.h"
-
 //深度ステンシルステート
 #include"depthStencilStates.h"
-
 //ブレンステート
 #include"blendStates.h"
-
 //レンダラークラス
 #include"renderer.h"
 Renderer* g_pRenderer = nullptr;
-
 //共用クラス
 #include"graphicsCommon.h"
 
@@ -91,10 +70,8 @@ ModelResource* modelResource = nullptr;
 //ジオメトリクラス
 //moveGS
 #include"moveGSEffect.h"
-MoveGSEffect* g_pMoveGSEffect = nullptr;
 //normalViz
 #include"normalVizGSEffect.h"
-NormalVizGSEffect* g_pNormalVizGSEffect = nullptr;
 
 //gameObject
 #include"testScene.h"
@@ -202,113 +179,24 @@ bool InitDevice()
         return false;
     }
 
-    //GS
-        //moveGS
-    g_pMoveGSEffect = new MoveGSEffect();
-    g_pMoveGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::Move));
-        //normalVizGS
-    g_pNormalVizGSEffect = new NormalVizGSEffect();
-    g_pNormalVizGSEffect->Initialize(pDevice,ShaderManager::GetInstance().getGS(ShaderID::NormalVizGS));
-    g_pNormalVizGSEffect->SetNormalParams(0.1,0,0,0);
+    
 
     //比較的高レベルなパーツ
     // Mesh作成（Cube）
-    g_pCubeMesh = Mesh::CreateCube(pDevice,1);
 
     // Material
-        //litMaterial
-    g_pLitMaterial = new LitMaterial();  
     UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
     UINT32 white = 0xFFFFFFFF;
     // HDR用の白（各チャンネル 1.0f の輝度）
     DirectX::PackedVector::XMHALF4 whiteHDR(1.0f, 1.0f, 1.0f, 1.0f);
-    if (!g_pLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::Lit), &whiteHDR, 1, 1,true,true)) return false;
-    g_pLitMaterial->CreateMaterialBuffer(pDevice);
-    g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
-    //g_pLitMaterial->SetGSEffect(g_pMoveGSEffect);
-    //g_pMoveGSEffect->SetOffset(0.0f,1.0f,0.0f);
-
-	    //unLitMaterial
-	g_pUnLitMaterial = new UnLitMaterial();
-	if (!g_pUnLitMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::UnLit),checker, 2, 2,true,false))//unlit
-		return false;
-	g_pUnLitMaterial->CreateMaterialBuffer(pDevice);
-	g_pUnLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 0.3f); // 緑がかった色で描画
-    //g_pUnLitMaterial->SetGS(ShaderManager::GetInstance().getGS(ShaderID::PassThrough));
     
-        //outlienMaterial
+	    //outlienMaterial
 	g_pOutlineMaterial = new OutLineMaterial();
 	if (!g_pOutlineMaterial->Initialize(pDevice, ShaderManager::GetInstance().
         GetShader(ShaderID::Outline),  checker, 2, 2,true,false))return false;
 	g_pOutlineMaterial->CreateMaterialBuffer(pDevice);
 	g_pOutlineMaterial->SetMaterialColor(1.0f, 0.0f, 0.0f, 1.0f); // 赤色で描画
-
-        //normalvizMaterial
-    g_pNormalVizMaterial = new NormalVizMaterial();
-    if (!g_pNormalVizMaterial->Initialize(pDevice, ShaderManager::GetInstance().
-        GetShader(ShaderID::NormalViz), checker, 2, 2,true,true)) return false;
-    g_pNormalVizMaterial->SetGSEffect(g_pNormalVizGSEffect);
-
-        //normalMappingMaterial
-	g_pNormalMappingMaterial = new NormalMappingMaterial();
-        //まずdiffuse画像を設定
-    if (!g_pNormalMappingMaterial->InitializeFromFile(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::NormalMapping),
-        L"assets/nor/diff.png"))return false;
-	    //次にnormal画像を設定
-    if (!g_pNormalMappingMaterial->InitializeNormalMapFromFile(pDevice,
-        L"assets/nor/nor.png"))return false;
-
-        //testLitMaterial
-	g_pTestLitMaterial = new LitMaterial();
-    if (!g_pTestLitMaterial->InitializeFromFile(pDevice,
-        ShaderManager::GetInstance().GetShader(ShaderID::Lit),
-        L"assets/nor/diff.png"))return false;
-
-        //parallax
-	g_pParallaxMappingMaterial = new ParallaxMappingMaterial();
-	if (!g_pParallaxMappingMaterial->InitializeFromFile(pDevice,
-		ShaderManager::GetInstance().GetShader(ShaderID::ParallaxMapping),
-		L"assets/para/diff.png"))return false;
-            //次にnormal画像を設定
-    if (!g_pParallaxMappingMaterial->InitializeParallaxMapFromFile(pDevice,
-        L"assets/para/normalHeight.png"))return false;
-
-	    //deferredCBMaterial
-	g_pDeferredCBMaterial = new DeferredCBMaterial();
-    if (!g_pDeferredCBMaterial ->Initialize(pDevice, ShaderManager::
-        GetInstance().GetShader(ShaderID::DeferredGB), &whiteHDR, 1, 1, true, true)) return false;
-    g_pDeferredCBMaterial->CreateMaterialBuffer(pDevice);
-    g_pDeferredCBMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
-    
-    // Model
-        //Model1
-    g_pMainModel = new Model(pDevice, g_pCubeMesh, g_pDeferredCBMaterial );//deferredへ
-    g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);
-        //Model2
-	g_pMainModel2 = new Model(pDevice, g_pCubeMesh, g_pUnLitMaterial);
-	g_pMainModel2->SetPosition(0.0f, 0.0f, 0.0f);
-    g_pMainModel2->SetTransparent(true);
-        //Model3
-    g_pMainModel3 = new Model(pDevice, g_pCubeMesh, g_pDeferredCBMaterial);//deferredへ
-    g_pMainModel3->SetPosition(0.0f,-6.2f,5.0f);//y-7
-    g_pMainModel3->SetScale(10.0f,10.0f,10.0f);
-        //Model4
-    g_pMainModel4 = new Model(pDevice, g_pCubeMesh, g_pNormalMappingMaterial);
-    g_pMainModel4->SetPosition(-3.0f, 0.0f, -3.0f);
-    g_pMainModel4->SetScale(3.0f, 3.0f, 3.0f);
-        //Model5
-	g_pMainModel5 = new Model(pDevice, g_pCubeMesh, g_pParallaxMappingMaterial);
-    g_pMainModel5->SetPosition(3.0f, 0.0f, -3.0f);
-    g_pMainModel5->SetScale(3.0f, 3.0f, 3.0f);
-        //oldCamera(modelResource)
-    modelResource = new ModelResource();
-	modelResource = ResourceManager::GetInstance().GetModel(pDevice,L"assets/oldCamera/scene.gltf");
-    g_pOldCameraBagModel = new Model(pDevice,modelResource);
-    g_pOldCameraBagModel->SetPosition(-3.0f,0.0f,20.0f);//5,0,-3
-
+        
     // Camera
     g_pCamera = new Camera(1280.0f, 720.0f);
 
@@ -349,7 +237,7 @@ void UpdateScene()
     g_pCamera->UpdateDirection(deltaYaw, deltaPitch);
 
     // モデル回転
-    g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
+    //g_pMainModel->SetRotation(0.0f, g_Time * 0.8f, 0.0f);
 
     // ★Sceneのゲームロジック更新はここで呼ぶ
     g_scene.Update(0.016f);//0.016
@@ -377,9 +265,6 @@ void Render()
 
 void CleanupDevice()
 {
-    if (g_pMainModel) { delete g_pMainModel;     g_pMainModel = nullptr; }
-    if (g_pLitMaterial) { delete g_pLitMaterial;   g_pLitMaterial = nullptr; }
-    if (g_pCubeMesh) { delete g_pCubeMesh;      g_pCubeMesh = nullptr; }
     if (g_pCamera) { delete g_pCamera;        g_pCamera = nullptr; }
     if (g_pGraphics) { delete g_pGraphics;      g_pGraphics = nullptr; }
 }
