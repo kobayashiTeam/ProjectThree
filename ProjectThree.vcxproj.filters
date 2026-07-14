@@ -79,6 +79,12 @@
     <Filter Include="ソース ファイル\scene">
       <UniqueIdentifier>{92b2dacd-6a91-4d1b-b57e-afe960ca8177}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\game">
+      <UniqueIdentifier>{52fc069f-82e1-41f9-abef-f67ad09e3694}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\game">
+      <UniqueIdentifier>{879cdee4-73bf-4622-8541-7b02f604e03a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -276,6 +282,9 @@
     <ClCompile Include="testScene.cpp">
       <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>ソース ファイル\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -442,6 +451,9 @@
     </ClInclude>
     <ClInclude Include="iScene.h">
       <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>ヘッダー ファイル\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

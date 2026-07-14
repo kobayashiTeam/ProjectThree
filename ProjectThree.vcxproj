@@ -147,6 +147,7 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="deferredCBMaterial.cpp" />
     <ClCompile Include="depthStencilStates.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="instancedModel.cpp" />
     <ClCompile Include="light.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="deferredCBMaterial.h" />
     <ClInclude Include="deferredLightingPass.h" />
     <ClInclude Include="depthStencilStates.h" />
+    <ClInclude Include="game.h" />
     <ClInclude Include="gameObject.h" />
     <ClInclude Include="gBufferPass.h" />
     <ClInclude Include="graphics.h" />
