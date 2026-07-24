@@ -189,6 +189,7 @@
     <ClCompile Include="skyBox.cpp" />
     <ClCompile Include="ssaoPass.cpp" />
     <ClCompile Include="testScene.cpp" />
+    <ClCompile Include="textRenderer.cpp" />
     <ClCompile Include="unLitMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -246,6 +247,7 @@
     <ClInclude Include="simpleBoxBlurPostProcess.h" />
     <ClInclude Include="skyBox.h" />
     <ClInclude Include="ssaoPass.h" />
+    <ClInclude Include="textRenderer.h" />
     <ClInclude Include="unLitMaterial.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="VerticalBlurPostProcess.h" />

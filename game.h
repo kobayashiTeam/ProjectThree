@@ -8,6 +8,7 @@
 class Graphics;
 class Renderer;
 class Camera;
+class TextRenderer;
 
 class Game {
 public:
@@ -22,5 +23,6 @@ private:
     Graphics* m_graphics = nullptr;
     Renderer* m_renderer = nullptr;
     Camera* m_camera = nullptr;
+    TextRenderer* m_textRenderer = nullptr;
     std::unique_ptr<IScene> m_currentScene;
 };

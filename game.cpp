@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "iScene.h"
 #include "testScene.h"
+#include"textRenderer.h"
 
 // main.cppのWndProcが更新するグローバル入力状態を、今はそのまま参照する
 extern bool g_keyLeft;
@@ -26,6 +27,10 @@ bool Game::Initialize(HWND hWnd, UINT width, UINT height)
 
     m_renderer = new Renderer();
     if (!m_renderer->Initialize(m_graphics)) return false;
+
+    m_textRenderer = new TextRenderer();
+    if (!m_textRenderer->Initialize(pDevice, m_graphics->GetContext(),
+        L"assets/fonts/DefaultFont.spritefont")) return false;
 
     m_currentScene = std::make_unique<TestScene>();
     m_currentScene->SetDevice(pDevice);
@@ -78,12 +83,21 @@ void Game::Render()
     m_renderer->BeginFrame(m_camera, 0.1f, 0.12f, 0.15f, 1.0f);
     m_currentScene->Submit(m_renderer);
     m_renderer->Execute();
+
+    // UIテキストは3D描画がすべて終わった後、バックバッファに直接重ね描きする
+    m_textRenderer->Begin();
+    m_currentScene->SubmitUI(m_textRenderer);
+    m_textRenderer->End();
+
     m_renderer->EndFrame();
 }
 
 void Game::Shutdown()
 {
     if (m_camera) { delete m_camera;   m_camera = nullptr; }
+    if (m_textRenderer) {
+        delete m_textRenderer; m_textRenderer = nullptr;
+    }
     if (m_renderer) { delete m_renderer; m_renderer = nullptr; }
     if (m_graphics) { delete m_graphics; m_graphics = nullptr; }
 }

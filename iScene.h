@@ -2,6 +2,7 @@
 #pragma once
 #include<d3d11.h>
 class Renderer;
+class TextRenderer;
 
 class IScene {
 public:
@@ -12,6 +13,10 @@ public:
 
     virtual void Update(float dt) = 0;
     virtual void Submit(Renderer* renderer) = 0;
+
+    // UIテキストの描画。3D描画（Submit→Renderer::Execute）がすべて終わった後、
+    // バックバッファに直接重ね描きする。使わないシーンは実装不要（デフォルトで何もしない）
+    virtual void SubmitUI(TextRenderer* textRenderer) {}
 
     // 「次はこのシーンへ」という遷移要求。無ければnullptrのまま
     virtual IScene* CheckTransition() { return nullptr; }
