@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "iScene.h"
 #include "testScene.h"
+#include"scene0.h"
 #include"textRenderer.h"
 
 // main.cppのWndProcが更新するグローバル入力状態を、今はそのまま参照する
@@ -32,7 +33,8 @@ bool Game::Initialize(HWND hWnd, UINT width, UINT height)
     if (!m_textRenderer->Initialize(pDevice, m_graphics->GetContext(),
         L"assets/fonts/DefaultFont.spritefont")) return false;
 
-    m_currentScene = std::make_unique<TestScene>();
+    //m_currentScene = std::make_unique<TestScene>();
+    m_currentScene = std::make_unique<Scene0>();
     m_currentScene->SetDevice(pDevice);
     if (!m_currentScene->Enter()) return false;
 

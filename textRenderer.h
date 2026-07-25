@@ -16,14 +16,6 @@
 #include <directxtk/CommonStates.h>
 
 
-//// DirectXTKの型は前方宣言だけして、.cppでのみ実体をincludeする
-//// （ヘッダの依存を軽くして、他のファイルへの巻き込みを防ぐ）
-//namespace DirectX {
-//    class SpriteBatch;
-//    class SpriteFont;
-//    class CommonStates;
-//}
-
 // UIテキスト専用の描画役。
 // 3D描画（Renderer）とは別ルートで、Game::Render()の最後に
 // バックバッファへ直接重ね描きする想定。

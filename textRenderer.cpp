@@ -1,8 +1,5 @@
 // textRenderer.cpp
 #include "textRenderer.h"
-//#include <directxtk/SpriteBatch.h>
-//#include <directxtk/SpriteFont.h>
-//#include <directxtk/CommonStates.h>
 
 TextRenderer::~TextRenderer() = default;
 
