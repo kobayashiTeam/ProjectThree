@@ -1,6 +1,7 @@
 ﻿// main.cpp
 #include <windows.h>
 #include "game.h"
+#include"input.h"
 
 bool g_keyLeft = false;
 bool g_keyRight = false;
@@ -16,12 +17,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (wParam == VK_RIGHT) g_keyRight = true;
         if (wParam == VK_UP)    g_keyUp = true;
         if (wParam == VK_DOWN)  g_keyDown = true;
+        //test
+        Input::OnKeyDown(wParam);
         return 0;
     case WM_KEYUP:
         if (wParam == VK_LEFT)  g_keyLeft = false;
         if (wParam == VK_RIGHT) g_keyRight = false;
         if (wParam == VK_UP)    g_keyUp = false;
         if (wParam == VK_DOWN)  g_keyDown = false;
+        //test
+        Input::OnKeyUp(wParam);
         return 0;
     case WM_DESTROY:
         PostQuitMessage(0);

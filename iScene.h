@@ -19,10 +19,11 @@ public:
     virtual void SubmitUI(TextRenderer* textRenderer,float dt) {}
 
     // 「次はこのシーンへ」という遷移要求。無ければnullptrのまま
-    virtual IScene* CheckTransition() { return nullptr; }
+    virtual IScene* CheckTransition() { return m_nextScene; }
 
     void SetDevice(ID3D11Device* device) { m_device = device; }
 
 protected:
     ID3D11Device* m_device = nullptr; // 借用。派生クラスからm_deviceとして直接使える
+    IScene* m_nextScene = nullptr;
 };

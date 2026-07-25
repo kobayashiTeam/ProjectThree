@@ -149,6 +149,7 @@
     <ClCompile Include="depthStencilStates.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="graphics.cpp" />
+    <ClCompile Include="input.cpp" />
     <ClCompile Include="instancedModel.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="litMaterial.cpp" />
@@ -183,6 +184,7 @@
     <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="scene0.cpp" />
+    <ClCompile Include="scene1.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="shadowCubeMap.cpp" />
     <ClCompile Include="shadowMap.cpp" />
@@ -208,6 +210,7 @@
     <ClInclude Include="graphicsCommon.h" />
     <ClInclude Include="gsEffect.h" />
     <ClInclude Include="HorizontalBlurPostProcess.h" />
+    <ClInclude Include="input.h" />
     <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionPostProcess.h" />
     <ClInclude Include="iScene.h" />
@@ -237,6 +240,7 @@
     <ClInclude Include="renderTarget.h" />
     <ClInclude Include="resourceManager.h" />
     <ClInclude Include="scene0.h" />
+    <ClInclude Include="scene1.h" />
     <ClInclude Include="testScene.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="sepiaPostProcess.h" />
@@ -396,6 +400,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Shaders\BasicColorShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

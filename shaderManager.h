@@ -36,6 +36,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::PointSprite, L"Shaders/PointSpriteShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalMapping, L"Shaders/NormalMappingShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::ParallaxMapping, L"Shaders/ParallaxMappingShader.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::BasicColor, L"Shaders/BasicColorShader.hlsl")) return false;
         //screenblit
         if (!GetOrCreate(pDevice, ShaderID::ScreenBlit, L"Shaders/ScreenBlit.hlsl")) return false;
         //postProcess
@@ -202,6 +203,10 @@ private:
 			layout = screenBlitLayout;
 			layoutCount = 2;
 			break;
+        case ShaderID::BasicColor:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
         case ShaderID::Sepia:

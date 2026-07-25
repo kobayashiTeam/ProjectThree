@@ -8,6 +8,7 @@
 #include "testScene.h"
 #include"scene0.h"
 #include"textRenderer.h"
+#include"input.h"
 
 // main.cppのWndProcが更新するグローバル入力状態を、今はそのまま参照する
 extern bool g_keyLeft;
@@ -63,13 +64,16 @@ void Game::Update(float dt)
 {
     const float rotSpeed = 0.02f;
     float deltaYaw = 0.0f, deltaPitch = 0.0f;
-    if (g_keyLeft)  deltaYaw += rotSpeed;
-    if (g_keyRight) deltaYaw -= rotSpeed;
-    if (g_keyUp)    deltaPitch += rotSpeed;
-    if (g_keyDown)  deltaPitch -= rotSpeed;
+    if (Input::IsKeyDown(VK_LEFT))  deltaYaw += rotSpeed;//(g_keyLeft)
+    if (Input::IsKeyDown(VK_RIGHT)) deltaYaw -= rotSpeed;//right
+    if (Input::IsKeyDown(VK_UP))    deltaPitch += rotSpeed;//up
+    if (Input::IsKeyDown(VK_DOWN))  deltaPitch -= rotSpeed;//down
     m_camera->UpdateDirection(deltaYaw, deltaPitch);
 
     m_currentScene->Update(dt);
+
+    //test
+    Input::Update();
 
     if (IScene* next = m_currentScene->CheckTransition())
     {

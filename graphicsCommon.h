@@ -40,6 +40,7 @@ enum class ShaderID {
     PointSprite,
     NormalMapping,
 	ParallaxMapping,
+    BasicColor,
     // postProcess
     Monochromatic,
     Inversion,
