@@ -18,7 +18,7 @@ public:
 
 private:
     void Update(float dt);
-    void Render();
+    void Render(float dt);
 
     Graphics* m_graphics = nullptr;
     Renderer* m_renderer = nullptr;

@@ -1,4 +1,4 @@
-// scene0.h:‚»‚ê‚¼‚ê‚ÌƒV[ƒ“”Ô†‚Æ“à—e‚Ìà–¾‚ğ•\¦‚·‚éƒV[ƒ“
+ï»¿// scene0.h:ãã‚Œãã‚Œã®ã‚·ãƒ¼ãƒ³ç•ªå·ã¨å†…å®¹ã®èª¬æ˜ã‚’è¡¨ç¤ºã™ã‚‹ã‚·ãƒ¼ãƒ³
 #pragma once
 #include "IScene.h"
 #include"gameObject.h"
@@ -23,15 +23,16 @@ public:
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
 
-    // TextRenderer‚Ì“®ìŠm”F—p‚Ì‰¼À‘•BScene0(Title)‚ª‚Å‚«‚½‚çíœ‚µ‚Ä‚æ‚¢B
-    void SubmitUI(TextRenderer* textRenderer) override {
-
-        //Œ»İ‚Ìscene‚ğ•\¦‚·‚é
+    // TextRendererã®å‹•ä½œç¢ºèªç”¨ã®ä»®å®Ÿè£…ã€‚Scene0(Title)ãŒã§ããŸã‚‰å‰Šé™¤ã—ã¦ã‚ˆã„ã€‚
+    void SubmitUI(TextRenderer* textRenderer,float dt) override {
+        //ãƒˆãƒ¼ã‚¿ãƒ«æ™‚é–“ã®æ›´æ–°
+        m_uiTime += dt;
+        //ç¾åœ¨ã®sceneã‚’è¡¨ç¤ºã™ã‚‹
         displayCurrentScene(textRenderer);
-        //Œ»İscene‚Å‚Ì‘€ìà–¾‚ğ•\¦‚·‚é
-        displayHowToUse(textRenderer);
+        //ç¾åœ¨sceneã§ã®æ“ä½œèª¬æ˜ã‚’è¡¨ç¤ºã™ã‚‹
+        displayHowToUse(textRenderer,dt);
 
-        //–{•ª
+        //æœ¬åˆ†
         std::vector<int> posYArray(9);
 		int topY = 20;
 		int lineSpace = 60;
@@ -56,11 +57,14 @@ public:
         textRenderer->DrawString(L"Scene0/8",posX,posY);//1000,20
     }
 
-    void displayHowToUse(TextRenderer* textRenderer) {
+    void displayHowToUse(TextRenderer* textRenderer,float dt) {
         int posX = UILayoutCommon::howToUsePositionX;
         int posY = UILayoutCommon::howToUsePositionY;
         int spaceY= UILayoutCommon::howToUseSpaceY;
-        textRenderer->DrawString(L"Jump to Scene:Press Number Key",posX,posY);//20
+        float speed = 3.0f;
+        float alpha=(sinf(m_uiTime * speed) + 2.0f)*0.5f;
+        textRenderer->DrawString(L"Jump to Scene:Press Number Key", posX, posY,
+            1.0f,1.0f,1.0f,alpha);
     }
 
 private:
@@ -68,4 +72,7 @@ private:
         m_objects.push_back(std::move(obj));
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
+
+    //å›ºæœ‰
+    float m_uiTime=0.0f;
 };

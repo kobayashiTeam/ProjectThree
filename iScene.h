@@ -16,7 +16,7 @@ public:
 
     // UIテキストの描画。3D描画（Submit→Renderer::Execute）がすべて終わった後、
     // バックバッファに直接重ね描きする。使わないシーンは実装不要（デフォルトで何もしない）
-    virtual void SubmitUI(TextRenderer* textRenderer) {}
+    virtual void SubmitUI(TextRenderer* textRenderer,float dt) {}
 
     // 「次はこのシーンへ」という遷移要求。無ければnullptrのまま
     virtual IScene* CheckTransition() { return nullptr; }

@@ -54,7 +54,7 @@ void Game::Run()
         else
         {
             Update(0.016f);
-            Render();
+            Render(0.016f);
         }
     }
 }
@@ -80,7 +80,7 @@ void Game::Update(float dt)
     }
 }
 
-void Game::Render()
+void Game::Render(float dt)
 {
     m_renderer->BeginFrame(m_camera, 0.1f, 0.12f, 0.15f, 1.0f);
     m_currentScene->Submit(m_renderer);
@@ -88,7 +88,7 @@ void Game::Render()
 
     // UIテキストは3D描画がすべて終わった後、バックバッファに直接重ね描きする
     m_textRenderer->Begin();
-    m_currentScene->SubmitUI(m_textRenderer);
+    m_currentScene->SubmitUI(m_textRenderer,dt);
     m_textRenderer->End();
 
     m_renderer->EndFrame();

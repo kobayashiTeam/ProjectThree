@@ -23,7 +23,7 @@ public:
     }
 
     // TextRendererの動作確認用の仮実装。Scene0(Title)ができたら削除してよい。
-    void SubmitUI(TextRenderer* textRenderer) override {
+    void SubmitUI(TextRenderer* textRenderer,float dt) override {
         textRenderer->DrawString(L"TestScene - TextRenderer OK", 20.0f, 20.0f);
     }
 
