@@ -10,6 +10,7 @@
 #include"textRenderer.h"
 #include"input.h"
 #include"scene1.h"
+#include"scene2.h"
 #include"scene3.h"
 
 class GameObject;
@@ -23,6 +24,9 @@ public:
         //test:input加入
         if (Input::IsKeyPressed('1')) {
             m_nextScene = new Scene1();
+        }
+        if (Input::IsKeyPressed('2')) {
+            m_nextScene = new Scene2();
         }
         //Scene2（テクスチャ＋ガンマ）はまだ未実装のため、先にScene3へ
         if (Input::IsKeyPressed('3')) {

@@ -5,7 +5,8 @@
 cbuffer PostProcessConfig : register(b5)
 {
     float g_Exposure; // 露出値（基本は 1.0。大きくすると画面が明るくなり、小さくすると暗くなる）
-    float3 g_Padding; // 16バイトアライメントのためのパディング
+    float g_GammaCorrection; // Scene2用：1.0=ON（ガンマ補正あり）、0.0=OFF（補正なし・リニアのまま出力）
+    float2 g_Padding; // 16バイトアライメントのためのパディング
 };
 
 struct VS_INPUT
@@ -48,8 +49,11 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     // float3 sdrColor = hdrColor / (hdrColor + float3(1.0, 1.0, 1.0));
 
     // 3. ガンマ補正（モニター表示用の適切な色空間へ変換）
-    // 元のコードの 1.0 / 2.2 をそのまま生かしています
-    sdrColor = pow(sdrColor, float3(1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2));
+    // Scene2用：g_GammaCorrectionがOFFのときはあえて補正をかけず、リニアのまま出力する
+    if (g_GammaCorrection > 0.5)
+    {
+        sdrColor = pow(sdrColor, float3(1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2));
+    }
     
     // アルファ値はそのまま通す（通常は 1.0）
     return float4(sdrColor, color.a);

@@ -312,6 +312,9 @@
     <ClCompile Include="Shaders\GBufferDebugDepthBlit.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </ClCompile>
+    <ClCompile Include="scene2.cpp">
+      <Filter>ソース ファイル\scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -501,6 +504,9 @@
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
     <ClInclude Include="scene3.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="scene2.h">
       <Filter>ヘッダー ファイル\scene</Filter>
     </ClInclude>
   </ItemGroup>

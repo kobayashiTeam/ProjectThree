@@ -125,7 +125,8 @@ struct ShadowCubeCB//b4CBに送る内容。内容が一個（view*Proj行列）しかないのでむき
 //ポストプロセス用のcb
 struct PostProcessConstantBuffer {
     float exposure = 1.0f;
-    float padding[3] = { 0.0f, 0.0f, 0.0f }; // 16バイトアライメント
+    float gammaCorrection = 1.0f; // Scene2用：1.0=ON（補正あり）、0.0=OFF（補正なし）
+    float padding[2] = { 0.0f, 0.0f }; // 16バイトアライメント
 };
 
 // SSAOパラメータ用構造体 (16バイトアライメントを保証)

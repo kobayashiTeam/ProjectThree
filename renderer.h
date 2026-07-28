@@ -71,6 +71,8 @@ public:
     //ポストプロセスバッファ
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
+    // Scene2用：ガンマ補正のON/OFF切り替え（ScreenBlitパスのpow(1/2.2)を分岐）
+    void SetGammaCorrection(bool isOn) { m_postProcessData.gammaCorrection = isOn ? 1.0f : 0.0f; }
 
     // 【追加】Scene3用：Gバッファのデバッグ表示モード切り替え（案A）
     void SetDebugView(GBufferDebugView view) { m_debugView = view; }

@@ -179,6 +179,7 @@ bool Renderer::Initialize(Graphics* graphics)
         
         //内容を初期設定
     SetExposure(0.5f);
+    SetGammaCorrection(true); // Scene2用：デフォルトはON
 
 	//DeferredLightingPassの初期化
 	m_deferredLightingPass = new DeferredLightingPass();
@@ -526,9 +527,9 @@ void Renderer::UpdatePostProcessConstantBuffer()
 
     PostProcessConstantBuffer postParams;
     postParams.exposure = m_postProcessData.exposure;
+    postParams.gammaCorrection = m_postProcessData.gammaCorrection;
     postParams.padding[0] = 0.0f;
     postParams.padding[1] = 0.0f;
-    postParams.padding[2] = 0.0f;
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};
     HRESULT hr = pContext->Map(m_pPostProcessCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);

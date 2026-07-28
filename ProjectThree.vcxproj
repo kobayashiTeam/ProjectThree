@@ -185,6 +185,7 @@
     <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="scene0.cpp" />
     <ClCompile Include="scene1.cpp" />
+    <ClCompile Include="scene2.cpp" />
     <ClCompile Include="scene3.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="shadowCubeMap.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="resourceManager.h" />
     <ClInclude Include="scene0.h" />
     <ClInclude Include="scene1.h" />
+    <ClInclude Include="scene2.h" />
     <ClInclude Include="scene3.h" />
     <ClInclude Include="testScene.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
