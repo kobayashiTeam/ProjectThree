@@ -311,10 +311,10 @@ void Renderer::Execute()
     m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
 
     // ==========================================
-   // 【新設】Scene3：Gバッファのデバッグ表示（案A）
-   // この時点でG-Buffer（Albedo/Normal/Depth）は埋まっているので、
-   // Lit以外のモードならSSAO/Lighting/ポストプロセスを全部飛ばして直接ブリットする
-   // ==========================================
+    // 【新設】Scene3：Gバッファのデバッグ表示（案A）
+    // この時点でG-Buffer（Albedo/Normal/Depth）は埋まっているので、
+    // Lit以外のモードならSSAO/Lighting/ポストプロセスを全部飛ばして直接ブリットする
+    // ==========================================
     if (m_debugView != GBufferDebugView::Lit)
     {
         ID3D11ShaderResourceView* debugSRV = nullptr;
@@ -328,7 +328,19 @@ void Renderer::Execute()
 
         m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
         m_blendStates->Bind(pContext, BlendMode::Opaque);
-        m_gBufferDebugBlit->Render(pContext, debugSRV);
+
+        // Depthだけは生の非線形値だと真っ赤に潰れて見えなくなるため、専用の線形化シェーダーを直接使う
+        if (m_debugView == GBufferDebugView::Depth)
+        {
+            ShaderManager::GetInstance().GetShader(ShaderID::GBufferDebugDepth)->Bind(pContext);
+            pContext->PSSetShaderResources(0, 1, &debugSRV);
+            ID3D11SamplerState* depthSampler = m_gBufferPass->GetDepthSampler();
+            pContext->PSSetSamplers(0, 1, &depthSampler);
+        }
+        else
+        {
+            m_gBufferDebugBlit->Render(pContext, debugSRV);
+        }
         m_finalRenderMesh->Render(pContext);
         return; // 通常のSSAO/Lighting/ポストプロセスチェーンはスキップ
     }

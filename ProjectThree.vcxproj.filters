@@ -309,6 +309,9 @@
     <ClCompile Include="scene3.cpp">
       <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders\GBufferDebugDepthBlit.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">

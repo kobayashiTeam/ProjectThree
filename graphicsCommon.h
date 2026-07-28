@@ -78,7 +78,8 @@ enum class ShaderID {
 	SSAO,
     SSAOBlur,
     //Scene3デバッグ表示用（Gバッファをそのままブリット）
-    GBufferDebug
+    GBufferDebug,
+    GBufferDebugDepth //Depth専用：線形化＋グレースケール化
 };
 
 //ライト関連

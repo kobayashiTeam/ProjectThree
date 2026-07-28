@@ -63,6 +63,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SSAOBlur, L"Shaders/SSAOBlurShader.hlsl")) return false;
         //Scene3デバッグ表示
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebug, L"Shaders/GBufferDebugBlit.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::GBufferDebugDepth, L"Shaders/GBufferDebugDepthBlit.hlsl")) return false;
         return true;
     }
 
@@ -206,6 +207,10 @@ private:
 			layoutCount = 2;
 			break;
         case ShaderID::GBufferDebug:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
+        case ShaderID::GBufferDebugDepth:
             layout = screenBlitLayout;
             layoutCount = 2;
             break;
