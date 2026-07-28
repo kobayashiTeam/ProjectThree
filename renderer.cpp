@@ -9,6 +9,7 @@
 #include <DirectXMath.h>
 #include"mesh.h"
 #include"screenBlitPostProcess.h"
+#include"gBufferDebugBlit.h"
 #include"shaderManager.h"
 #include"monochromePostProcess.h"
 #include"inversionPostProcess.h"
@@ -108,6 +109,11 @@ bool Renderer::Initialize(Graphics* graphics)
     m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
     m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
+
+    //新規：Scene3のGバッファデバッグ表示用
+    m_gBufferDebugBlit = new GBufferDebugBlit();
+    m_gBufferDebugBlit->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::GBufferDebug));
  
 
    //正式にクラス化したPostProcessChainの生成、初期化
@@ -303,6 +309,29 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
 
     m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
+
+    // ==========================================
+   // 【新設】Scene3：Gバッファのデバッグ表示（案A）
+   // この時点でG-Buffer（Albedo/Normal/Depth）は埋まっているので、
+   // Lit以外のモードならSSAO/Lighting/ポストプロセスを全部飛ばして直接ブリットする
+   // ==========================================
+    if (m_debugView != GBufferDebugView::Lit)
+    {
+        ID3D11ShaderResourceView* debugSRV = nullptr;
+        switch (m_debugView)
+        {
+        case GBufferDebugView::Albedo: debugSRV = m_gBufferPass->GetAlbedoSRV(); break;
+        case GBufferDebugView::Normal: debugSRV = m_gBufferPass->GetNormalSRV(); break;
+        case GBufferDebugView::Depth:  debugSRV = m_gBufferPass->GetDepthSRV();  break;
+        default: break;
+        }
+
+        m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
+        m_blendStates->Bind(pContext, BlendMode::Opaque);
+        m_gBufferDebugBlit->Render(pContext, debugSRV);
+        m_finalRenderMesh->Render(pContext);
+        return; // 通常のSSAO/Lighting/ポストプロセスチェーンはスキップ
+    }
 
 
     // ==========================================

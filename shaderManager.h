@@ -61,6 +61,8 @@ public:
         //SSAO
         if (!GetOrCreate(pDevice, ShaderID::SSAO, L"Shaders/SSAOShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::SSAOBlur, L"Shaders/SSAOBlurShader.hlsl")) return false;
+        //Scene3デバッグ表示
+        if (!GetOrCreate(pDevice, ShaderID::GBufferDebug, L"Shaders/GBufferDebugBlit.hlsl")) return false;
         return true;
     }
 
@@ -203,6 +205,10 @@ private:
 			layout = screenBlitLayout;
 			layoutCount = 2;
 			break;
+        case ShaderID::GBufferDebug:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
         case ShaderID::BasicColor:
             layout = standardLayout;
             layoutCount = 4;

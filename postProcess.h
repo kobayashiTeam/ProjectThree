@@ -48,6 +48,17 @@ public:
         pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
     }
 
+    // 【追加】Scene3のGバッファデバッグ表示用：RenderTargetを介さず、生のSRVを直接渡せる版
+    // （GBufferPassはRenderTarget*ではなくSRVのgetterしか公開していないため）
+    virtual void Render(ID3D11DeviceContext* pContext, ID3D11ShaderResourceView* sourceSRV) {
+        if (!pContext || !sourceSRV) return;
+
+        if (m_pShader) m_pShader->Bind(pContext);
+
+        pContext->PSSetShaderResources(0, 1, &sourceSRV);
+        pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
+    }
+
     virtual void Cleanup() {
         m_pShader = nullptr; // 管理権はシェーダーマネージャーにあるため参照を切るだけ
         if (m_pSamplerLinear) { m_pSamplerLinear->Release(); m_pSamplerLinear = nullptr; }

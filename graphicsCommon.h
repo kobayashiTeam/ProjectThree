@@ -30,6 +30,14 @@ enum class RenderPass {
     Count
 };
 
+// Scene3：Gバッファのどれを最終出力するか（案A：Rendererが状態を持つ）
+enum class GBufferDebugView {
+    Lit,     // 通常通り、Lighting済みの最終結果
+    Albedo,
+    Normal,
+    Depth
+};
+
 enum class ShaderID {
     Lit,
     LitInstancing,
@@ -68,7 +76,9 @@ enum class ShaderID {
     DeferredLighting,
     //SSAO
 	SSAO,
-    SSAOBlur
+    SSAOBlur,
+    //Scene3デバッグ表示用（Gバッファをそのままブリット）
+    GBufferDebug
 };
 
 //ライト関連

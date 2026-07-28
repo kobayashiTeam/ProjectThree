@@ -39,6 +39,7 @@ class BloomCombinePostProcess;
 class PostProcessChain;
 class BloomBlurPass;;
 class GBufferPass;
+class GBufferDebugBlit;
 class SSAOPass;
 class ShadowSystem;
 class DeferredLightingPass;
@@ -70,6 +71,9 @@ public:
     //ポストプロセスバッファ
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
+
+    // 【追加】Scene3用：Gバッファのデバッグ表示モード切り替え（案A）
+    void SetDebugView(GBufferDebugView view) { m_debugView = view; }
 
 
 private:
@@ -140,5 +144,9 @@ private:
 	SSAOPass* m_ssaoPass = nullptr;
 	//新規：ShadowSystem
 	ShadowSystem* m_shadowSystem = nullptr;
+
+    //新規：Scene3のGバッファデバッグ表示（案A）
+    GBufferDebugView m_debugView = GBufferDebugView::Lit;
+    GBufferDebugBlit* m_gBufferDebugBlit = nullptr;
 
 };
