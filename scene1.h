@@ -27,7 +27,7 @@ public:
 
     // TextRendererの動作確認用の仮実装。Scene0(Title)ができたら削除してよい。
     void SubmitUI(TextRenderer* textRenderer, float dt) override {
-        textRenderer->DrawString(L"Scene1 - Basi Color", 20.0f, 20.0f);
+        textRenderer->DrawString(L"Scene1 - Basic Color", 20.0f, 20.0f);
         //トータル時間の更新
         m_uiTime += dt;
         //現在のsceneを表示する
