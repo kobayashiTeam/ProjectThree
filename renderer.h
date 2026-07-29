@@ -76,6 +76,8 @@ public:
 
     // 【追加】Scene3用：Gバッファのデバッグ表示モード切り替え（案A）
     void SetDebugView(GBufferDebugView view) { m_debugView = view; }
+    // Scene4用：DirectionalLightの向きを変更（ShadowSystemへ委譲）
+    void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir);
 
 
 private:

@@ -544,3 +544,10 @@ void Renderer::UpdatePostProcessConstantBuffer()
     pContext->PSSetConstantBuffers(5, 1, cbArray);
     pContext->GSSetConstantBuffers(5, 1, cbArray);
 }
+
+void Renderer::SetDirectionalLightDirection(DirectX::XMFLOAT3 dir)
+{
+    if (m_shadowSystem) {
+        m_shadowSystem->SetDirectionalLightDirection(dir);
+    }
+}

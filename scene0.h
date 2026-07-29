@@ -12,6 +12,7 @@
 #include"scene1.h"
 #include"scene2.h"
 #include"scene3.h"
+#include"scene4.h"
 
 class GameObject;
 
@@ -28,9 +29,11 @@ public:
         if (Input::IsKeyPressed('2')) {
             m_nextScene = new Scene2();
         }
-        //Scene2（テクスチャ＋ガンマ）はまだ未実装のため、先にScene3へ
         if (Input::IsKeyPressed('3')) {
             m_nextScene = new Scene3();
+        }
+        if (Input::IsKeyPressed('4')) {
+            m_nextScene = new Scene4();
         }
     }
 

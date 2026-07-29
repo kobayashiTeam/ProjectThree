@@ -16,7 +16,7 @@ bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
     dirLight.position = { -3.0f, 5.0f, -10.0f };
     dirLight.direction = { 3.0f, -1.0f, 1.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.80f;
+    dirLight.intensity = 0.80f;//0.8
     m_directionalLights.reserve(MAX_LIGHTS);   // ★ポインタ安全性のため必須
     m_directionalLights.push_back(dirLight);
 

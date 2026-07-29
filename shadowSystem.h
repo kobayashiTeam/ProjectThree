@@ -53,6 +53,14 @@ public:
     void SubmitShadowPass(RenderQueue& opaqueQueue) {
         opaqueQueue.SetOverrideVS(m_shadowShader);
     }
+    //test
+    // Scene4用：DirectionalLightの向きを外部から書き換える（既存要素のin-place更新、
+    // 配列の再確保はしない）
+    void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir) {
+        if (!m_directionalLights.empty()) {
+            m_directionalLights[0].direction = dir;
+        }
+    }
 
 private:
     std::vector<DirectionalLight> m_directionalLights;
