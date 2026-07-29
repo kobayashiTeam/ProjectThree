@@ -71,6 +71,10 @@ public:
     //ポストプロセスバッファ
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
+    float GetExposure() const { return m_postProcessData.exposure; }
+    // Scene6用：Bloom（BloomCombinePostProcess）のON/OFF切り替え
+    void SetBloomActive(bool isOn);
+    bool IsBloomActive() const;
     // Scene2用：ガンマ補正のON/OFF切り替え（ScreenBlitパスのpow(1/2.2)を分岐）
     void SetGammaCorrection(bool isOn) { m_postProcessData.gammaCorrection = isOn ? 1.0f : 0.0f; }
 

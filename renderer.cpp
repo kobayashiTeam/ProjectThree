@@ -565,3 +565,15 @@ void Renderer::SetLightVisibilityMode(LightVisibilityMode mode)
         m_shadowSystem->SetLightVisibilityMode(mode);
     }
 }
+
+void Renderer::SetBloomActive(bool isOn)
+{
+    if (m_finalRenderBloomCombinePostProcess) {
+        m_finalRenderBloomCombinePostProcess->SetActive(isOn);
+    }
+}
+
+bool Renderer::IsBloomActive() const
+{
+    return m_finalRenderBloomCombinePostProcess ? m_finalRenderBloomCombinePostProcess->IsActive() : false;
+}
