@@ -551,3 +551,17 @@ void Renderer::SetDirectionalLightDirection(DirectX::XMFLOAT3 dir)
         m_shadowSystem->SetDirectionalLightDirection(dir);
     }
 }
+
+void Renderer::SetPointLightPosition(DirectX::XMFLOAT3 pos)
+{
+    if (m_shadowSystem) {
+        m_shadowSystem->SetPointLightPosition(pos);
+    }
+}
+
+void Renderer::SetLightVisibilityMode(LightVisibilityMode mode)
+{
+    if (m_shadowSystem) {
+        m_shadowSystem->SetLightVisibilityMode(mode);
+    }
+}

@@ -25,6 +25,9 @@ public:
             int next = (static_cast<int>(m_debugView) + 1) % 4;
             m_debugView = static_cast<GBufferDebugView>(next);
         }
+
+        // 全シーン共通のシーン番号キー判定
+        CheckSceneNumberKeys();
     }
 
     void Submit(Renderer* renderer) override {
@@ -37,6 +40,15 @@ public:
         textRenderer->DrawString(L"Scene3 - Deferred Rendering", 20.0f, 20.0f);
         textRenderer->DrawString(GetModeLabel(), 20.0f, 80.0f);
         textRenderer->DrawString(L"Tab : Switch View (Lit / Albedo / Normal / Depth)", 20.0f, 140.0f);
+    
+        //トータル時間の更新
+        m_uiTime += dt;
+        //現在のsceneを表示する
+        displayCurrentScene(textRenderer, 3);
+        //現在sceneでの操作説明を表示する
+        displayHowToUse(textRenderer, dt);
+        //test
+        DrawSceneNavigationHint(textRenderer);
     }
 
 private:

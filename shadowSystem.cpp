@@ -80,38 +80,46 @@ bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
 }
 
 
-void ShadowSystem:: UpdateLightDataConstantBuffer(ID3D11DeviceContext* ctx) {
+void ShadowSystem::UpdateLightDataConstantBuffer(ID3D11DeviceContext* ctx) {
 
     LightBufferCB cb = {};
 
-    // Directional
-    for (int i = 0; i < (int)m_directionalLights.size() && cb.lightCount < MAX_LIGHTS; i++)
+    // Directional（DirectionalOnly / Both のときだけ詰める）
+    if (m_lightVisibilityMode == LightVisibilityMode::DirectionalOnly ||
+        m_lightVisibilityMode == LightVisibilityMode::Both)
     {
-        const DirectionalLight& L = m_directionalLights[i];
-        auto& dst = cb.lights[cb.lightCount];
-        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
-        dst.direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
-        dst.color = L.color;
-        dst.intensity = L.intensity;
-        dst.type = (int)LightType::Directional;
-        dst.farPlane = 0.0f;  // 未使用
-        DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
-        dst.lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
-        cb.lightCount++;
+        for (int i = 0; i < (int)m_directionalLights.size() && cb.lightCount < MAX_LIGHTS; i++)
+        {
+            const DirectionalLight& L = m_directionalLights[i];
+            auto& dst = cb.lights[cb.lightCount];
+            dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
+            dst.direction = { L.direction.x, L.direction.y, L.direction.z, 0.0f };
+            dst.color = L.color;
+            dst.intensity = L.intensity;
+            dst.type = (int)LightType::Directional;
+            dst.farPlane = 0.0f;  // 未使用
+            DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
+            dst.lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
+            cb.lightCount++;
+        }
     }
 
-    // Pointを続けて詰める
-    for (int i = 0; i < (int)m_pointLights.size() && cb.lightCount < MAX_LIGHTS; i++)
+    // Point（PointOnly / Both のときだけ詰める）
+    if (m_lightVisibilityMode == LightVisibilityMode::PointOnly ||
+        m_lightVisibilityMode == LightVisibilityMode::Both)
     {
-        const PointLight& L = m_pointLights[i];
-        auto& dst = cb.lights[cb.lightCount];
-        dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
-        dst.color = L.color;
-        dst.intensity = L.intensity;
-        dst.type = (int)LightType::Point;
-        dst.farPlane = L.farPlane;
-        // lightSpaceMatrixは未使用なのでゼロのまま
-        cb.lightCount++;
+        for (int i = 0; i < (int)m_pointLights.size() && cb.lightCount < MAX_LIGHTS; i++)
+        {
+            const PointLight& L = m_pointLights[i];
+            auto& dst = cb.lights[cb.lightCount];
+            dst.position = { L.position.x, L.position.y, L.position.z, 0.0f };
+            dst.color = L.color;
+            dst.intensity = L.intensity;
+            dst.type = (int)LightType::Point;
+            dst.farPlane = L.farPlane;
+            // lightSpaceMatrixは未使用なのでゼロのまま
+            cb.lightCount++;
+        }
     }
 
     ctx->UpdateSubresource(m_lightCB.Get(), 0, nullptr, &cb, 0, 0);

@@ -31,6 +31,9 @@ public:
         if (m_dirX < -1.0f) m_dirX = -1.0f;
         if (m_dirY > 1.0f) m_dirY = 1.0f;
         if (m_dirY < -1.0f) m_dirY = -1.0f;
+
+        // 全シーン共通のシーン番号キー判定
+        CheckSceneNumberKeys();
     }
 
     void Submit(Renderer* renderer) override {
@@ -53,6 +56,15 @@ public:
         wchar_t buf[64];
         swprintf_s(buf, L"Light Dir : (%.2f, %.2f)", m_dirX, m_dirY);
         textRenderer->DrawString(buf, 20.0f, 140.0f);
+
+        //トータル時間の更新
+        m_uiTime += dt;
+        //現在のsceneを表示する
+        displayCurrentScene(textRenderer, 4);
+        //現在sceneでの操作説明を表示する
+        displayHowToUse(textRenderer, dt);
+        //test
+        DrawSceneNavigationHint(textRenderer);
     }
 
 private:

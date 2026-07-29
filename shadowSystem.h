@@ -61,10 +61,22 @@ public:
             m_directionalLights[0].direction = dir;
         }
     }
+    // Scene5用：PointLightの位置を書き換える（既存要素をin-place更新、再確保はしない）
+    void SetPointLightPosition(DirectX::XMFLOAT3 pos) {
+        if (!m_pointLights.empty()) {
+            m_pointLights[0].position = pos;
+        }
+    }
+
+    // Scene5用：Directional/Point/Bothの表示切り替え（UpdateLightDataConstantBuffer内で分岐に使用）
+    void SetLightVisibilityMode(LightVisibilityMode mode) {
+        m_lightVisibilityMode = mode;
+    }
 
 private:
     std::vector<DirectionalLight> m_directionalLights;
     std::vector<PointLight> m_pointLights;
+    LightVisibilityMode m_lightVisibilityMode = LightVisibilityMode::Both;
     std::vector<ShadowMap> m_shadowMaps;
     std::vector<ShadowCubeMap> m_shadowCubeMaps;
 

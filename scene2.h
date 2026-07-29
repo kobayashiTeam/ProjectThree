@@ -24,6 +24,9 @@ public:
         if (Input::IsKeyPressed(VK_TAB)) {
             m_gammaOn = !m_gammaOn;
         }
+
+        // 全シーン共通のシーン番号キー判定
+        CheckSceneNumberKeys();
     }
 
     void Submit(Renderer* renderer) override {
@@ -38,6 +41,15 @@ public:
             m_gammaOn ? L"Gamma Correction : ON" : L"Gamma Correction : OFF",
             20.0f, 80.0f);
         textRenderer->DrawString(L"Tab : Toggle Gamma Correction", 20.0f, 140.0f);
+
+        //トータル時間の更新
+        m_uiTime += dt;
+        //現在のsceneを表示する
+        displayCurrentScene(textRenderer,2);
+        //現在sceneでの操作説明を表示する
+        displayHowToUse(textRenderer, dt);
+        //test
+        DrawSceneNavigationHint(textRenderer);
     }
 
 private:

@@ -4,6 +4,6 @@ namespace UILayoutCommon {
 	constexpr int currentScenePositionY = 20;
 
 	constexpr int howToUsePositionX = 650;
-	constexpr int howToUsePositionY = 600;
+	constexpr int howToUsePositionY = 580;
 	constexpr int howToUseSpaceY = 30;
 }

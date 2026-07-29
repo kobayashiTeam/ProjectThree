@@ -151,6 +151,7 @@
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="instancedModel.cpp" />
+    <ClCompile Include="iScene.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="litMaterial.cpp" />
     <ClCompile Include="main.cpp">
@@ -188,6 +189,7 @@
     <ClCompile Include="scene2.cpp" />
     <ClCompile Include="scene3.cpp" />
     <ClCompile Include="scene4.cpp" />
+    <ClCompile Include="scene5.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="shadowCubeMap.cpp" />
     <ClCompile Include="shadowMap.cpp" />
@@ -248,6 +250,7 @@
     <ClInclude Include="scene2.h" />
     <ClInclude Include="scene3.h" />
     <ClInclude Include="scene4.h" />
+    <ClInclude Include="scene5.h" />
     <ClInclude Include="testScene.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="sepiaPostProcess.h" />

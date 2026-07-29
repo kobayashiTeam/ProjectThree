@@ -78,6 +78,10 @@ public:
     void SetDebugView(GBufferDebugView view) { m_debugView = view; }
     // Scene4用：DirectionalLightの向きを変更（ShadowSystemへ委譲）
     void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir);
+    // Scene5用：PointLightの位置を変更（ShadowSystemへ委譲）
+    void SetPointLightPosition(DirectX::XMFLOAT3 pos);
+    // Scene5用：Directional/Point/Bothの表示切り替え（ShadowSystemへ委譲）
+    void SetLightVisibilityMode(LightVisibilityMode mode);
 
 
 private:

@@ -13,6 +13,7 @@
 #include"scene2.h"
 #include"scene3.h"
 #include"scene4.h"
+#include"scene5.h"
 
 class GameObject;
 
@@ -22,19 +23,8 @@ public:
 
     void Update(float dt) override {
         for (auto& obj : m_objects) obj->Update(dt);
-        //test:input加入
-        if (Input::IsKeyPressed('1')) {
-            m_nextScene = new Scene1();
-        }
-        if (Input::IsKeyPressed('2')) {
-            m_nextScene = new Scene2();
-        }
-        if (Input::IsKeyPressed('3')) {
-            m_nextScene = new Scene3();
-        }
-        if (Input::IsKeyPressed('4')) {
-            m_nextScene = new Scene4();
-        }
+        // 全シーン共通のシーン番号キー判定（IScene::CheckSceneNumberKeys）に一本化
+        CheckSceneNumberKeys();
     }
 
     void Submit(Renderer* renderer) override {

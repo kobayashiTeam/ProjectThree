@@ -38,6 +38,13 @@ enum class GBufferDebugView {
     Depth
 };
 
+// Scene5：シャドウマッピングでどちらの光源をライティングに反映するか（案A：ShadowSystemが状態を持つ）
+enum class LightVisibilityMode {
+    DirectionalOnly,
+    PointOnly,
+    Both
+};
+
 enum class ShaderID {
     Lit,
     LitInstancing,
