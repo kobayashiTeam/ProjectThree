@@ -158,7 +158,7 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //instancedModel:ここでmeshをつくる
     m_pInstancedModel = new InstancedModel();
-    if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 27))return false;
+    if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 512))return false;
     
 
     //新規:ShadowSystem生成初期化
@@ -376,7 +376,8 @@ void Renderer::Execute()
     //m_pPointSpriteGSEffect->Draw(pContext);
 
     // ─── 【新設】InstancedModelの描画 ───
-    //m_pInstancedModel->Render(pContext);
+    // Scene7以外はSetInstanceCountが呼ばれないためm_instanceDataが空のまま→Render内で早期returnされ無害
+    m_pInstancedModel->Render(pContext);
 
     // ─── 【ここ！！】スカイボックスの描画 ───
     // ─── 【新設】スカイボックスの描画 ───
@@ -563,6 +564,13 @@ void Renderer::SetLightVisibilityMode(LightVisibilityMode mode)
 {
     if (m_shadowSystem) {
         m_shadowSystem->SetLightVisibilityMode(mode);
+    }
+}
+
+void Renderer::SetInstanceCount(UINT count)
+{
+    if (m_pInstancedModel) {
+        m_pInstancedModel->SetActiveCount(count);
     }
 }
 

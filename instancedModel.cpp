@@ -1,6 +1,7 @@
 #include"instancedModel.h"
 #include"material.h"
 #include"mesh.h"
+#include<cmath>
 
 void InstancedModel::Render(ID3D11DeviceContext* pContext) {
 
@@ -150,45 +151,34 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
     SetMaterialColor(1,1,1,1);
 
 
-    //test:行列リソースをここで作っておく
-    std::vector<InstanceData> instances;
-    const int N = 3;
+    // Scene7用：maxInstances分の座標を最初に1回だけ計算してテーブル化しておく
+    // （オブジェクトプールと同じ発想：資源は先に確保、使う数だけ後から選ぶ）
+    // 一辺の長さは maxInstances に収まる最小の立方体サイズ（512なら8×8×8）
+    const int side = static_cast<int>(std::ceil(std::cbrt(static_cast<double>(m_maxInstances))));
     const float spacing = 2.5f;
-    for (int z = 0; z < N; ++z)
-        for (int y = 0; y < N; ++y)
-            for (int x = 0; x < N; ++x)
+
+    m_positionTable.reserve(m_maxInstances);
+    for (int z = 0; z < side && m_positionTable.size() < m_maxInstances; ++z)
+        for (int y = 0; y < side && m_positionTable.size() < m_maxInstances; ++y)
+            for (int x = 0; x < side && m_positionTable.size() < m_maxInstances; ++x)
             {
-                float px = (x - N / 2) * spacing;
-                float py = (y - N / 2) * spacing;
-                float pz = (z - N / 2) * spacing;
+                float px = (x - side / 2) * spacing;
+                float py = (y - side / 2) * spacing;
+                float pz = (z - side / 2) * spacing;
 
-                // インスタンスごとに位相をずらして回転
-                //float phase = (x + y * N + z * N * N) * 0.3f;
-                //DirectX::XMMATRIX rot = XMMatrixRotationY(time + phase);
                 DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(px, py, pz);
-
-                // ★ XMMatrixMultiply は「左から右に適用」
-                //   rot * trans = ローカル回転してからワールド平行移動
-                //DirectX::XMMATRIX world = XMMatrixMultiply(rot, trans);
-
-                // ★ シェーダへ送る前に転置が必要か？
-                //   HLSLのmul(vec,mat)は「行ベクトル × 行列」なので、
-                //   XMMatrixを「そのまま行ごとにfloat4x4に書き出す」だけでOK。
-                //   （XMStoreFloat4x4 → row0=_11~_14 の順で格納）
-                m_instanceData.push_back(MatrixToInstanceData(world));
+                m_positionTable.push_back(MatrixToInstanceData(world));
             }
-    /*DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(5.5f, 0.5f, 10.5f);
-    InstanceData changedWorld = MatrixToInstanceData(world);
-    AddInstance(MatrixToInstanceData(world));*/
-    UINT count = (UINT)instances.size();
-        //c++でつくったデータを送る
-    D3D11_MAPPED_SUBRESOURCE mapped = {};
-    if (SUCCEEDED(pContext->Map(m_pInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
-    {
-        memcpy(mapped.pData, m_instanceData.data(), sizeof(InstanceData)*count);
-        pContext->Unmap(m_pInstanceBuffer, 0);
-    }
 
-
+    // m_instanceDataは空のまま開始（他のシーンで無関係なcubeが映り込まないように）
+    // 実際に何個表示するかはScene7側からSetActiveCount()で指定する
     return true;
+}
+
+void InstancedModel::SetActiveCount(UINT count) {
+    if (count > m_maxInstances) count = m_maxInstances;
+
+    m_instanceData.clear();
+    m_instanceData.insert(m_instanceData.end(),
+        m_positionTable.begin(), m_positionTable.begin() + count);
 }

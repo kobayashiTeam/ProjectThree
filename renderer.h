@@ -86,6 +86,8 @@ public:
     void SetPointLightPosition(DirectX::XMFLOAT3 pos);
     // Scene5用：Directional/Point/Bothの表示切り替え（ShadowSystemへ委譲）
     void SetLightVisibilityMode(LightVisibilityMode mode);
+    // Scene7用：GPUインスタンシングの表示個数を変更（InstancedModelへ委譲）
+    void SetInstanceCount(UINT count);
 
 
 private:

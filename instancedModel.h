@@ -26,6 +26,8 @@ private:
     Mesh* m_pMesh = nullptr;
     //Material* m_pInstMaterial = nullptr;
     std::vector<InstanceData> m_instanceData;
+    // Scene7用：maxInstances分の座標を最初に1回だけ計算しておくテーブル（オブジェクトプール的発想）
+    std::vector<InstanceData> m_positionTable;
 
     ID3D11Buffer* m_pInstanceBuffer = nullptr;
     UINT m_maxInstances = 0;
@@ -55,6 +57,9 @@ public:
     void ClearInstances() {
         m_instanceData.clear();
     }
+
+    // Scene7用：座標テーブルの先頭からcount個だけを有効化する（テーブル自体は再計算しない）
+    void SetActiveCount(UINT count);
 
     // ★追加メソッド②：インスタンスを1個追加する
     void AddInstance(const InstanceData& data) {

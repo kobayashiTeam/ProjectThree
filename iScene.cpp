@@ -8,6 +8,7 @@
 #include "scene4.h"
 #include "scene5.h"
 #include"scene6.h"
+#include"scene7.h"
 
 void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('0')) { m_nextScene = new Scene0(); return; }
@@ -17,6 +18,7 @@ void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('4')) { m_nextScene = new Scene4(); return; }
     if (Input::IsKeyPressed('5')) { m_nextScene = new Scene5(); return; }
     if (Input::IsKeyPressed('6')) { m_nextScene = new Scene6(); return; }
+    if (Input::IsKeyPressed('7')) { m_nextScene = new Scene7(); return; }
 }
 
 void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
