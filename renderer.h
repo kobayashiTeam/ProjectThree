@@ -88,6 +88,8 @@ public:
     void SetLightVisibilityMode(LightVisibilityMode mode);
     // Scene7用：GPUインスタンシングの表示個数を変更（InstancedModelへ委譲）
     void SetInstanceCount(UINT count);
+    // Scene8用：表示個数の変更に加え、群全体をオフセット分だけ移動させる
+    void SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset);
 
 
 private:

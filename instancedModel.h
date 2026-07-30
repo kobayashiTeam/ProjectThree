@@ -61,6 +61,10 @@ public:
     // Scene7用：座標テーブルの先頭からcount個だけを有効化する（テーブル自体は再計算しない）
     void SetActiveCount(UINT count);
 
+    // Scene8用：count個を有効化しつつ、群全体を指定オフセット分だけ平行移動する
+    // （テーブル内の相対配置=spacingは変えず、群れごと任意のワールド座標へ動かす）
+    void SetActiveCount(UINT count, const DirectX::XMFLOAT3& offset);
+
     // ★追加メソッド②：インスタンスを1個追加する
     void AddInstance(const InstanceData& data) {
         if (m_instanceData.size() >= m_maxInstances) return; // 上限ガード

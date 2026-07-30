@@ -192,3 +192,18 @@ void InstancedModel::SetActiveCount(UINT count) {
     m_instanceData.insert(m_instanceData.end(),
         m_positionTable.begin(), m_positionTable.begin() + count);
 }
+
+void InstancedModel::SetActiveCount(UINT count, const DirectX::XMFLOAT3& offset) {
+    if (count > m_maxInstances) count = m_maxInstances;
+
+    m_instanceData.clear();
+    m_instanceData.insert(m_instanceData.end(),
+        m_positionTable.begin(), m_positionTable.begin() + count);
+
+    // ‰ñ“]‚ğŠÜ‚Ü‚È‚¢•½sˆÚ“®s—ñ‚Ì‚½‚ßArow3‚Ö‚Ì‰ÁZ‚¾‚¯‚ÅŒQ‘S‘Ì‚ğˆÚ“®‚Å‚«‚é
+    for (auto& inst : m_instanceData) {
+        inst.row3.x += offset.x;
+        inst.row3.y += offset.y;
+        inst.row3.z += offset.z;
+    }
+}

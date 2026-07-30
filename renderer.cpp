@@ -585,3 +585,10 @@ bool Renderer::IsBloomActive() const
 {
     return m_finalRenderBloomCombinePostProcess ? m_finalRenderBloomCombinePostProcess->IsActive() : false;
 }
+
+void Renderer::SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset)
+{
+    if (m_pInstancedModel) {
+        m_pInstancedModel->SetActiveCount(count, offset);
+    }
+}

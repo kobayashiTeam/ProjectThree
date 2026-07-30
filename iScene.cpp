@@ -9,6 +9,7 @@
 #include "scene5.h"
 #include"scene6.h"
 #include"scene7.h"
+#include"scene8.h"
 
 void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('0')) { m_nextScene = new Scene0(); return; }
@@ -19,12 +20,18 @@ void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('5')) { m_nextScene = new Scene5(); return; }
     if (Input::IsKeyPressed('6')) { m_nextScene = new Scene6(); return; }
     if (Input::IsKeyPressed('7')) { m_nextScene = new Scene7(); return; }
+    if (Input::IsKeyPressed('8')) { m_nextScene = new Scene8(); return; }
 }
 
 void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
     textRenderer->DrawString(
-        L"0:Index 1:Base 2:Texture&Gamma 3:Deferred 4:NormalMap 5:Shadow (6-8:TBD)",
-        400.0f, 640.0f,           // 画面右下寄り（1280x720基準）
+        L"0:Index 1:Base 2:Texture&Gamma 3:Deferred 4:NormalMap",
+        500.0f, 640.0f,           // 画面右下寄り（1280x720基準）
+        1.0f, 1.0f, 1.0f, 1.0f,   // 少し控えめなグレーで目立ちすぎないように
+        0.7f);                    // scale：本文より小さく表示
+    textRenderer->DrawString(
+        L"5:Shadow 6:HDR+Bloom 7:GPU Instancing 8:All",
+        500.0f, 660.0f,           // 画面右下寄り（1280x720基準）
         1.0f, 1.0f, 1.0f, 1.0f,   // 少し控えめなグレーで目立ちすぎないように
         0.7f);                    // scale：本文より小さく表示
 }
