@@ -170,6 +170,16 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
                 m_positionTable.push_back(MatrixToInstanceData(world));
             }
 
+    // 原点に近い順に並べ替え（個数が少ないうちはカメラの近くに出るように）
+    std::sort(m_positionTable.begin(), m_positionTable.end(),
+        [](const InstanceData& a, const InstanceData& b) {
+            auto distSq = [](const InstanceData& d) {
+                float x = d.row3.x, y = d.row3.y, z = d.row3.z;
+                return x * x + y * y + z * z;
+                };
+            return distSq(a) < distSq(b);
+        });
+
     // m_instanceDataは空のまま開始（他のシーンで無関係なcubeが映り込まないように）
     // 実際に何個表示するかはScene7側からSetActiveCount()で指定する
     return true;

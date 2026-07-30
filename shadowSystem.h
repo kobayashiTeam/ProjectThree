@@ -33,6 +33,7 @@ public:
     }
     void EndPointPass(ID3D11DeviceContext* ctx) {
         m_shadowCubeMaps[0].EndRender(ctx);
+        ctx->GSSetShader(nullptr, nullptr, 0);
     }
 
     // ===== Lightingパスで使うためのバインド =====
