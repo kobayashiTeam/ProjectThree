@@ -9,7 +9,7 @@ public:
     virtual ~IScene() = default;
 
     virtual bool Enter() { return true; }   // このシーンに入った瞬間の初期化
-    virtual void Exit() {}    // このシーンを抜ける瞬間の後片付け
+    virtual void Exit(Renderer* renderer) {}    // このシーンを抜ける瞬間の後片付け
 
     virtual void Update(float dt) = 0;
     virtual void Submit(Renderer* renderer) = 0;

@@ -43,6 +43,10 @@ public:
         DrawSceneNavigationHint(textRenderer);
     }
 
+    void Exit(Renderer* renderer)override {
+        renderer->SetInstanceCount(static_cast<UINT>(0));
+    }
+
 private:
     static constexpr int kMaxInstances = 512;
     // 初期値は旧テストコードと同じ3^3=27個から開始

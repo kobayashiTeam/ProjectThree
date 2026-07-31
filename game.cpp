@@ -77,7 +77,7 @@ void Game::Update(float dt)
 
     if (IScene* next = m_currentScene->CheckTransition())
     {
-        m_currentScene->Exit();
+        m_currentScene->Exit(m_renderer);
         next->SetDevice(m_graphics->GetDevice());
         next->Enter();
         m_currentScene.reset(next);
