@@ -10,37 +10,43 @@
 
 技術ポイント
 
-(1)地図2D画像を透視変換の数学的処理により疑似3D視点へ変換
+(1)遅延レンダリング（Deferred Rendering)：G-Buffer（アルベド／法線／深度）を生成し、Lighting Passで合成。GBufferの各テクスチャはデバッグ表示として個別に切り替え可能
 
-(2)ビルボード描画:カメラ角度に応じたスプライト回転処理を実装
+(2)シャドウマッピング：Directional LightとPoint Light両対応。Point LightはCube Shadow Mapを採用し、Geometry Shaderで6面を1パスで描画
 
-(3)タイル勾配マップによるAI制御:敵機のリアルタイムなルート検索、自動走行を実現
+(3)ノーマルマッピング：法線マップによる陰影表現。ライト方向を動かして陰影の変化を確認できる
 
-(4)非線形加速処理:速度域に応じて加速度を変化させる挙動設計
+(4)HDR + Exposureトーンマッピング：露出値を操作して明るさの見え方を確認
+
+(5)Bloom：MRTとMSAAピンポンバッファによる高輝度部分のにじみ表現
+
+(6)GPUインスタンシング：座標テーブル方式で多数のオブジェクトを効率的に描画
+
+(7)スカイボックス／ガンマ補正：基礎的なレンダリング品質の担保
+
 
 <br>
 
 
 工夫ポイント
 
-参考元:https://github.com/vmbatlle/super-mario-kart/tree/d3ab83d2694f3fa3c244e79cfd31a8265b243c82/src
+実装を進める中で、当初1002行あった`renderer.cpp`が肥大化していく課題に直面しました。GBufferPass／SSAOPass／ShadowSystem／PostProcessChain／DeferredLightingPassとして
 
-こちらの完成版のプロジェクトを参考にさせていただきました。AIの力も借りて数か月間をかけて
+責務ごとに切り出し、ResourceManagerを導入することで約500行まで整理しました。あわせてScene／GameObject／IScene（Enter/Exit/Update/Submit/CheckTransition）という抽象化を設計し、
 
-全ファイルコードと設計を解析、透視変換や敵AI挙動のメカニズムを理解し、単なるコピペにとどまらないように、どのコードを間引き、
+各シーンが自分の見せたい機能だけをON/OFFできるアーキテクチャにしています。
 
-再構成すればブラックボックスやバグの無い縮小版作品にできるかを心がけました。
+「作って終わり」ではなく、後から機能を差し替え・拡張できる設計にすること自体を、このデモを通じて意識しました。
 
-当初の考えは３d描画のできないスーパーファミコンで、如何にして画像のみで立体表現を実現したのか
+Youtube:
 
-という興味の解決というものでしたが、
+https://youtu.be/_prOC4zQ6fk
 
-他人の複雑なコードを読み解き、アーキテクチャ（設計）を完全に理解した上で、
+参考
+[LearnOpenGL](https://learnopengl.com/)（内容をD3D11に翻訳しながら実装）
 
-デグレード（機能破壊）を起こさずにリファクタリング・機能縮小できる能力は実務で求められるスキルであると考え、
-
-その体験ができました
-
-Youtube:https://www.youtube.com/watch?v=ULIE_iPm7Z0
+開発環境
+- Visual Studio / DirectX 11
+- デバッグ：RenderDoc
 
 
