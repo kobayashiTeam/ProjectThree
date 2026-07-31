@@ -34,9 +34,13 @@ Geometry Shaderで6面を1パスで描画
 
 工夫ポイント
 
-実装を進める中で、当初1002行あった`renderer.cpp`が肥大化していく課題に直面しました。GBufferPass／SSAOPass／ShadowSystem／PostProcessChain／DeferredLightingPassとして
+実装を進める中で、当初1002行あった`renderer.cpp`が肥大化していく課題に直面しました。
 
-責務ごとに切り出し、ResourceManagerを導入することで約500行まで整理しました。あわせてScene／GameObject／IScene（Enter/Exit/Update/Submit/CheckTransition）という抽象化を設計し、
+GBufferPass／SSAOPass／ShadowSystem／PostProcessChain／DeferredLightingPassとして
+
+責務ごとに切り出し、ResourceManagerを導入することで約500行まで整理しました。
+
+あわせてScene／GameObject／IScene（Enter/Exit/Update/Submit/CheckTransition）という抽象化を設計し、
 
 各シーンが自分の見せたい機能だけをON/OFFできるアーキテクチャにしています。
 
