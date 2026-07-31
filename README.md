@@ -10,9 +10,13 @@
 
 技術ポイント
 
-(1)遅延レンダリング（Deferred Rendering)：G-Buffer（アルベド／法線／深度）を生成し、Lighting Passで合成。GBufferの各テクスチャはデバッグ表示として個別に切り替え可能
+(1)遅延レンダリング（Deferred Rendering)：G-Buffer（アルベド／法線／深度）を生成し、Lighting Passで合成。
 
-(2)シャドウマッピング：Directional LightとPoint Light両対応。Point LightはCube Shadow Mapを採用し、Geometry Shaderで6面を1パスで描画
+GBufferの各テクスチャはデバッグ表示として個別に切り替え可能
+
+(2)シャドウマッピング：Directional LightとPoint Light両対応。Point LightはCube Shadow Mapを採用し、
+
+Geometry Shaderで6面を1パスで描画
 
 (3)ノーマルマッピング：法線マップによる陰影表現。ライト方向を動かして陰影の変化を確認できる
 
