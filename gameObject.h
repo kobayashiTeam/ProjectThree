@@ -1,6 +1,5 @@
-// GameObject.h
 #pragma once
-#include "graphicsCommon.h" // RenderPass, BlendMode
+#include "graphicsCommon.h"
 #include"renderer.h"
 
 class Model;
@@ -15,7 +14,7 @@ public:
     // ゲームロジック側。派生クラス（Player/Enemyなど）がオーバーライドする
     virtual void Update(float dt) {}
 
-    // 描画側。今はほぼ全GameObjectで共通なので基底クラスで完結できる
+    // 描画処理は基底クラスで共通化
     virtual void Submit(Renderer* renderer) {
         if (m_model) renderer->Submit(m_model, m_renderPass, m_blendMode);
     }

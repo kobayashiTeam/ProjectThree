@@ -23,14 +23,13 @@ enum class BlendMode
 
 // 描画の工程（ゲームのレンダリングステップ）
 enum class RenderPass {
-    Opaque,       // 1. 通常の不透明オブジェクト
-    Outline,      // 2. 特殊処理：アウトライン
-    Transparent,  // 3. 半透明オブジェクト
-    DeferredOpaque, // ★新設：litShader対象のcubeたちはここに登録
+    Opaque,       // 通常の不透明オブジェクト
+    Transparent,  // 半透明オブジェクト
+    DeferredOpaque, // Lit系シェーダーを使うオブジェクトはこちらに登録
     Count
 };
 
-// Scene3：Gバッファのどれを最終出力するか（案A：Rendererが状態を持つ）
+// Scene3：Gバッファのどの成分を最終出力するか（Renderer側でこの状態を保持する設計）
 enum class GBufferDebugView {
     Lit,     // 通常通り、Lighting済みの最終結果
     Albedo,
@@ -38,7 +37,7 @@ enum class GBufferDebugView {
     Depth
 };
 
-// Scene5：シャドウマッピングでどちらの光源をライティングに反映するか（案A：ShadowSystemが状態を持つ）
+// Scene5：シャドウマッピングでどちらの光源をライティングに反映するか
 enum class LightVisibilityMode {
     DirectionalOnly,
     PointOnly,
@@ -48,7 +47,6 @@ enum class LightVisibilityMode {
 enum class ShaderID {
     Lit,
     LitInstancing,
-    Outline,
     UnLit,
     ScreenBlit,
     NormalViz,
@@ -99,7 +97,7 @@ enum class LightType {
 };
 
 
-//Directional ライト用
+// GPU側に送る1ライト分のデータ（type フィールドで Directional/Point/Spot を判別）
 struct LightData  // GPU側に送る1ライト分のデータ
 {
     DirectX::XMFLOAT4 position;         // w未使用
@@ -112,7 +110,7 @@ struct LightData  // GPU側に送る1ライト分のデータ
     float padding;
 };
 
-//Directional
+// 全ライトをまとめてb3に送るバッファ
 struct LightBufferCB  //b3CBに送る内容。LightData内容（上記）はシェーダ側で再定義する
 {
     LightData lights[MAX_LIGHTS];
@@ -143,4 +141,4 @@ struct SSAOParam
     DirectX::XMFLOAT2 noiseScale;  // 8バイト
     float             radius;      // 4バイト
     float             bias;        // 4バイト  (合計 16バイト)
-}; // 全体で 1040 バイト (16の倍数なので完全に安全です)
+}; // 全体で 1040 バイト（16バイトアライメント要件を満たす）

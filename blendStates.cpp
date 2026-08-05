@@ -5,7 +5,7 @@ bool BlendStates::Initialize(ID3D11Device* device)
     HRESULT hr;
 
     // ====================== None (ブレンド無効) ======================
-    D3D11_BLEND_DESC noneDesc = {};  // 重要：{} でゼロクリア
+    D3D11_BLEND_DESC noneDesc = {};  // {} でゼロクリア
     noneDesc.RenderTarget[0].BlendEnable = FALSE;
     noneDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
@@ -29,23 +29,19 @@ bool BlendStates::Initialize(ID3D11Device* device)
     // ====================== Additive (光の加算など) ======================
     D3D11_BLEND_DESC additiveDesc = {};
     additiveDesc.RenderTarget[0].BlendEnable = TRUE;
-    additiveDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;        // ← ここをONEに変更
+    additiveDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;        // 加算合成のため、元の色をそのまま使う
     additiveDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;       // 背景にそのまま足す
     additiveDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 
     additiveDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    additiveDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;  // または ZERO
+    additiveDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;   // アルファも加算（Bloom等の光の重なりを想定）
     additiveDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 
     additiveDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     hr = device->CreateBlendState(&additiveDesc, m_additiveState.GetAddressOf());
-    if (FAILED(hr))
-    {
-        // デバッグ用にhrの値を確認したい場合はここにOutputDebugStringなど
-        return false;
-    }
-
+    if (FAILED(hr))return false;
+    
     return true;
 }
 

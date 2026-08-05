@@ -1,12 +1,10 @@
-﻿// scene0.h:それぞれのシーン番号と内容の説明を表示するシーン
-#pragma once
+﻿#pragma once
 #include "IScene.h"
 #include"gameObject.h"
 #include <vector>
 #include <memory>
 #include"uiLayoutCommon.h"
 
-//test
 #include"textRenderer.h"
 #include"input.h"
 #include"scene1.h"
@@ -31,7 +29,6 @@ public:
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
 
-    // TextRendererの動作確認用の仮実装。Scene0(Title)ができたら削除してよい。
     void SubmitUI(TextRenderer* textRenderer,float dt) override {
         //トータル時間の更新
         m_uiTime += dt;
@@ -40,14 +37,14 @@ public:
         //現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer,dt);
 
-        //本分
+        //本文
         std::vector<int> posYArray(9);
 		int topY = 20;
 		int lineSpace = 60;
         for (int i = 0; i < posYArray.size(); i++) {
 			posYArray[i] = topY + i * lineSpace;
         }
-        textRenderer->DrawString(L"Scene0 - Index", 20.0f, posYArray[0]);//20
+        textRenderer->DrawString(L"Scene0 - Index", 20.0f, posYArray[0]);
         textRenderer->DrawString(L"Scene1 - Base Rendering", 20.0f, posYArray[1]);
         textRenderer->DrawString(L"Scene2 - Texture and Gamma", 20.0f, posYArray[2]);
         textRenderer->DrawString(L"Scene3 - Deferred Rendering", 20.0f, posYArray[3]);
@@ -62,7 +59,7 @@ public:
     void displayCurrentScene(TextRenderer* textRenderer) {
         int posX = UILayoutCommon::currentScenePositionX;
         int posY = UILayoutCommon::currentScenePositionY;
-        textRenderer->DrawString(L"Scene0/8",posX,posY);//1000,20
+        textRenderer->DrawString(L"Scene0/8",posX,posY);
     }
 
     void displayHowToUse(TextRenderer* textRenderer,float dt) {
@@ -75,14 +72,10 @@ public:
             1.0f,1.0f,1.0f,alpha);
     }
 
-    //IScene* CheckTransition() override{ return nullptr; }
-
 private:
     void AddObject(std::unique_ptr<GameObject> obj) {
         m_objects.push_back(std::move(obj));
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
 
-    //固有
-    float m_uiTime=0.0f;
 };

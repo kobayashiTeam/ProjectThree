@@ -1,6 +1,5 @@
 #pragma once
 #include<d3d11.h>
-#include<vector>
 #include<DirectXMath.h>
 #include <wrl/client.h>
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -23,7 +22,6 @@ public:
     }m_cbSpriteData;
 
    bool Init(ID3D11Device* pDevice);        // シェーダー＋VB生成
-    //void SetPoints(std::vector<Vector3>& points); // 点群を外から設定
     void Bind(ID3D11DeviceContext* pContext); // 全バインド
     void Draw(ID3D11DeviceContext* pContext); // トポロジー設定＋Draw
 
@@ -46,7 +44,3 @@ public:
         m_pShader = shader;
     }
 };
-
-//memo
-//VS,b1にmModel格納
-//GS,b3にPerSpriteBuffer

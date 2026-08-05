@@ -1,4 +1,3 @@
-// ResourceManager.h
 #pragma once
 #include <unordered_map>
 #include <string>
@@ -14,7 +13,15 @@ public:
         return instance;
     }
 
-    // pathをキーにキャッシュ。既にあれば再利用、無ければ読み込んで登録
+    ~ResourceManager()
+    {
+        for (auto& pair : m_models)
+        {
+            delete pair.second;
+        }
+    }
+
+    // ファイルパスをキーとしてモデルリソースをキャッシュする
     ModelResource* GetModel(ID3D11Device* device, const std::wstring& path) {
         auto it = m_models.find(path);
         if (it != m_models.end()) {
@@ -32,5 +39,7 @@ public:
 
 private:
     ResourceManager() = default;
+    // 読み込んだモデルリソースをパスごとに保持
+    // ResourceManagerが所有する
     std::unordered_map<std::wstring, ModelResource*> m_models;
 };

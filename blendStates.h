@@ -1,6 +1,4 @@
 #pragma once
-// BlendStates.h
-#pragma once
 #include <d3d11.h>
 #include <wrl/client.h>
 #include "graphicsCommon.h"
@@ -14,7 +12,7 @@ public:
 	void Bind(ID3D11DeviceContext* context,BlendMode mode);
 
 private:
-	//モード３つ分ステートを生成したもの別々に保管
+	// 各ブレンドモードに対応するブレンドステート
 	ComPtr<ID3D11BlendState> m_noneState;
 	ComPtr<ID3D11BlendState> m_alphaState;
 	ComPtr<ID3D11BlendState> m_additiveState;

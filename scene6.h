@@ -1,4 +1,3 @@
-// scene6.h：Scene6 - HDR＋Bloom（PointLightをIJKLで近づけて輝度1.0超えを発火させ、Tabでbloom ON/OFF、P/Mで露出調整）
 #pragma once
 #include "IScene.h"
 #include "gameObject.h"
@@ -76,13 +75,12 @@ public:
         swprintf_s(buf, L"Bloom : %ls", m_bloomActive ? L"ON" : L"OFF");
         textRenderer->DrawString(buf, 20.0f, 380.0f);
 
-        //トータル時間の更新
+        // トータル時間の更新
         m_uiTime += dt;
-        //現在のsceneを表示する
+        // 現在のsceneを表示する
         displayCurrentScene(textRenderer, 6);
-        //現在sceneでの操作説明を表示する
+        // 現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer, dt);
-        //test
         DrawSceneNavigationHint(textRenderer);
     }
 

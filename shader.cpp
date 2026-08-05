@@ -1,5 +1,4 @@
 
-// Shader.cpp
 #include "shader.h"
 
 bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wchar_t* psFileName,
@@ -21,13 +20,9 @@ bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wcha
     hr = pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &m_pVertexShader);
     if (FAILED(hr)) { pVSBlob->Release(); return false; }
 
-    // 2. 頂点レイアウトの作成（現状のレイアウトをそのまま移植）
-    //インデックスバッファ：meshがもつもの。頂点座標とセット
-    //レイアウト：頂点バッファの解釈。頂点情報に含まれる
-    //種々の属性をパースする
-    
-    hr = pDevice->CreateInputLayout(layout, layoutCount, pVSBlob->GetBufferPointer(), //第二引数4
-        pVSBlob->GetBufferSize(), &m_pVertexLayout);//layout,layoutcount
+    // 2. 頂点レイアウトの作成
+    hr = pDevice->CreateInputLayout(layout, layoutCount, pVSBlob->GetBufferPointer(), 
+        pVSBlob->GetBufferSize(), &m_pVertexLayout);
     pVSBlob->Release();
     if (FAILED(hr)) return false;
 

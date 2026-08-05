@@ -142,7 +142,7 @@ PS_OUTPUT PS(PS_INPUT input)
     float3 normal = normalize(input.Normal);
     float3 viewDir = normalize(vEyePos.xyz - input.WorldPos);
 
-    // 【修正】アンビエントはループの外で1回だけ（ベースの暗さを決める）
+    // アンビエントはループの外で1回だけ加算する（ライトごとに重複加算しないため）
     // シーン全体の環境光として、例えば 0.1 程度の強さにする
     float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
     
@@ -150,13 +150,13 @@ PS_OUTPUT PS(PS_INPUT input)
 
     for (int i = 0; i < lightCount; i++)
     {
-        // --- (ライト方向と減衰の計算はそのまま) ---
-        float3 lightDir;
-        if (lights[i].type == 0)
+        // --- ライト方向と減衰の計算 ---
+        float3 lightDir; // 初期値（Spotライトは現状未対応）
+        if (lights[i].type == 0)// Directional
         {
             lightDir = normalize(-lights[i].direction.xyz);
         }
-        else if (lights[i].type==1)
+        else if (lights[i].type == 1)// Point
         {
             lightDir = normalize(lights[i].position.xyz - input.WorldPos);
         }
@@ -169,7 +169,7 @@ PS_OUTPUT PS(PS_INPUT input)
             (vAttenuation.x + vAttenuation.y * distance + vAttenuation.z * distance * distance);
         }
 
-        // --- (シャドウ計算はそのまま) ---
+        // --- シャドウ計算 ---
         float shadow = 1.0f; // デフォルトは影なし(1.0)
         if (lights[i].type == 0)
         {
@@ -184,7 +184,7 @@ PS_OUTPUT PS(PS_INPUT input)
         // --- ライティング計算（アンビエントを排除） ---
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0f);
-        float3 diffuse = diff * lights[i].color.xyz * lights[i].intensity; // intensityも考慮
+        float3 diffuse = diff * lights[i].color.xyz * lights[i].intensity;
 
         // Specular
         float3 halfwayDir = normalize(lightDir + viewDir);
@@ -201,11 +201,6 @@ PS_OUTPUT PS(PS_INPUT input)
 
     // 最終カラー ＝ 全体の環境光 ＋ 蓄積された直射光
     float3 finalColor = globalAmbient + totalDirectLight;
-    //test
-    //finalColor *= 15.0f;
-    //return float4(finalColor, objectColor.a);
-    
-    // --- (ここから書き換え) ---
     
     // 構造体のインスタンスを作る
     PS_OUTPUT output;

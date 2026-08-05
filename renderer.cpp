@@ -30,7 +30,6 @@
 #include"VerticalBlurPostProcess.h"
 #include"bloomCombinePostProcess.h"
 #include<random>
-//test
 #include"postProcessChain.h"
 #include"bloomBlurPass.h"
 #include"gBufferPass.h"
@@ -44,7 +43,6 @@ Renderer::~Renderer()
     delete m_rasterStates;
     delete m_dsStates;
     delete m_blendStates;
-    //delete m_renderQueue;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -74,8 +72,7 @@ bool Renderer::Initialize(Graphics* graphics)
     HRESULT hr = pDevice->CreateBuffer(&cbd, nullptr, m_perFrameCB.GetAddressOf());
     if (FAILED(hr)) return false;
 
-	// 3. オフスクリーンレンダーターゲット1号の初期化（テスト）
-		//HDRの実験のため、colorFormatを16bit浮動小数点にしてみる
+	// 3. 「オフスクリーンRTの初期化（HDR対応のため R16G16B16A16_FLOAT）」
 	m_offscreenRT = new RenderTarget();
 	if (!m_offscreenRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
 		return false;
@@ -87,12 +84,12 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
 
-        //オフスクリーンレンダー２号の初期化（２号というか２枚で十分、swapChainで使う）
+        //オフスクリーンレンダー２号の初期化（swapChainで使用）
     m_tmpRT = new RenderTarget();
     if (!m_tmpRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
-        //test bloom用
+
 	m_brightRT = new RenderTarget();
 	if (!m_brightRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
 		return false;
@@ -104,22 +101,18 @@ bool Renderer::Initialize(Graphics* graphics)
     }
 	
 
-    //テスト:ポストプロセス
     //simpleBlit
     m_finalRenderScreenBlitPostProcess = new ScreenBlitPostProcess();
     m_finalRenderScreenBlitPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::ScreenBlit));
 
-    //新規：Scene3のGバッファデバッグ表示用
+    // Gバッファデバッグ表示用
     m_gBufferDebugBlit = new GBufferDebugBlit();
     m_gBufferDebugBlit->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::GBufferDebug));
  
 
-   //正式にクラス化したPostProcessChainの生成、初期化
-        //ScreenBlitPostProcess（最終転写用）とHorizontalBlur/VerticalBlur（Bloomの中間ブラー用）は
-	    //特殊なのでchainに加えない。個別に使う
-        //各postprocessはrendererメンバである必要もなくなり、add時に生成、代入
+    // PostProcessChain の生成・初期化
 	m_postProcessChain = new PostProcessChain();
     m_postProcessChain->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
     m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
@@ -129,7 +122,7 @@ bool Renderer::Initialize(Graphics* graphics)
     m_postProcessChain->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
     m_finalRenderBloomCombinePostProcess= m_postProcessChain->AddEffect<BloomCombinePostProcess>(pDevice, ShaderID::BloomCombine, true);
 
-        //bloomBlurだけpostprocesschainパスとは別パスとして別クラスに生成
+        // BloomBlur は別パスとして独立クラスで管理
 	m_bloomBlurPass = new BloomBlurPass();
 	m_bloomBlurPass->Initialize(pDevice, 1280, 720);
 
@@ -156,12 +149,12 @@ bool Renderer::Initialize(Graphics* graphics)
     m_pPointSpriteGSEffect = new PointSpriteGSEffect();
     if (!m_pPointSpriteGSEffect->Init(pDevice))return false;
 
-    //instancedModel:ここでmeshをつくる
+    // InstancedModel の初期化
     m_pInstancedModel = new InstancedModel();
     if (!m_pInstancedModel->Init(pDevice, pContext,Mesh::CreateCube(pDevice, 1.0f), 512))return false;
     
 
-    //新規:ShadowSystem生成初期化
+    // ShadowSystem の生成・初期化
 	m_shadowSystem = new ShadowSystem();
 	m_shadowSystem->Initialize(pDevice);
 
@@ -179,7 +172,7 @@ bool Renderer::Initialize(Graphics* graphics)
         
         //内容を初期設定
     SetExposure(0.5f);
-    SetGammaCorrection(true); // Scene2用：デフォルトはON
+    SetGammaCorrection(true); // デフォルトでガンマ補正を有効化
 
 	//DeferredLightingPassの初期化
 	m_deferredLightingPass = new DeferredLightingPass();
@@ -234,9 +227,9 @@ void Renderer::UpdatePerFrameConstantBuffer()
     // スロット0にバインド
     ID3D11Buffer* cbArray[] = { m_perFrameCB.Get() };
     pContext->VSSetConstantBuffers(0, 1, cbArray);
-    //test:PSにもこれを設定
+    //PSにもこれを設定
     pContext->PSSetConstantBuffers(0, 1, cbArray);
-    //テスト：GSにも同cbを設定
+    //GSにも同cbを設定
     pContext->GSSetConstantBuffers(0,1,cbArray);
 }
 
@@ -252,7 +245,6 @@ void Renderer::Submit(Model* model, RenderPass pass, BlendMode mode)
     // パスのインデックスを取得
     int passIdx = static_cast<int>(pass);
 
-    // ★ if文で分岐しなくても、すべてのパスで共通の処理に一元化できます！
     if (passIdx >= 0 && passIdx < static_cast<int>(RenderPass::Count))
     {
         // 引数で入ってきた mode をそのままQueueのSubmitに渡す
@@ -265,7 +257,6 @@ void Renderer::Execute()
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
     int opaqueIdx = static_cast<int>(RenderPass::Opaque);
-    int outlineIdx = static_cast<int>(RenderPass::Outline);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
 
@@ -284,10 +275,10 @@ void Renderer::Execute()
     m_shadowSystem->EndPointPass(pContext);
 
     // ==========================================
-    // 【新設】1. 描画先を「自作の裏画面」に切り替える（Offscreen Pass 開始）
+    // 1. オフスクリーンRTに描画先を切り替え
     // ==========================================
-    m_offscreenRTwithMSAA->Clear(pContext);//テスト：
-	m_brightRTwithMSAA->Clear(pContext);//テスト：
+    m_offscreenRTwithMSAA->Clear(pContext);
+	m_brightRTwithMSAA->Clear(pContext);
 
     // 配列にして準備
     RenderTarget* targets[2] = {
@@ -296,7 +287,7 @@ void Renderer::Execute()
     };
     // 深度バッファは代表して1つ目のものから取得して渡す
     ID3D11DepthStencilView* dsv = m_offscreenRTwithMSAA->GetDSV();
-    //staticメソッドで綺麗にバインド！
+    //複数RTを一括バインド
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
 
@@ -312,7 +303,7 @@ void Renderer::Execute()
     m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
 
     // ==========================================
-    // 【新設】Scene3：Gバッファのデバッグ表示（案A）
+    // Scene3：Gバッファのデバッグ表示
     // この時点でG-Buffer（Albedo/Normal/Depth）は埋まっているので、
     // Lit以外のモードならSSAO/Lighting/ポストプロセスを全部飛ばして直接ブリットする
     // ==========================================
@@ -357,13 +348,13 @@ void Renderer::Execute()
         m_gBufferPass->GetPositionSRV(), 
         m_finalRenderMesh);
 
-    // ===== ここで既存の「裏画面」MRTバインドに戻す =====
+    // オフスクリーンMRTに再バインド
     targets[0] = m_offscreenRTwithMSAA;
 	targets[1] = m_brightRTwithMSAA;
     dsv = m_offscreenRTwithMSAA->GetDSV();
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
-    // ===== 【新設】Lighting Pass =====
+    // ===== Lighting Pass =====
     m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh);
 
 
@@ -372,21 +363,16 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
     m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates,true);
 
-    // ─── 【新設】PointSpriteの描画 ───
-    //m_pPointSpriteGSEffect->Draw(pContext);
 
-    // ─── 【新設】InstancedModelの描画 ───
-    // Scene7以外はSetInstanceCountが呼ばれないためm_instanceDataが空のまま→Render内で早期returnされ無害
+    // ─── InstancedModelの描画 ───
+    //未設定時は早期returnされるため無害
     m_pInstancedModel->Render(pContext);
 
-    // ─── 【ここ！！】スカイボックスの描画 ───
-    // ─── 【新設】スカイボックスの描画 ───
+    // ─── スカイボックスの描画 ───
     if (m_pSkyBox) {
-        // 境目でステートをスカイボックス用に切り替える！front,depthlessequal
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 内側を見せるため前面カリング
-        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // 1.0の隙間に滑り込ませる
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);       // 前面カリングで内側を描画
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthLessEqual);    // DepthLessEqual で遠平面にフィット
 
-        //test:ごちゃごちゃしたシェーダセットを一掃
         pContext->VSSetShader(nullptr,nullptr,0);
         pContext->PSSetShader(nullptr, nullptr, 0);
         pContext->GSSetShader(nullptr, nullptr, 0);
@@ -395,43 +381,29 @@ void Renderer::Execute()
     }
 
     
-    //return;
-    
-    // ─── 工程2: アウトラインパス ───
-    //if (!m_renderQueues[outlineIdx].IsEmpty()) { // ※IsEmptyメソッドがあると便利
-    //    this->BeginStencilOutlinePass(); // ステンシル等の特殊ステートON
-
-    //    // アウトラインパスのキューを実行
-    //    m_renderQueues[outlineIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates);
-
-    //    this->EndStencilOutlinePass();  // ステートを戻す
-    //}
-
     // ─── 工程3: 半透明パス ───
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
-    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 必要ならデプス書き込みOFFのステートなど
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); 
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates,true);
 
-    //return;
 
     
     // ==========================================
-    // 【新設】3. ポストプロセス・ピンポン・パイプライン
+    // 3. ポストプロセス・ピンポン・パイプライン
     // ==========================================
-    // 現在の「入力（読む）」と「出力（書く）」の追跡用ポインタ
-    RenderTarget* pCurrentInput = m_offscreenRT; // 3Dシーンが描き込まれている
-    RenderTarget* pCurrentOutput = m_tmpRT;      // まだ空っぽの作業机
+    // ピンポン用の入力・出力RTポインタ
+    RenderTarget* pCurrentInput = m_offscreenRT; 
+    RenderTarget* pCurrentOutput = m_tmpRT;      
 
     //これ以前でMSAAレンダリングした内容をm_offscreenRTにダウンサンプリング描画
     ID3D11Texture2D* offScreenRTTex = m_offscreenRT->GetTexture(); // 描画先
     ID3D11Texture2D* msaaTex = m_offscreenRTwithMSAA->GetTexture(); //描画元
     //Resolve（解像）を実行して画面に直接転写する
     pContext->ResolveSubresource(
-        offScreenRTTex, 0,           // 転送先：本物の画面
-        msaaTex, 0,                 // 転送元：自作MSAAバッファ
-        DXGI_FORMAT_R16G16B16A16_FLOAT // フォーマット（お使いのものに合わせる）
+        offScreenRTTex, 0,           // 転送先: 非MSAA RT
+        msaaTex, 0,                 // 転送元: MSAA RT
+        DXGI_FORMAT_R16G16B16A16_FLOAT 
     );
-    // 3DシーンのResolveの直後あたりに追記
 	offScreenRTTex = m_brightRT->GetTexture(); // 描画先
 	msaaTex = m_brightRTwithMSAA->GetTexture(); //描画元
     pContext->ResolveSubresource(
@@ -441,42 +413,34 @@ void Renderer::Execute()
     );
 
     // ========================================================
-    // 2. 【ここ！】Resolveされて中身が入った m_brightRT を使って、独立してBlurを2回叩く
+    // 輝度抽出RTに対して独立してBlurを実行
     // ========================================================
 
-    // ボケ専用のピンポン用ポインタ（m_offscreenRTには絶対に触れさせない）
+    // Bloom用Blurの入力・出力RT（シーンRTとは分離）
     RenderTarget * pBlurInput = m_brightRT;     // 最初の入力：輝度抽出テクスチャ
     RenderTarget* pBlurOutput = m_tmpRT;        // 作業バッファ1
 
-    //// 3. 【重要】完成したボケ画像を、Bloom合成エフェクトに仕込む！
-    // Bloom下ごしらえ（前回の話）
+    // Bloom合成用にブラー結果を設定
     ID3D11ShaderResourceView* bloomSRV = 
         m_bloomBlurPass->Execute( pContext, m_brightRT,m_finalRenderMesh);
     m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(bloomSRV);
 
 
-    // 次のチェーン（モノクロやビネットなど）に行くための「お片付け」
-    // ⚠️今のままだと、pCurrentInput が「ボケ画像」になってしまっていて、
-    // 通常の3Dシーン（m_offscreenRT）が迷子になっています。
-    // なので、メインチェーンを始めるために、ポインタを本来の3Dシーンの場所に戻してあげます。
-
     pCurrentInput = m_offscreenRT; // 通常の3Dシーンの絵（Resolve直後の状態）に戻す
-    pCurrentOutput = m_tmpRT;      // 出力先も綺麗にリセット
+    pCurrentOutput = m_tmpRT;      // 出力先をリセット
 
 
     // ========================================================
     // 4. ポストプロセス・ピンポン・チェーン
     // ========================================================
-    //// チェーン実行。戻り値が「最終的にどのRTに絵が入っているか」を教えてくれる
+    // ポストプロセスチェーン実行（戻り値が最終結果RT）
         RenderTarget * finalResult = m_postProcessChain->Render(
             pContext, m_offscreenRT, m_tmpRT, m_finalRenderMesh);
     
-    //return;
-
     // ==========================================
     // 4. 出力先を「デフォルト（画面）」に戻して最終転写
     // ==========================================
-    m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
+    m_graphics->bindDefaultRenderTarget(); // バックバッファに切り替え
     m_blendStates->Bind(pContext, BlendMode::Opaque);
 	UpdatePostProcessConstantBuffer();//ポストプロセス用の定数バッファを更新
 
@@ -501,21 +465,12 @@ void Renderer::SetCullMode(RasterizerStates::CullMode mode)
     m_rasterStates->Bind(m_graphics->GetContext(), mode);
 }
 
-void Renderer::BeginStencilOutlinePass()
-{
-    // 将来的にステンシルマスクを有効化するステート変更をここに記述
-}
-
-void Renderer::EndStencilOutlinePass()
-{
-    // ステンシルマスクを元に戻す処理をここに記述
-}
 
 bool Renderer::createFinalRenderQuad() {
     
     ID3D11Device* pDevice = m_graphics->GetDevice();
     if (!pDevice)return false;
-    m_finalRenderMesh = Mesh::CreateQuad(pDevice);//mesh
+    m_finalRenderMesh = Mesh::CreateQuad(pDevice);
     if (!m_finalRenderMesh)return false;
 
     return true;

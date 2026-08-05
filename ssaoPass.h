@@ -1,16 +1,9 @@
-// SSAOPass.h
 #include<d3d11.h>
 #include"renderTarget.h"
 #include"shaderManager.h"
 #include"mesh.h"
 #include"graphicsCommon.h"
 
-//struct SSAOParam {
-//    DirectX::XMFLOAT4 samples[64];
-//    DirectX::XMFLOAT2 noiseScale;
-//    float radius;
-//    float bias;
-//};
 
 class SSAOPass {
 public:
@@ -27,6 +20,11 @@ public:
         m_shader = ShaderManager::GetInstance().GetShader(ShaderID::SSAO);
         m_blurShader = ShaderManager::GetInstance().GetShader(ShaderID::SSAOBlur);
         return true;
+    }
+
+    ~SSAOPass() {
+        delete m_rawRT;
+        delete m_blurRT;
     }
 
     // GBufferPass‚©‚ç’¼ÚSRV‚ğó‚¯æ‚éŒ`‚É‚·‚é‚±‚Æ‚ÅˆË‘¶ŠÖŒW‚ğˆø”‚Å–¾¦‚·‚é
@@ -64,10 +62,10 @@ public:
     }
 
 private:
-    bool initNoiseTexture(ID3D11Device* pDevice);   // Œ³‚ÌinitSSAO‚»‚Ì‚Ü‚ÜˆÚA
-    bool initSamplers(ID3D11Device* pDevice);       // Œ³‚ÌinitSSAOSampler‚»‚Ì‚Ü‚ÜˆÚA
-    bool initConstantBuffer(ID3D11Device* pDevice, float w, float h); // Œ³‚ÌinitSSAOConstantBuffer‚»‚Ì‚Ü‚ÜˆÚA
-    void updateConstantBuffer(ID3D11DeviceContext* ctx); // Œ³‚ÌupdateSSAOConstantBuffer‚»‚Ì‚Ü‚ÜˆÚA
+    bool initNoiseTexture(ID3D11Device* pDevice);   
+    bool initSamplers(ID3D11Device* pDevice);       
+    bool initConstantBuffer(ID3D11Device* pDevice, float w, float h);
+    void updateConstantBuffer(ID3D11DeviceContext* ctx); 
 
     RenderTarget* m_rawRT = nullptr;
     RenderTarget* m_blurRT = nullptr;

@@ -13,19 +13,16 @@ cbuffer PerFrameBuffer : register(b0)
     float4 vAttenuation;
 };
 
-// 頂点シェーダーに送る定数バッファ (スロット1)
+// 頂点シェーダーに送る定数バッファ (スロット3)
 cbuffer PerObjectBuffer : register(b3)
 {
-    matrix g_ViewProjection; // ★平行移動成分を除去した View行列 × Projection行列
+    matrix g_ViewProjection; // 平行移動成分を除去した View行列 × Projection行列
 };
 
 // 入力頂点構造（位置情報のみ）
 struct VS_INPUT
 {
     float3 position : POSITION;
-    //float3 normal : NORMAL; // 追加（使わないが宣言だけする）
-    //float4 color : COLOR; // 追加
-    //float2 texcoord : TEXCOORD0; // 追加
 };
 
 // 頂点シェーダーからピクセルシェーダーへの出力構造
@@ -40,7 +37,7 @@ TextureCube g_SkyboxTexture : register(t0);
 SamplerState g_SamplerLinear : register(s0);
 
 // =========================================================================
-// 頂点シェーダー (エントリーポイント: VS_Main)
+// 頂点シェーダー (エントリーポイント: VS)
 // =========================================================================
 VS_OUTPUT VS(VS_INPUT input)
 {
@@ -49,7 +46,7 @@ VS_OUTPUT VS(VS_INPUT input)
     // 頂点位置を変換
     output.position = mul(float4(input.position, 1.0f), g_ViewProjection);
     
-    // 【重要】深度値を強制的に最奥(1.0)にするトリック
+    // 深度値を強制的に最奥(1.0)にするトリック
     // ラスタライズ後の z/w が 1.0 になるよう、z に w を代入する
     output.position.z = output.position.w;
     
@@ -60,12 +57,10 @@ VS_OUTPUT VS(VS_INPUT input)
 }
 
 // =========================================================================
-// ピクセルシェーダー (エントリーポイント: PS_Main)
+// ピクセルシェーダー (エントリーポイント: PS)
 // =========================================================================
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-    // texCoordの値を色として表示して確認する
-    //return float4(input.texCoord * 0.5 + 0.5, 1.0);
     // 3次元の方向ベクトルを用いてキューブマップから色をサンプリング
     return g_SkyboxTexture.Sample(g_SamplerLinear, input.texCoord);
     return float4(1.0f,0.0f,0.0f,1.0f);

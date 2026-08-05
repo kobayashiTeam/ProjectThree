@@ -1,9 +1,9 @@
 ﻿#include "modelResource.h"
 #include "mesh.h"
 #include "material.h"
-#include "litMaterial.h" // 必要に応じて使い分け
+#include "litMaterial.h"
 #include "shaderManager.h"
-#include "vertex.h"      // SimpleVertex が定義されているヘッダ
+#include "vertex.h"     
 
 // Assimpのインクルード
 #include <assimp/Importer.hpp>
@@ -25,10 +25,10 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
     // Assimpはマルチバイト文字列を要求するため変換
     std::string pathStr(filePath.begin(), filePath.end());
 
-    // ★ LearnOpenGLからDirectXに置き換える際、最重要のフラグ
+    // LearnOpenGLからDirectXに置き換える際、最重要のフラグ
     unsigned int flags =
         aiProcess_Triangulate |             // ポリゴンを強制的に三角形にする
-        aiProcess_ConvertToLeftHanded |     // ★超重要: 右手系からDirectX標準の「左手系」に一発変換
+        aiProcess_ConvertToLeftHanded |     // 右手系からDirectX標準の「左手系」に一発変換
         aiProcess_CalcTangentSpace |        // 法線マップ用の接線（Tangent）を自動計算
         aiProcess_GenSmoothNormals;         // 法線がない場合に自動生成
 
@@ -41,8 +41,8 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
 
     // テクスチャを相対パスで読み込むために、ファイルの親ディレクトリを取得しておく
 	// 例えば "Assets/Models/house.obj" なら "Assets/Models/" を抜き取る
-    //素材がどれも同じフォルダ構成になっている前提で、scene.gltfの
-    //テクスチャは同じディレクトリにフォルダで入ってると考え、それまでのパスを保持しておく
+    // モデルファイルの親ディレクトリを取得
+// テクスチャの相対パス解決に使用
     std::wstring directory = filePath.substr(0, filePath.find_last_of(L"/\\") + 1);
 
     // 初期行列（単位行列）から再帰解析を開始
@@ -55,7 +55,7 @@ bool ModelResource::LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderMa
 void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device* pDevice, 
     ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX parentTransform) {
     // Assimpの4x4行列を DirectXMath の XMMATRIX に変換
-	// Assimpの行列は行優先（row-major）で格納されているため、要素を入れ替えてセットします。
+    // Assimp の行列を DirectXMath の行列へ変換
     aiMatrix4x4 m = node->mTransformation;
     DirectX::XMMATRIX localTransform = DirectX::XMMatrixSet(
         m.a1, m.b1, m.c1, m.d1,
@@ -67,10 +67,7 @@ void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device
     DirectX::XMMATRIX globalTransform = DirectX::XMMatrixMultiply(localTransform, parentTransform);
 
     // このノードに含まれるメッシュ（パーツ）を処理
-    //mMeshedには全てのメッシュインデックスが順番に無頓着で並んでいる
-    //各ノードのmMeshesはノードを構成するメッシュのインデックスが適切な順番で並んでいる
-    //それを守ってmMeshesからmeshを取り出して処理すれば、適切なヒエラルキーの
-    //モデルが出来上がる
+    // ノードが参照するメッシュを順に処理
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         ProcessMesh(mesh, scene, pDevice, pShaderManager, directory, globalTransform);
@@ -84,15 +81,12 @@ void ModelResource::ProcessNode(aiNode* node, const aiScene* scene, ID3D11Device
 
 void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device* pDevice, 
     ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX transform) {
-    //std::vector<SimpleVertex> vertices;
-    //std::vector<DWORD> indices;
-    //test
     // SimpleVertex一本槍をやめて属性別に分ける
     std::vector<DirectX::XMFLOAT3> positions;
     std::vector<DirectX::XMFLOAT3> normals;
     std::vector<DirectX::XMFLOAT4> colors;
     std::vector<DirectX::XMFLOAT2> uvs;
-    std::vector<DirectX::XMFLOAT3> tangents; // ★追加！
+    std::vector<DirectX::XMFLOAT3> tangents;
     std::vector<DWORD> indices;
 
      // --- 頂点データのコンバート ---
@@ -131,7 +125,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
             uvs.push_back({ 0.0f, 0.0f }); // フォールバック
         }
 
-        // ★Tangent のロード & フォールバック処理
+        // Tangent の読み込み
         if (mesh->HasTangentsAndBitangents() && mesh->mTangents != nullptr) {
             tangents.push_back({
                 mesh->mTangents[i].x,
@@ -140,16 +134,15 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
                 });
         }
         else {
-            // もしモデルがTangentを持っていなければ、
-            // ひとまず安全なデフォルト値（前方を向くダミー値など）を詰める
+            // Tangent が存在しない場合はデフォルト値を設定
             tangents.push_back({ 1.0f, 0.0f, 0.0f });
         }
     }
 
     // --- インデックスデータのコンバート ---
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {//最初はポリゴンごとに
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {// Faceごとにインデックスを取得
         aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {//次はポリゴン１枚の頂点毎に
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
             indices.push_back(face.mIndices[j]);
         }
     }
@@ -163,7 +156,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
         indices.data(), (UINT)indices.size()
     );
 
-    m_ownedMeshes.push_back(newMesh);//出来上がったメッシュをメッシュコンテナに保存。描画で使う
+    m_ownedMeshes.push_back(newMesh);// 描画用メッシュとして登録
 
     // --- マテリアル（テクスチャ）の本連動 ---
     Material* newMaterial = nullptr;
@@ -178,10 +171,9 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
             std::string texPathSrc(texturePath.C_Str());
             std::wstring texPathW(texPathSrc.begin(), texPathSrc.end());
 
-            // 親ディレクトリパスと結合　directryはさっき取得した。
             std::wstring fullTexPath = directory + texPathW;
 
-            // ★【変更】増設した InitializeFromFile を呼び出す！
+            // テクスチャを読み込んでマテリアルを生成
             LitMaterial* litMat = new LitMaterial();
             if (litMat->InitializeFromFile(pDevice, pLitShader, fullTexPath.c_str())) {
                 litMat->CreateMaterialBuffer(pDevice);
@@ -198,7 +190,7 @@ void ModelResource::ProcessMesh(aiMesh* mesh, const aiScene* scene, ID3D11Device
 
     // テクスチャがない、またはロード失敗時はチェッカー模様（既存の安全装置）
     if (!newMaterial) {
-        //一次元配列４項目だが、sysmemの定義で2*2の行列として解釈してもらう
+        // 2×2 のダミーテクスチャ
         UINT32 dummyPixels[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
         LitMaterial* litMat = new LitMaterial();
         litMat->Initialize(pDevice, pLitShader, dummyPixels, 2, 2,true,true);

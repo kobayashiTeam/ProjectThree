@@ -1,4 +1,3 @@
-// textRenderer.cpp
 #include "textRenderer.h"
 
 TextRenderer::~TextRenderer() = default;

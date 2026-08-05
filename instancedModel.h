@@ -24,7 +24,6 @@ public:
 
 private:
     Mesh* m_pMesh = nullptr;
-    //Material* m_pInstMaterial = nullptr;
     std::vector<InstanceData> m_instanceData;
     // Scene7用：maxInstances分の座標を最初に1回だけ計算しておくテーブル（オブジェクトプール的発想）
     std::vector<InstanceData> m_positionTable;
@@ -36,7 +35,7 @@ private:
     ID3D11VertexShader* m_pVertexShader=nullptr;
     ID3D11PixelShader* m_pPixelShader = nullptr;
     ID3D11InputLayout* m_pVertexLayout = nullptr;
-    //textrue
+    //texture
     ID3D11ShaderResourceView* m_pTextureRV = nullptr;
     ID3D11SamplerState* m_pSamplerLinear = nullptr;
     //material in shader
@@ -45,15 +44,18 @@ private:
 
 public:
     ~InstancedModel() {
-        if (m_pInstanceBuffer) {
-            m_pInstanceBuffer->Release();
-            m_pInstanceBuffer = nullptr;
-        }
+        if (m_pInstanceBuffer) { m_pInstanceBuffer->Release(); m_pInstanceBuffer = nullptr; }
+        if (m_pVertexShader) { m_pVertexShader->Release();   m_pVertexShader = nullptr; }
+        if (m_pPixelShader) { m_pPixelShader->Release();    m_pPixelShader = nullptr; }
+        if (m_pVertexLayout) { m_pVertexLayout->Release();   m_pVertexLayout = nullptr; }
+        if (m_pTextureRV) { m_pTextureRV->Release();      m_pTextureRV = nullptr; }
+        if (m_pSamplerLinear) { m_pSamplerLinear->Release();  m_pSamplerLinear = nullptr; }
+        if (m_pMaterialBuffer) { m_pMaterialBuffer->Release(); m_pMaterialBuffer = nullptr; }
     }
 
     bool Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,Mesh* mesh,UINT maxInstances);
 
-    // ★追加メソッド①：データを全部リセットする（毎フレーム再構築する場合に使う）
+    // データを全部リセットする（毎フレーム再構築する場合に使う）
     void ClearInstances() {
         m_instanceData.clear();
     }
@@ -65,7 +67,7 @@ public:
     // （テーブル内の相対配置=spacingは変えず、群れごと任意のワールド座標へ動かす）
     void SetActiveCount(UINT count, const DirectX::XMFLOAT3& offset);
 
-    // ★追加メソッド②：インスタンスを1個追加する
+    // インスタンスを1個追加する
     void AddInstance(const InstanceData& data) {
         if (m_instanceData.size() >= m_maxInstances) return; // 上限ガード
 

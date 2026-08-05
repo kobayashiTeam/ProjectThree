@@ -1,4 +1,3 @@
-// iScene.cpp
 #include "iScene.h"
 #include "input.h"
 #include "scene0.h"
@@ -27,27 +26,26 @@ void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
     textRenderer->DrawString(
         L"0:Index 1:Base 2:Texture&Gamma 3:Deferred 4:NormalMap",
         500.0f, 640.0f,           // 画面右下寄り（1280x720基準）
-        1.0f, 1.0f, 1.0f, 1.0f,   // 少し控えめなグレーで目立ちすぎないように
+        1.0f, 1.0f, 1.0f, 1.0f,   // 白色・不透明で表示
         0.7f);                    // scale：本文より小さく表示
     textRenderer->DrawString(
         L"5:Shadow 6:HDR+Bloom 7:GPU Instancing 8:All",
         500.0f, 660.0f,           // 画面右下寄り（1280x720基準）
-        1.0f, 1.0f, 1.0f, 1.0f,   // 少し控えめなグレーで目立ちすぎないように
+        1.0f, 1.0f, 1.0f, 1.0f,   // 白色・不透明で表示
         0.7f);                    // scale：本文より小さく表示
 }
 
-void IScene:: displayCurrentScene(TextRenderer* textRenderer,int current) {
+void IScene::displayCurrentScene(TextRenderer* textRenderer,int current) {
     int posX = UILayoutCommon::currentScenePositionX;
     int posY = UILayoutCommon::currentScenePositionY;
 
     std::wstring text = L"Scene" + std::to_wstring(current) + L"/8";
 
     textRenderer->DrawString(text.c_str(), posX, posY);
-    //textRenderer->DrawString(L"Scene1/8", posX, posY);
 
 }
 
-void IScene:: displayHowToUse(TextRenderer* textRenderer, float dt) {
+void IScene::displayHowToUse(TextRenderer* textRenderer, float dt) {
     int posX = UILayoutCommon::howToUsePositionX;
     int posY = UILayoutCommon::howToUsePositionY;
     int spaceY = UILayoutCommon::howToUseSpaceY;

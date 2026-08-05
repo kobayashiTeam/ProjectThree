@@ -1,4 +1,3 @@
-// scene7.h：Scene7 - GPUインスタンシング（P/Mでインスタンス数を増減、上限512）
 #pragma once
 #include "IScene.h"
 #include "uiLayoutCommon.h"
@@ -12,7 +11,7 @@ public:
     bool Enter() override;
 
     void Update(float dt) override {
-        // ===== インスタンス数の増減（P=+ / M=-。Scene6のExposureと同じ「押しっぱなしで連続変化」方式）=====
+        // P/Mキーでインスタンス数を連続的に増減
         const float countSpeed = 60.0f; // 1秒あたりの増減数
         if (Input::IsKeyDown('P')) m_instanceCountF += countSpeed * dt;
         if (Input::IsKeyDown('M')) m_instanceCountF -= countSpeed * dt;

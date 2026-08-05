@@ -20,8 +20,8 @@ bool Scene4::Enter() {
         L"assets/nor/nor.png")) return false;
 
     g_pMainModel = new Model(m_device, g_pCubeMesh, g_pNormalMappingMaterial);
-    g_pMainModel->SetPosition(0.0f, 0.0f, -4.0f);//0,0,3
-    g_pMainModel->SetScale(2.0f, 2.0f, 2.0f);//2,2,2
+    g_pMainModel->SetPosition(0.0f, 0.0f, -4.0f);
+    g_pMainModel->SetScale(2.0f, 2.0f, 2.0f);
 
     AddObject(std::make_unique<GameObject>(g_pMainModel, RenderPass::Opaque, BlendMode::Opaque));
 

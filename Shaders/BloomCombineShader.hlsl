@@ -46,7 +46,7 @@ float4 PS(PS_INPUT input) : SV_Target
     // 2. 事前に作っておいたボケ（光の溢れ）成分をサンプリング
     float3 blurColor = txBlur.Sample(samLinear, input.Tex).rgb;
 
-    // 3. 通常シーンにボケ足を「加算合成（足し算）」する
+    // 3. 通常シーンにボケた高輝度成分を「加算合成」する
     // ※元の画面のアルファ値（透過度情報など）を壊さないよう、rgbだけ加算してaはそのまま残します
     float3 finalColor = sceneColor.rgb + blurColor;
 

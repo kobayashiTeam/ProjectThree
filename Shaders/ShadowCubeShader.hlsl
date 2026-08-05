@@ -1,5 +1,3 @@
-// ShadowCubeVSPS.hlsl
-
 cbuffer PerObjectCB : register(b1)
 {
     matrix mModel;

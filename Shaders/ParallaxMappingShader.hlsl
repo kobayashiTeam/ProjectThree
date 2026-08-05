@@ -20,7 +20,7 @@ cbuffer PerObjectBuffer : register(b1)
 cbuffer PerMaterialBuffer : register(b2)
 {
     float4 vMaterialColor;
-    float fHeightScale; // ★パララックスの深さの係数 (C++側から0.02〜0.05程度を渡す)
+    float fHeightScale; // パララックスの深さの係数 (C++側から0.02〜0.05程度を渡す)
     float3 vMaterialPadding;
 };
 
@@ -70,7 +70,7 @@ struct PS_INPUT
 // テクスチャ・サンプラー
 // ---------------------------------------------------------
 Texture2D txDiffuse : register(t0);
-Texture2D txNormalHeightMap : register(t1); // ★RGB: 法線, A: ハイトマップ が入った統合テクスチャ
+Texture2D txNormalHeightMap : register(t1); // RGB: 法線, A: ハイトマップ が入った統合テクスチャ
 SamplerState samLinear : register(s0);
 
 Texture2D shadowMap : register(t3);
@@ -134,7 +134,7 @@ float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
 }
 
 // ---------------------------------------------------------
-// ★ パララックスマッピング関数（UVをズラすコアロジック）
+//  パララックスマッピング関数（UVをズラすコアロジック）
 // ---------------------------------------------------------
 float2 ParallaxMapping(float2 texCoords, float3 viewDirTangent)
 {
@@ -142,9 +142,8 @@ float2 ParallaxMapping(float2 texCoords, float3 viewDirTangent)
     float height = txNormalHeightMap.Sample(samLinear, texCoords).a;
     
     // 視線の傾きに合わせてUVのズレを計算
-    // LearnOpenGLと同じく「1.0 - height」にするか「height」にするかは
-    // 白黒画像の「どっちが凹か」によって反転させてください。
-    // ここでは 白(1.0)が凸、黒(0.0)が凹とし、下に沈み込ませる計算にしています。
+    // ハイトマップの「凸/凹」の解釈により (height) と (1.0 - height) のどちらを使うかが変わる。
+    // このプロジェクトでは 白(1.0)=凸、黒(0.0)=凹 として、下に沈み込ませる計算を採用している。
     float2 p = viewDirTangent.xy / viewDirTangent.z * (height * fHeightScale);
     
     // 元のUV座標から引いて補正後のUVを返す
@@ -163,23 +162,22 @@ float4 PS(PS_INPUT input) : SV_Target
     float3 B = cross(N, T);
     float3x3 TBN = float3x3(T, B, N); // 接空間 -> ワールド空間
 
-    // 2. ★ワールド空間の視線ベクトルを、接空間（TBN空間）へ逆変換する
+    // 2. ワールド空間の視線ベクトルを、接空間（TBN空間）へ逆変換する
     float3 viewDirWorld = normalize(vEyePos.xyz - input.WorldPos);
     // TBN行列は直交行列なので、逆行列は転置（transpose）で求められます
     float3x3 worldToTangent = transpose(TBN);
     float3 viewDirTangent = normalize(mul(viewDirWorld, worldToTangent));
 
-    // 3. ★パララックスマッピングを実行し、視差を考慮した新しいUV座標を取得
+    // 3. パララックスマッピングを実行し、視差を考慮した新しいUV座標を取得
     float2 offsetTexCoords = ParallaxMapping(input.Tex, viewDirTangent);
 
-    // 4. ★描画がポリゴンのUV境界（0.0〜1.0）を超えた場合、ピクセルを捨てる（お好みで）
-    // 壁の端の表現などで不自然に引き延ばされるのを防ぎます
+    // 4. UV境界（0.0〜1.0）を超えたピクセルは破棄する（任意の処理。壁の端が不自然に引き延ばされるのを防ぐ）
     if (offsetTexCoords.x < 0.0f || offsetTexCoords.x > 1.0f || offsetTexCoords.y < 0.0f || offsetTexCoords.y > 1.0f)
     {
         discard;
     }
 
-    // 5. ★【重要】これ以降はすべて「offsetTexCoords」を使ってサンプリングする！
+    // 5. これ以降はすべて「offsetTexCoords」を使ってサンプリングする
     float4 texColor = txDiffuse.Sample(samLinear, offsetTexCoords);
     float4 objectColor = texColor * input.Color * vMaterialColor;
 
@@ -189,21 +187,18 @@ float4 PS(PS_INPUT input) : SV_Target
     // デコード [-1.0 〜 1.0]
     float3 localNormal = normalMapColor * 2.0f - 1.0f;
     
-    // OpenGL形式のノーマルマップ対策（上下が逆なら反転）
-    // localNormal.y = -localNormal.y; 
-
     // 新しいUVから作った法線をワールド空間へ変換
     float3 normal = normalize(mul(localNormal, TBN));
 
     // ---------------------------------------------------------
-    // ライティング計算（ここからは元コードのまま、normalと新しいobjectColorを使用）
+    // ライティング計算（法線マッピング版と同じロジックだが、パララックスで補正したnormal/objectColorを使用）
     // ---------------------------------------------------------
     float3 globalAmbient = float3(0.1f, 0.1f, 0.1f) * objectColor.xyz;
     float3 totalDirectLight = float3(0.0f, 0.0f, 0.0f);
 
     for (int i = 0; i < lightCount; i++)
     {
-        float3 lightDir;
+        float3 lightDir; // 初期値（Spotライトは現状未対応。使用中の光源はDirectional/Pointのみ）
         if (lights[i].type == 0) // Directional
         {
             lightDir = normalize(-lights[i].direction.xyz);
@@ -248,7 +243,5 @@ float4 PS(PS_INPUT input) : SV_Target
     }
 
     float3 finalColor = globalAmbient + totalDirectLight;
-    //test
-    //finalColor *= 90.0f;
     return float4(finalColor, objectColor.a);
 }

@@ -6,16 +6,14 @@ Camera::Camera(float width, float height)
     : m_windowWidth(width)
     , m_windowHeight(height)
 {
-    //cameraの正体は場所と向きの行列。見た目的な実体はない。
-    // 初期行列を設定
+    // ビュー行列はカメラの位置と向きを表現する行列
     m_view = XMMatrixIdentity();
-    //引数内のような視錐台を仮定したとき、台内にある頂点をスクリーンに投影する
-    //行列を作る関数。
+    // 透視投影行列を生成
     m_projection = 
-        XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), width / height, 0.01f, 1000.0f);//100
-    m_eyePos = XMFLOAT4(0.0f, 0.0f,-10.0f, 0.0f);//0,0,-10
+        XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), width / height, 0.01f, 1000.0f);
+    m_eyePos = XMFLOAT4(0.0f, 0.0f,-10.0f, 0.0f);
 
-    //yaw,pitchを初期化
+    // カメラの向きを初期化
     m_yaw = XMConvertToRadians(90.0f);  // +Z方向;    // 左右（ラジアン）
     m_pitch=0.0f;  // 上下（ラジアン）
 }

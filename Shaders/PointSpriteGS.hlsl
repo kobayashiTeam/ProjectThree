@@ -1,5 +1,3 @@
-// PointSprite_GS.hlsl
-// 1点を受け取り、XY平面に広がる板ポリ（2三角形）を生成する
 
 cbuffer PerFrameBuffer : register(b0)
 {
@@ -17,7 +15,7 @@ cbuffer PerSpriteBuffer : register(b3)
     float3 SpriteColor; // 色
 };
 
-// VS_OUTPUTと完全一致（セマンティクスも）
+// Vertex Shader出力と対応する入力形式
 struct GSIn
 {
     float4 WorldPos : TEXCOORD0;
@@ -48,7 +46,7 @@ float4 ToClip(float4 worldPos)
 void GSmain(point GSIn input[1], inout TriangleStream<GSOut> stream)
 {
     float3 center = input[0].WorldPos.xyz;
-    float h = SpriteSize; // 半径
+    float h = SpriteSize; // 半分のサイズ
 
     // XY平面固定の4隅（ワールド空間）
     // TriangleStripなので Z字順に並べる

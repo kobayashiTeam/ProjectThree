@@ -158,18 +158,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="main2.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="main3.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="main4.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="material.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="model.cpp" />
@@ -178,14 +166,10 @@
     </ClCompile>
     <ClCompile Include="normalMappingMaterial.cpp" />
     <ClCompile Include="normalVizMaterial.cpp" />
-    <ClCompile Include="outLine.cpp" />
-    <ClCompile Include="outLineMaterial.cpp" />
     <ClCompile Include="parallaxMappingMaterial.cpp" />
     <ClCompile Include="PointSpriteGSEffect.cpp" />
-    <ClCompile Include="postProcess.cpp" />
     <ClCompile Include="rasterizerStates.cpp" />
     <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="renderQueue.cpp" />
     <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="scene0.cpp" />
     <ClCompile Include="scene1.cpp" />
@@ -240,8 +224,6 @@
     <ClInclude Include="normalMappingMaterial.h" />
     <ClInclude Include="normalVizGSEffect.h" />
     <ClInclude Include="normalVizMaterial.h" />
-    <ClInclude Include="outLine.h" />
-    <ClInclude Include="outLineMaterial.h" />
     <ClInclude Include="parallaxMappingMaterial.h" />
     <ClInclude Include="pointSpriteGSEffect.h" />
     <ClInclude Include="postProcess.h" />
@@ -281,11 +263,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Shaders\Monochromatic.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Shaders\OutlineShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

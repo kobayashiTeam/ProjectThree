@@ -2,9 +2,6 @@
 // ディファードライティング ＋ SSAO合成ピクセルシェーダー
 // =========================================================
 
-// ---------------------------------------------------------
-// 定数バッファ（既存の構造をそのまま維持）
-// ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;
@@ -85,9 +82,6 @@ PS_INPUT VS(VS_INPUT input)
     return output;
 }
 
-// ---------------------------------------------------------
-// シャドウ計算（既存のロジックをそのまま維持）
-// ---------------------------------------------------------
 float ShadowCalculation_Directional(float4 lightSpacePos)
 {
     float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
@@ -129,8 +123,7 @@ PS_OUTPUT PS(PS_INPUT input)
     float3 normal = normalize(normalData.xyz * 2.0f - 1.0f);
     float3 viewDir = normalize(vEyePos.xyz - worldPos);
 
-    // ★追加：SSAOマップからオクルージョン値（0.0～1.0）をサンプリング
-    // 値がブレるのを防ぐため、深度と同じ samPoint サンプラーを使用します
+    // SSAOによる遮蔽率を取得
     float ssao = txSSAOBlur.Sample(samPoint, input.Tex).r;
 
     // --- 2. ライト計算（SSAOを環境光に適用） ---
@@ -140,12 +133,12 @@ PS_OUTPUT PS(PS_INPUT input)
 
     for (int i = 0; i < lightCount; i++)
     {
-        float3 lightDir;
-        if (lights[i].type == 0)
+        float3 lightDir; // 初期値（Spotライトは現状未対応。使用中の光源はDirectional/Pointのみ）
+        if (lights[i].type == 0)// Directional
         {
             lightDir = normalize(-lights[i].direction.xyz);
         }
-        else if (lights[i].type == 1)
+        else if (lights[i].type == 1)// Point
         {
             lightDir = normalize(lights[i].position.xyz - worldPos);
         }
@@ -189,8 +182,6 @@ PS_OUTPUT PS(PS_INPUT input)
     // (※ブルームの光漏れ判定[Bright]にも、SSAOが反映された最終カラーを用います)
     PS_OUTPUT output;
     output.Color = float4(finalColor, objectColor.a);
-    // デバッグ: SSAOの値だけを出力してみる
-    //output.Color = float4(ssao, ssao, ssao, 1.0f);
 
     float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0f)

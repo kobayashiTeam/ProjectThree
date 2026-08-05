@@ -1,6 +1,5 @@
 #include "scene8.h"
 #include <DirectXPackedVector.h>
-
 #include "deferredCBMaterial.h"
 #include "normalMappingMaterial.h"
 #include "mesh.h"

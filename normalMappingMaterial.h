@@ -1,5 +1,5 @@
 #pragma once
-#include <DirectXMath.h> // ★これが必要
+#include <DirectXMath.h> 
 #include"material.h"
 
 class NormalMappingMaterial : public Material
@@ -8,19 +8,18 @@ public:
     // このマテリアル専用の定数バッファ構造体（スロット2用）
     struct PerMaterialCB
     {
-        DirectX::XMFLOAT4 vMaterialColor; // マテリアル固有の色（今回はテスト用）
+        DirectX::XMFLOAT4 vMaterialColor; // マテリアル固有の色
     };
 
-    //派生マテリアル専用テクスチャ、の設定を持ったview、とサンプラー
-    ID3D11ShaderResourceView* m_pNormalMapTextureRV;
-    ID3D11SamplerState* m_pNormalMapSamplerLinear;
-
 private:
+    // 法線マップ用のSRVとサンプラー
+    ID3D11ShaderResourceView* m_pNormalMapTextureRV = nullptr;
+    ID3D11SamplerState* m_pNormalMapSamplerLinear = nullptr;
     ID3D11Buffer* m_pMaterialBuffer = nullptr; // スロット2用バッファ
     PerMaterialCB m_cbData;                    // パラメータの生データ
 
 public:
-    NormalMappingMaterial() : m_pMaterialBuffer(nullptr) {
+    NormalMappingMaterial(){
         m_cbData.vMaterialColor = DirectX::XMFLOAT4(1, 1, 1, 1);
     }
     ~NormalMappingMaterial() override { if (m_pMaterialBuffer) m_pMaterialBuffer->Release(); }
@@ -33,9 +32,8 @@ public:
         m_cbData.vMaterialColor = DirectX::XMFLOAT4(r, g, b, a);
     }
 
-    // ★親のBindを上書き（オーバーライド）して、自分専用のバッファもセットする！
+    // 親のBindを上書き（オーバーライド）して、自分専用のバッファもセットする
     void Bind(ID3D11DeviceContext* pContext) override;
 
-    //test:normalmapの入手
 	bool InitializeNormalMapFromFile(ID3D11Device* pDevice, const wchar_t* pFileName);
 };

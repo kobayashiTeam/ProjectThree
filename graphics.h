@@ -1,4 +1,3 @@
-// Graphics.h
 #pragma once
 #include <d3d11.h>
 
@@ -16,13 +15,12 @@ public:
     void BeginScene(float r, float g, float b, float a);
     void EndScene();
 
-    // 他のクラスからDirectXオブジェクトを安全に利用するためのゲッター
+    // DirectXリソースへアクセスするための取得関数
     ID3D11Device* GetDevice() const { return m_pd3dDevice; }
     ID3D11DeviceContext* GetContext() const { return m_pImmediateContext; }
 
-    //テスト
 	void bindDefaultRenderTarget();
-    //描画先カラーバッファを直接外部から欲しいときがある
+    // 描画先カラーバッファを直接取得する場合に使用
     ID3D11Texture2D* getBackBufferTexture() {return pBackBuffer; }
 
 private:
@@ -31,11 +29,7 @@ private:
     IDXGISwapChain* m_pSwapChain = nullptr;
     ID3D11Texture2D* pBackBuffer = nullptr;
     ID3D11RenderTargetView* m_pRenderTargetView = nullptr;
-    //描画領域と被るようなオブジェクトは大体texture2dの型？
     ID3D11Texture2D* m_pDepthStencil = nullptr;
     ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
 
-    //テスト
-public:
-    
 };

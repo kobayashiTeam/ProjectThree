@@ -53,7 +53,7 @@ bool SSAOPass::initNoiseTexture(ID3D11Device* pDevice) {
     if (FAILED(hr)) return false;
 
     return true;
-}// 元のinitSSAOそのまま移植
+}
 
 bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
 
@@ -98,11 +98,11 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
 
     return true;
 
-}// 元のinitSSAOSamplerそのまま移植
+}
 
 bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
 
-    // ★ここで実際の画面解像度（ビューポートの横幅・縦幅）を使って計算する
+    //ここで実際の画面解像度（ビューポートの横幅・縦幅）を使って計算する
     float windowWidth = 1280.0f; // 実際のゲーム画面の横幅
     float windowHeight = 720.0f; // 実際のゲーム画面の縦幅
     // --- 64個のサンプルベクトルの生成ロジック ---
@@ -128,7 +128,7 @@ bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
     // --- 固定パラメータの初期値設定 ---
     m_paramData.noiseScale = DirectX::XMFLOAT2(windowWidth / 4.0f, windowHeight / 4.0f); // 画面解像度に合わせて後で更新も可
     m_paramData.radius = 0.40f;   // 遮蔽を調べる半径（ゲームのスケールに合わせて要調整）
-    m_paramData.bias = 0.03f; // ニキビのようなアーティファクトを防ぐバイアス0.025
+    m_paramData.bias = 0.03f; // アクネ（自己遮蔽ノイズ）を防ぐためのバイアス値
 
     // --- Dynamic定数バッファの作成 ---
     D3D11_BUFFER_DESC cbDesc = {};
@@ -142,15 +142,13 @@ bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
     HRESULT hr = pDevice->CreateBuffer(&cbDesc, nullptr, &m_ssaoCB);
     if (FAILED(hr)) return false;
 
-    // 前述のノイズテクスチャ生成などもここに続く...
     return true;
 
-}// 元のinitSSAOConstantBufferそのまま移植
+}
 
 void SSAOPass::updateConstantBuffer(ID3D11DeviceContext* ctx) {
 
-    // イマジナリー仕様：もしリアルタイムにImGui等で radius や bias をイジるなら
-   // ここで m_ssaoParamData.radius = imgui_value; のように更新してからMapします
+    // TODO: 将来的にImGui等でradius/biasを実行時調整する場合は、ここでm_paramDataを更新してからMapする
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     // GPUの書き込みが終わるのを待たずに新しいバッファを割り当てる DISCARD を指定
@@ -162,7 +160,7 @@ void SSAOPass::updateConstantBuffer(ID3D11DeviceContext* ctx) {
         ctx->Unmap(m_ssaoCB.Get(), 0);
     }
 
-    // ピクセルシェーダーのスロット 6 に定数バッファをセット！
+    // ピクセルシェーダーのスロット 6 に定数バッファをセット
     ctx->PSSetConstantBuffers(6, 1, m_ssaoCB.GetAddressOf());
 
-}// 元のupdateSSAOConstantBufferそのまま移植
+}

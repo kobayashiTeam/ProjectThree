@@ -1,8 +1,5 @@
 #include"light.h"
 
-// Light.cppiV‹Kì¬j
-#include "Light.h"
-
 DirectX::XMMATRIX PointLight::GetViewMatrix(int face) const
 {
     using namespace DirectX;

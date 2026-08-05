@@ -1,4 +1,3 @@
-// GBufferDebugDepthBlit.hlsl
 // Scene3のDepth表示専用。GBufferDebugBlit.hlslとの違いは1点だけ：
 // 生の非線形depth値をそのまま出すと近距離?中距離がほぼ全部1.0付近に張り付いて
 // 真っ赤（濃淡なし）に見えてしまうため、ここで線形化してからグレースケール化する。
@@ -26,7 +25,7 @@ VS_OUTPUT VS(VS_INPUT input)
 Texture2D sourceTexture : register(t0);
 SamplerState linearSampler : register(s0);
 
-// ★camera.cppのXMMatrixPerspectiveFovLHに渡しているnear/farと一致させること
+// camera.cppのXMMatrixPerspectiveFovLHに渡しているnear/farと一致させること
 static const float NEAR_Z = 0.01f;
 static const float FAR_Z = 1000.0f;
 // 見やすさ調整用の目安値（シーンのスケールに応じて変えてよい）

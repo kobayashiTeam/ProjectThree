@@ -1,4 +1,3 @@
-// scene5.h：Scene5 - シャドウマッピング（DirectionalLightをWASD、PointLightをIJKLで動かし、Tabで表示ライトを切り替える）
 #pragma once
 #include "IScene.h"
 #include "gameObject.h"
@@ -63,7 +62,7 @@ public:
     }
 
     void Submit(Renderer* renderer) override {
-        // DirectionalLight：z0固定で正規化してから反映（0ベクトル化を回避）
+        // DirectionalLight：Z成分は1.0固定で正規化してから反映（0ベクトル化を回避）
         DirectX::XMFLOAT3 dir(m_dirX, m_dirY, 1.0f);
         float lenSq = dir.x * dir.x + dir.y * dir.y;
         if (lenSq > 0.0001f) {
@@ -101,13 +100,12 @@ public:
         swprintf_s(buf, L"Point Light : (%.2f, %.2f)", m_pointX, m_pointZ);
         textRenderer->DrawString(buf, 20.0f, 380.0f);
 
-        //トータル時間の更新
+        // トータル時間の更新
         m_uiTime += dt;
-        //現在のsceneを表示する
+        // 現在のsceneを表示する
         displayCurrentScene(textRenderer, 5);
-        //現在sceneでの操作説明を表示する
+        // 現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer, dt);
-        //test
         DrawSceneNavigationHint(textRenderer);
     }
 

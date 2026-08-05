@@ -1,4 +1,3 @@
-// UnLitMaterial.cpp
 #include "unLitMaterial.h"
 
 // ==========================================================

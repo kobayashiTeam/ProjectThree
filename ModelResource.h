@@ -23,7 +23,7 @@ public:
     // ファイルからモデルを読み込む（エントリーポイント）
     bool LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& filePath);
 
-    // 外部のModelインスタンスが描画する際に参照するパーツリスト
+    // 描画時に参照するモデルパーツ一覧
     const std::vector<ModelPart>& GetParts() const { return m_parts; }
 
 private:
@@ -36,7 +36,7 @@ private:
 private:
     std::vector<ModelPart> m_parts;
 
-    // メモリ解放のために、このファイルが動的に生成した全アセットを追跡する
+    // このリソースが所有する生成済みアセットを保持
     std::vector<Mesh*> m_ownedMeshes;
     std::vector<Material*> m_ownedMaterials;
 };

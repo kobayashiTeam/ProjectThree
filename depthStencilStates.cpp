@@ -26,7 +26,7 @@ bool DepthStencilStates::Initialize(ID3D11Device* device) {
 	D3D11_DEPTH_STENCIL_DESC skyboxDesc = {};
 	skyboxDesc.DepthEnable = TRUE;
 	skyboxDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // 空の向こうに物は描画されないので書き込み不要
-	skyboxDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;     // ★1.0で並んだときにパスさせるために必須
+	skyboxDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;     // 1.0で並んだときにパスさせるために必須
 
 	hr = device->CreateDepthStencilState(&skyboxDesc, m_pDepthLessEqualState.GetAddressOf());
 	if (FAILED(hr)) return false;
@@ -48,6 +48,7 @@ void DepthStencilStates::Bind(ID3D11DeviceContext* pContext,Mode mode) {
 		break;
 	case Mode::DepthLessEqual:
 		pContext->OMSetDepthStencilState(m_pDepthLessEqualState.Get(),0);
+		break;
 	}
 	return;
 }

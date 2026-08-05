@@ -1,6 +1,3 @@
-// NormalVis_VSPS.hlsl
-// 既存のVS/PSと同じcbuffer構成をそのまま流用
-
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;
@@ -29,7 +26,6 @@ struct VS_OUTPUT
 {
     float4 ClipPos : SV_POSITION;
     float3 Normal : NORMAL;
-    //float4 WorldPos : POSITION; // GS内でオフセット計算に使う
     float4 WorldPos : TEXCOORD0;
 };
 
@@ -48,10 +44,9 @@ VS_OUTPUT VS(VS_INPUT input)
     VS_OUTPUT output;
 
     float4 worldPos = mul(input.Pos, mModel);
-    output.WorldPos = worldPos; //worldPos//float4(1,0,0,1)
+    output.WorldPos = worldPos;
     output.ClipPos = mul(mul(worldPos, mView), mProjection);
     output.Normal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
-    //output.Normal = mul(float4(input.Normal, 0.0f), mModel).xyz;
     return output;
 }
 
@@ -61,6 +56,4 @@ VS_OUTPUT VS(VS_INPUT input)
 float4 PS(PS_INPUT input) : SV_Target
 {
     return input.Color;
-    return float4(1, 0, 0, 1);
-
 }

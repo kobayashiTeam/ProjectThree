@@ -1,5 +1,5 @@
 #pragma once
-#include <DirectXMath.h> // ★これが必要
+#include <DirectXMath.h>
 #include"material.h"
 
 class UnLitMaterial : public Material
@@ -8,7 +8,7 @@ public:
     // このマテリアル専用の定数バッファ構造体（スロット2用）
     struct PerMaterialCB
     {
-        DirectX::XMFLOAT4 vMaterialColor; // マテリアル固有の色（今回はテスト用）
+        DirectX::XMFLOAT4 vMaterialColor; // マテリアル固有の色
     };
 
 private:
@@ -16,7 +16,7 @@ private:
     PerMaterialCB m_cbData;                    // パラメータの生データ
 
 public:
-    UnLitMaterial() : m_pMaterialBuffer(nullptr) {
+    UnLitMaterial()  {
         m_cbData.vMaterialColor = DirectX::XMFLOAT4(1, 1, 1, 1);
     }
     ~UnLitMaterial() override { if (m_pMaterialBuffer) m_pMaterialBuffer->Release(); }
@@ -29,6 +29,6 @@ public:
         m_cbData.vMaterialColor = DirectX::XMFLOAT4(r, g, b, a);
     }
 
-    // ★親のBindを上書き（オーバーライド）して、自分専用のバッファもセットする！
+    // 親のBindを上書き（オーバーライド）して、自分専用のバッファもセットする
     void Bind(ID3D11DeviceContext* pContext) override;
 };

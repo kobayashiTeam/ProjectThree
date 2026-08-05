@@ -1,14 +1,13 @@
 #pragma once  
-// MoveGSEffect.h  
 #include<d3d11.h>  
 #include"gsEffect.h"  
-#include<DirectXMath.h> // 修正: DirectX::XMFLOAT3 を使用するために必要なヘッダーをインクルード  
+#include<DirectXMath.h>
 
 class NormalVizGSEffect : public GSEffect {  
 private:  
    // このクラス専用のcb構造体  
    struct CBData {  
-       DirectX::XMFLOAT3 NormalColor; // 修正: 不要なスペースを削除  
+       DirectX::XMFLOAT3 NormalColor;
        float NormalLength;  
    } m_cbData;  // 構造体の実体をメンバとして持つ  
 
@@ -40,6 +39,6 @@ public:
 
        // GSとcbufferをバインド  
        pContext->GSSetShader(m_pGS, nullptr, 0);  
-       pContext->GSSetConstantBuffers(3, 1, &m_pCB); //3  
+       pContext->GSSetConstantBuffers(3, 1, &m_pCB);
    }  
 };

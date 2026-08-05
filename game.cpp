@@ -34,7 +34,6 @@ bool Game::Initialize(HWND hWnd, UINT width, UINT height)
     if (!m_textRenderer->Initialize(pDevice, m_graphics->GetContext(),
         L"assets/fonts/DefaultFont.spritefont")) return false;
 
-    //m_currentScene = std::make_unique<TestScene>();
     m_currentScene = std::make_unique<Scene0>();
     m_currentScene->SetDevice(pDevice);
     if (!m_currentScene->Enter()) return false;
@@ -64,15 +63,14 @@ void Game::Update(float dt)
 {
     const float rotSpeed = 0.02f;
     float deltaYaw = 0.0f, deltaPitch = 0.0f;
-    if (Input::IsKeyDown(VK_LEFT))  deltaYaw += rotSpeed;//(g_keyLeft)
-    if (Input::IsKeyDown(VK_RIGHT)) deltaYaw -= rotSpeed;//right
-    if (Input::IsKeyDown(VK_UP))    deltaPitch += rotSpeed;//up
-    if (Input::IsKeyDown(VK_DOWN))  deltaPitch -= rotSpeed;//down
+    if (Input::IsKeyDown(VK_LEFT))  deltaYaw += rotSpeed;
+    if (Input::IsKeyDown(VK_RIGHT)) deltaYaw -= rotSpeed;
+    if (Input::IsKeyDown(VK_UP))    deltaPitch += rotSpeed;
+    if (Input::IsKeyDown(VK_DOWN))  deltaPitch -= rotSpeed;
     m_camera->UpdateDirection(deltaYaw, deltaPitch);
 
     m_currentScene->Update(dt);
 
-    //test
     Input::Update();
 
     if (IScene* next = m_currentScene->CheckTransition())

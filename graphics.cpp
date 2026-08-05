@@ -1,4 +1,3 @@
-// Graphics.cpp
 #include "graphics.h"
 
 Graphics::Graphics()
@@ -17,7 +16,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     sd.BufferCount = 1;
     sd.BufferDesc.Width = width;
     sd.BufferDesc.Height = height;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//ここがディスプレイ出力の限界？
+    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     sd.BufferDesc.RefreshRate.Numerator = 60;
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -26,9 +25,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     sd.SampleDesc.Quality = 0;
     sd.Windowed = TRUE;
 
-    //これはなんだろう？
-    //GPUに要求する、最低機能レベルのサイン
-    //9_1,10_0にしてみたら窓が一瞬出て消えた。
+    // 使用する Direct3D の機能レベル
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
     D3D_FEATURE_LEVEL featureLevel;
 
@@ -42,13 +39,9 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
 
     // 2. レンダーターゲットビューの作成
     pBackBuffer = nullptr;
-    //getBufferが情報取得だけじゃなくて、pBackBufferにいれたのか？
     hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
     if (FAILED(hr)) return false;
-    //これがカラーバッファーのことか？ここに最終的に出力されたものが表示されるのか？
-    //正しい。インデックス0にPSなどの処理後の出力先にここに送られる。
     hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pRenderTargetView);
-    //pBackBuffer->Release();
     if (FAILED(hr)) return false;
 
     // 3. 深度バッファの作成
@@ -66,8 +59,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &m_pDepthStencil);
     if (FAILED(hr)) return false;
 
-    // 4. 深度ステンシルステートの作成（OpenGLの glEnable(GL_DEPTH_TEST) 相当）
-    // 2. ビュー（DSV）の作成（★ここを上に移動）
+    // 4. 深度ステンシルビューの作成
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -76,16 +68,12 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
     if (FAILED(hr)) return false;
 
-    // ==========================================
-    // 後半：準備できたモノをまとめてパイプラインに連結（セット）する
-    // ==========================================
+    // 作成したリソースをレンダリングパイプラインへ設定
 
-    // 4. レンダーターゲットと深度バッファ（窓口）をセット
+    // レンダーターゲットと深度ステンシルビューを設定
     m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
 
     // 5. ビューポートの設定
-    //これもなんだっけ？描画出力先を細かい部分で描画したりするんだっけ？
-    //width,heightを1.2にすると出力が左上に限定された。ミニマップなどに使えそう
     D3D11_VIEWPORT vp;
     vp.Width = (float)width;
     vp.Height = (float)height;

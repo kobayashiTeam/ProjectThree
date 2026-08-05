@@ -7,7 +7,7 @@ void InstancedModel::Render(ID3D11DeviceContext* pContext) {
 
     if (m_instanceData.empty() || !m_pInstanceBuffer) return;
 
-    // ★GPUへの転送ロジック（Map/Unmap）がここに混ざる
+    // インスタンスデータをGPU用バッファへ転送（Map/Unmap）
     UINT count = (std::min)(
         static_cast<UINT>(m_instanceData.size()),
         m_maxInstances
@@ -18,7 +18,7 @@ void InstancedModel::Render(ID3D11DeviceContext* pContext) {
         pContext->Unmap(m_pInstanceBuffer, 0);
     }
 
-    // 2. マテリアルバインド:shaderは内部生成の物を使うことになった
+    // 2. マテリアルバインド（シェーダーはこのクラス内で生成したものを使用）
     pContext->IASetInputLayout(m_pVertexLayout);
     pContext->VSSetShader(m_pVertexShader, nullptr, 0);
     pContext->PSSetShader(m_pPixelShader, nullptr, 0);
@@ -34,12 +34,11 @@ void InstancedModel::Render(ID3D11DeviceContext* pContext) {
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 
     // 3. 描画（直接バッファのポインタとストライドのサイズを渡す）
-    //UINT count = m_instanceData.size();
     m_pMesh->RenderInstanced(pContext, count, m_pInstanceBuffer, sizeof(InstanceData));
 }
 
 
-bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
+bool InstancedModel::Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
     Mesh* mesh,UINT maxInstances) {
     m_pMesh = mesh;
     m_maxInstances = maxInstances;
@@ -84,7 +83,7 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
     if (FAILED(hr)) { pVSBlob->Release(); return false; }
 
          // 2. 頂点レイアウトの作成（現状のレイアウトをそのまま移植）
-    hr = pDevice->CreateInputLayout(instancedLayout, layoutCount, pVSBlob->GetBufferPointer(), //第二引数4
+    hr = pDevice->CreateInputLayout(instancedLayout, layoutCount, pVSBlob->GetBufferPointer(),
         pVSBlob->GetBufferSize(), &m_pVertexLayout);
     pVSBlob->Release();
     if (FAILED(hr)) return false;
@@ -147,7 +146,7 @@ bool InstancedModel:: Init(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 
     hr = pDevice->CreateBuffer(&cbd, nullptr, &m_pMaterialBuffer);
     if (FAILED(hr))return false;
-    //一応マテリアルを初期化する
+    // マテリアルの初期化（デフォルトは白色）
     SetMaterialColor(1,1,1,1);
 
 

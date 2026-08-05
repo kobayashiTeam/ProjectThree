@@ -6,7 +6,7 @@ bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t hei
 {
     m_width = width;
     m_height = height;
-    m_hasDepth = createDepth; // メンバ変数に状態を記録しておく（後でBindやResizeで便利）
+    m_hasDepth = createDepth; // 後続の Bind / Resize で参照するため状態を保持
 
     HRESULT hr;
 
@@ -36,7 +36,7 @@ bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t hei
 
     // ─── 条件付き処理：深度バッファが必要な場合のみ実行 ───
     if (!createDepth) {
-        return true; // 深度が不要（ポストプロセス用など）なら、ここで成功として終了！
+        return true; // 深度が不要（ポストプロセス用など）なら、ここで成功として終了
     }
 
     // 4. 深度バッファ（テクスチャ実体）の作成
@@ -72,10 +72,10 @@ void RenderTarget::Bind(ID3D11DeviceContext* context) {
     // D3D11は第3引数の nullptr を「深度バッファなし」として正しく受け付ける。
     ID3D11DepthStencilView* dsv = m_hasDepth ? m_dsv.Get() : nullptr;
 
-    // パイプラインにレンダーターゲット（色）と深度バッファ（窓口）を連結
+    // レンダーターゲットと深度ステンシルビューをバインド
     context->OMSetRenderTargets(1, m_rtv.GetAddressOf(), dsv);
 
-    // 【重要】以前お話しした通り、ビューポートもこのバッファのサイズに合わせる
+    // ビューポートもこのバッファのサイズに合わせる
     D3D11_VIEWPORT vp{};
     vp.Width = static_cast<float>(m_width);
     vp.Height = static_cast<float>(m_height);
@@ -88,15 +88,13 @@ void RenderTarget::Bind(ID3D11DeviceContext* context) {
 
 
 void RenderTarget::Clear(ID3D11DeviceContext* context, const float* color) {
-    //宣言時点でcolorにデフォルト引数があったとしても、こちらの本定義では
-    //const float* colorで終わらせる
 
 	// 1. カラーバッファのクリア
 	if (color) {
 		context->ClearRenderTargetView(m_rtv.Get(), color);
 	}
 	else {
-		float defaultColor[4] = { 0, 0, 0, 0 }; // 黒で初期化//w=0
+		float defaultColor[4] = { 0, 0, 0, 0 }; // 黒で初期化
 		context->ClearRenderTargetView(m_rtv.Get(), defaultColor);
 	}
 	// 2. 深度バッファのクリア（存在する場合のみ）
@@ -124,13 +122,13 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     textureDesc.ArraySize = 1;
     textureDesc.Format = colorFormat;
 
-    // ★ここが通常と違う！MSAAの設定
+    // MSAAの設定
     textureDesc.SampleDesc.Count = sampleCount; // 4 や 8 など
     textureDesc.SampleDesc.Quality = 0;
     textureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-    // ★重要：MSAAテクスチャはそのままシェーダーで読めないため、
-    // BIND_SHADER_RESOURCE は外し、RENDER_TARGET のみにします。
+    // MSAAテクスチャはそのままシェーダーで読めないため、
+    // BIND_SHADER_RESOURCE は外し、RENDER_TARGET のみに。
     textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
 
     // 1. テクスチャ（カラー実体）の生成
@@ -138,11 +136,11 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     if (FAILED(hr)) return false;
 
     // 2. レンダーターゲットビュー（書き込み窓口）の作成
-    // MSAA用の場合は、第2引数をnullptrにすれば自動的にマルチサンプル用として作成されます
+    // nullptr 指定でマルチサンプル用RTVを作成
     hr = device->CreateRenderTargetView(m_texture.Get(), nullptr, &m_rtv);
     if (FAILED(hr)) return false;
 
-    // ★MSAAなので、シェーダーリソースビュー(SRV)は作成しません（m_srv = nullptrのまま）
+    // MSAAのため SRV は作成しない
 
 
     // ─── 条件付き処理：深度バッファが必要な場合のみ実行 ───
@@ -158,7 +156,7 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     descDepth.ArraySize = 1;
     descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-    // ★カラーバッファとサンプル数を完全に一致させる！
+    //カラーバッファとサンプル数を完全に一致させる
     descDepth.SampleDesc.Count = sampleCount;
     descDepth.SampleDesc.Quality = 0;
     descDepth.Usage = D3D11_USAGE_DEFAULT;
@@ -171,7 +169,7 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
 
-    // ★通常は TEXTURE2D ですが、MSAAの場合は TEXTURE2DMS に指定する必要があります！
+    // MSAA の場合は TEXTURE2DMS を指定
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &descDSV, &m_dsv);
@@ -181,7 +179,6 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
 }
 
 
-// RenderTarget.cpp での実装
 void RenderTarget::BindMultiple(
     ID3D11DeviceContext* context,
     uint32_t count,
@@ -197,7 +194,6 @@ void RenderTarget::BindMultiple(
     }
 
     // 2. パイプラインにまとめてバインド
-    // &rtvs[0] で配列の先頭ポインタを渡す
     context->OMSetRenderTargets(count, &rtvs[0], dsv);
 
     // 3. ビューポートは「0番目のターゲット」のサイズに合わせる
@@ -212,7 +208,6 @@ void RenderTarget::BindMultiple(
     context->RSSetViewports(1, &vp);
 }
 
-// RenderTarget.cpp
 bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uint32_t height,
     DXGI_FORMAT depthFormat)
 {
@@ -227,11 +222,9 @@ bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uin
     depthDesc.Height = height;
     depthDesc.MipLevels = 1;
     depthDesc.ArraySize = 1;
-    //depthDesc.Format = depthFormat; // 例: DXGI_FORMAT_D32_FLOAT
-    depthDesc.Format = DXGI_FORMAT_R32_TYPELESS; // Typelessにする
+    depthDesc.Format = DXGI_FORMAT_R32_TYPELESS; 
     depthDesc.SampleDesc.Count = 1;
     depthDesc.Usage = D3D11_USAGE_DEFAULT;
-    //depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // 両方立てる
 
     HRESULT hr = device->CreateTexture2D(&depthDesc, nullptr, m_depthTexture.GetAddressOf());
@@ -239,15 +232,13 @@ bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uin
 
 	//DSVの作成
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-    //dsvDesc.Format = depthFormat;
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsv.GetAddressOf());
-    if (FAILED(hr)) return false;   // ★ここでは早期returnせず、失敗時のみfalseで抜ける
+    if (FAILED(hr)) return false; 
 
-    // ----- SRV作成（★追記部分） -----
-    // 
+    // SRV の作成
    // Lighting Passなどでこの深度をテクスチャとして読み込むために必要
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // SRV側はFloatとして解釈

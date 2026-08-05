@@ -1,7 +1,7 @@
 // ---------------------------------------------------------
 // 定数バッファ
 // ---------------------------------------------------------
-// スロット0：フレーム単位で共通（カメラやライトの情報）- 変更なし！
+// スロット0：フレーム単位で共通（カメラやライトの情報）
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;
@@ -12,9 +12,8 @@ cbuffer PerFrameBuffer : register(b0)
     float4 vAttenuation;
 };
 
-// ★スロット1（PerObjectBuffer）は使用しないため削除
 
-// スロット2：マテリアル単位で共通 - 変更なし！
+// スロット2：マテリアル単位で共通
 cbuffer PerMaterialBuffer : register(b2)
 {
     float4 vMaterialColor;
@@ -25,13 +24,13 @@ cbuffer PerMaterialBuffer : register(b2)
 // ---------------------------------------------------------
 struct VS_INPUT
 {
-    // スロット0 ~ 3：頂点属性データ（通常描画と同じ）
+    // スロット0 ~ 3：頂点属性データ
     float4 Pos : POSITION;
     float3 Normal : NORMAL;
     float4 Color : COLOR;
     float2 Tex : TEXCOORD0;
 
-    // ★スロット4：インスタンスデータ（C++側の入力レイアウトでセマンティクスインデックスを0~3に分けたもの）
+    // スロット4：インスタンスデータ（C++側の入力レイアウトでセマンティクスインデックスを0~3に分けたもの）
     float4 InstMatrixRow0 : INSTANCE_WORLD0;
     float4 InstMatrixRow1 : INSTANCE_WORLD1;
     float4 InstMatrixRow2 : INSTANCE_WORLD2;
@@ -57,7 +56,7 @@ PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
     
-    // ★4本のfloat4から、このインスタンス固有の4x4ワールド行列を再構築
+    // 4本のfloat4から、このインスタンス固有の4x4ワールド行列を再構築
     float4x4 instanceModelMatrix = float4x4(
         input.InstMatrixRow0,
         input.InstMatrixRow1,
@@ -65,14 +64,14 @@ PS_INPUT VS(VS_INPUT input)
         input.InstMatrixRow3
     );
     
-    // ★mModelの代わりに、再構築したinstanceModelMatrixを使ってワールド座標を計算
-    float4 worldPos = mul(input.Pos, instanceModelMatrix); //input.Pos, instanceModelMatrix
+    // mModelの代わりに、再構築したinstanceModelMatrixを使ってワールド座標を計算
+    float4 worldPos = mul(input.Pos, instanceModelMatrix);
     output.WorldPos = worldPos.xyz;
     
     output.Pos = mul(worldPos, mView);
     output.Pos = mul(output.Pos, mProjection);
     
-    // ★法線ベクトルもインスタンス行列でワールド変換
+    // 法線ベクトルもインスタンス行列でワールド変換
     output.Normal = mul(float4(input.Normal, 0.0f), instanceModelMatrix).xyz;
     output.Normal = normalize(output.Normal);
     
@@ -83,7 +82,7 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ピクセルシェーダー (PS) - 元のコードから変更なし！
+// ピクセルシェーダー (PS)
 // ---------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
@@ -126,39 +125,3 @@ float4 PS(PS_INPUT input) : SV_Target
 }
 
 
-//unlit版
-// ---------------------------------------------------------
-// 頂点シェーダー (VS)
-// ---------------------------------------------------------
-//PS_INPUT VS(VS_INPUT input)
-//{
-//    PS_INPUT output = (PS_INPUT) 0;
-    
-//    float4x4 instanceModelMatrix = float4x4(
-//        input.InstMatrixRow0,
-//        input.InstMatrixRow1,
-//        input.InstMatrixRow2,
-//        input.InstMatrixRow3
-//    );
-    
-//    // ワールド→ビュー→プロジェクション変換のみ
-//    float4 worldPos = mul(input.Pos, instanceModelMatrix);
-//    output.Pos = mul(worldPos, mView);
-//    output.Pos = mul(output.Pos, mProjection);
-    
-//    output.Color = input.Color;
-//    output.Tex = input.Tex;
-    
-//    return output;
-//}
-
-//// ---------------------------------------------------------
-//// ピクセルシェーダー (PS)
-//// ---------------------------------------------------------
-//float4 PS(PS_INPUT input) : SV_Target
-//{
-//    float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    
-//    // ライティング計算なし。テクスチャ・頂点カラー・マテリアルカラーの積をそのまま出力
-//    return texColor * input.Color * vMaterialColor;
-//}

@@ -1,11 +1,9 @@
-// TestScene.h
 #pragma once
 #include "IScene.h"
 #include"gameObject.h"
 #include <vector>
 #include <memory>
 
-//test
 #include"textRenderer.h"
 
 class GameObject;
@@ -22,7 +20,6 @@ public:
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
 
-    // TextRendererの動作確認用の仮実装。Scene0(Title)ができたら削除してよい。
     void SubmitUI(TextRenderer* textRenderer,float dt) override {
         textRenderer->DrawString(L"TestScene - TextRenderer OK", 20.0f, 20.0f);
     }

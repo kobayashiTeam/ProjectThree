@@ -3,21 +3,21 @@
 
 bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
 
-    // ライトCB生成（旧: 201行目）
+    // ライトCB生成
     D3D11_BUFFER_DESC bd = {};
     bd.ByteWidth = sizeof(LightBufferCB);
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     pDevice->CreateBuffer(&bd, nullptr, &m_lightCB);
 
-    // Directionalライト生成＋シャドウマップ（旧: 205-236行目）
+    // Directionalライト生成＋シャドウマップ
     DirectionalLight dirLight = {};
     dirLight.type = LightType::Directional;
     dirLight.position = { -3.0f, 5.0f, -10.0f };
     dirLight.direction = { 3.0f, -1.0f, 1.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 0.80f;//0.8
-    m_directionalLights.reserve(MAX_LIGHTS);   // ★ポインタ安全性のため必須
+    dirLight.intensity = 0.80f;
+    m_directionalLights.reserve(MAX_LIGHTS);   //ポインタ安全性のため必須
     m_directionalLights.push_back(dirLight);
 
     ShadowMap shadowMap;
@@ -27,7 +27,7 @@ bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
     m_shadowMaps.push_back(shadowMap);
 
     m_shadowShader = ShaderManager::GetInstance().GetShader(ShaderID::Shadow);
-    // シャドウサンプラー生成（旧: 224-236行目）...
+    // シャドウサンプラー生成
     D3D11_SAMPLER_DESC sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
@@ -41,7 +41,7 @@ bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
 
     pDevice->CreateSamplerState(&sampDesc, &m_shadowSampler);
 
-    // Pointライト生成＋シャドウキューブマップ（旧: 239-274行目）
+    // Pointライト生成＋シャドウキューブマップ
     bd = {};
     bd.ByteWidth = sizeof(ShadowCubeCB);
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -57,15 +57,13 @@ bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
 
     ShadowCubeMap shadowCubeMap;
     shadowCubeMap.Initialize(pDevice, 2048);
-    shadowCubeMap.SetLight(&m_pointLights[0]);  // ※元コードはローカル変数pointLightのアドレスを渡していたが、
-    //   これは危険（関数を抜けると無効ポインタ）なので、
-    //   vector内の実体を指すよう修正しておきます
+    shadowCubeMap.SetLight(&m_pointLights[0]);
     m_shadowCubeMaps.reserve(MAX_LIGHTS);
     m_shadowCubeMaps.push_back(shadowCubeMap);
 
     m_shadowCubeShader = ShaderManager::GetInstance().GetShader(ShaderID::ShadowCube);
     m_shadowCubeGS = ShaderManager::GetInstance().getGS(ShaderID::ShadowCubeGS);
-    // 通常サンプラー生成（旧: 265-274行目）...
+    // 通常サンプラー生成
     sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -97,7 +95,7 @@ void ShadowSystem::UpdateLightDataConstantBuffer(ID3D11DeviceContext* ctx) {
             dst.color = L.color;
             dst.intensity = L.intensity;
             dst.type = (int)LightType::Directional;
-            dst.farPlane = 0.0f;  // 未使用
+            dst.farPlane = 0.0f;  
             DirectX::XMMATRIX lsm = L.GetViewMatrix() * L.GetProjectionMatrix();
             dst.lightSpaceMatrix = DirectX::XMMatrixTranspose(lsm);
             cb.lightCount++;
@@ -135,7 +133,7 @@ void ShadowSystem::UpdatePointLightConstantBuffer(ID3D11DeviceContext* ctx) {
     if (m_pointLights.empty()) return;
 
     ShadowCubeCB cb = {};
-    const PointLight& L = m_pointLights[0];  // 今は1灯固定
+    const PointLight& L = m_pointLights[0];  // 現在は1灯のみ対応
 
     cb.gLightPos = L.position;
     cb.gFarPlane = L.farPlane;
@@ -152,6 +150,6 @@ void ShadowSystem::UpdatePointLightConstantBuffer(ID3D11DeviceContext* ctx) {
 
     ID3D11Buffer* cbArray[] = { m_pointLightCB.Get() };
     ctx->VSSetConstantBuffers(4, 1, cbArray);
-    ctx->GSSetConstantBuffers(4, 1, cbArray);  // GSにも忘れず
+    ctx->GSSetConstantBuffers(4, 1, cbArray);
     ctx->PSSetConstantBuffers(4, 1, cbArray);
 }

@@ -1,4 +1,3 @@
-// scene2.h：Scene2 - テクスチャ＋ガンマ補正のON/OFF切り替え
 #pragma once
 #include "IScene.h"
 #include"gameObject.h"
@@ -6,10 +5,9 @@
 #include <memory>
 #include"uiLayoutCommon.h"
 
-//test
 #include"textRenderer.h"
 #include"input.h"
-#include"renderer.h" // SetGammaCorrection
+#include"renderer.h" 
 
 class GameObject;
 
@@ -42,13 +40,12 @@ public:
             20.0f, 80.0f);
         textRenderer->DrawString(L"Tab : Toggle Gamma Correction", 20.0f, 140.0f);
 
-        //トータル時間の更新
+        // トータル時間の更新
         m_uiTime += dt;
-        //現在のsceneを表示する
+        // 現在のsceneを表示する
         displayCurrentScene(textRenderer,2);
-        //現在sceneでの操作説明を表示する
+        // 現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer, dt);
-        //test
         DrawSceneNavigationHint(textRenderer);
     }
 
@@ -58,6 +55,5 @@ private:
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
 
-    //固有
     bool m_gammaOn = true;
 };

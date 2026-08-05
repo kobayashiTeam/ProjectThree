@@ -18,7 +18,7 @@ public:
     bool Initialize(ID3D11Device* pDevice, Shader* pShader) override {
         if (!PostProcess::Initialize(pDevice, pShader)) return false;
 
-        // エフェクト専用の定数バッファ（スロット2用など）を作成
+        // エフェクト専用の定数バッファ（スロット2用）を作成
         D3D11_BUFFER_DESC cbd = {};
         cbd.Usage = D3D11_USAGE_DEFAULT;
         cbd.ByteWidth = sizeof(PerEffectCB);

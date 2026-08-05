@@ -74,10 +74,7 @@ PS_INPUT VS(VS_INPUT input)
     // 色とUVはそのままPSへフォワード
     output.Color = input.Color;
     output.Tex = input.Tex;
-
-    // ※遅延シェーディングでは、ライト空間の座標計算(シャドウ用)は
-    //  ここではなく、最後の第2パス（ライティング時）に行うため削除しています。
-
+    
     return output;
 }
 
@@ -88,7 +85,7 @@ PS_OUTPUT PS(PS_INPUT input)
 {
     PS_OUTPUT output;
 
-    float4 testColor = float4(1.0f, 1.0f, 1.0f, 1.0f); // デバッグ用の赤色
+    float4 testColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
     // 1. 【基本色の抽出】
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
     float4 objectColor = texColor * input.Color * testColor;//vMaterialColor
@@ -99,9 +96,7 @@ PS_OUTPUT PS(PS_INPUT input)
     // 2. 【法線情報の書き込み】
     float3 normal = normalize(input.Normal);
     
-    // 法線は [-1.0, 1.0] の範囲を持つが、通常のレンダーターゲット(RGBA8など)に
-    // 保存する場合は [0.0, 1.0] に変換してパッキングする（浮動小数点バッファならそのままでも可）
-    // 今回は安全のため、[0.0, 1.0] への変換式を適用
+    // 法線を0～1範囲へ変換して保存
     float3 packedNormal = normal * 0.5f + 0.5f;
     
     // RT1 に法線を書き込む（W要素は将来のマテリアルID用に1.0を割り振っておきます）

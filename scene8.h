@@ -1,5 +1,3 @@
-// scene8.h：Scene8 - 統合デモ（「同時に動くこと自体が証明になる」技術のみで構成。
-// ON/OFF切替そのものが本質だった機能[テクスチャ+ガンマ切替/G-Bufferデバッグ表示]は対象外）
 #pragma once
 #include "IScene.h"
 #include "gameObject.h"
@@ -22,7 +20,7 @@ public:
     void Update(float dt) override {
         for (auto& obj : m_objects) obj->Update(dt);
 
-        // ===== DirectionalLight操作（Scene4/5と同じロジック）=====
+        // Directional Light の向きを操作
         const float dirSpeed = 1.0f;
         if (Input::IsKeyDown('A')) m_dirX += dirSpeed * dt;
         if (Input::IsKeyDown('D')) m_dirX -= dirSpeed * dt;
@@ -33,7 +31,7 @@ public:
         if (m_dirY > 1.0f) m_dirY = 1.0f;
         if (m_dirY < -1.0f) m_dirY = -1.0f;
 
-        // ===== PointLight操作（Scene5/6と同じロジック）=====
+        // Point Light の位置を操作
         // このライトはシャドウ判定と同時にHDR+Bloomの発火トリガーも兼ねる
         const float pointSpeed = 4.0f;
         if (Input::IsKeyDown('J')) m_pointX -= pointSpeed * dt;
@@ -104,7 +102,7 @@ private:
     float m_pointZ = 3.0f;
     const float m_pointHeight = 4.0f;
 
-    // Scene6の初期値に合わせて固定
+    // Exposureは固定値を使用
     const float m_exposure = 0.5f;
 
     // 表示数・奥へのオフセットは固定（背景の群として使うため操作不可）

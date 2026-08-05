@@ -25,20 +25,17 @@ public:
     uint32_t Width() const { return m_width; }
     uint32_t Height() const { return m_height; }
 
-    //テスト：initialize
-    // 1つのメソッドに統合。デフォルトでは深度バッファも作成する設定にする
 
     bool Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
         DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true);
-    // ★新しく追加
     bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
         DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, 
         bool createDepth=true);
-    // 複数のrtが１つの深度バッファが欲しいとき、こちらで初期化してこれを代表に使う
-        //その場合これのrtvは使わないので最小限のメモリに抑える
+    // 複数のRenderTargetで共有する深度バッファを生成する
+    // カラーバッファは使用しないため、RTVは作成しない
     bool InitializeDepthOnly(ID3D11Device* device, uint32_t width, uint32_t height,
         DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT);
-    //複数のrtを同時にbindするときの静的メソッド
+    // 複数のRenderTargetを同時にバインドするための静的関数
     static void BindMultiple(
         ID3D11DeviceContext* context,
         uint32_t count,
@@ -47,7 +44,7 @@ public:
     );
 
 private:
-	ComPtr<ID3D11Texture2D> m_texture;// カラーバッファー
+	ComPtr<ID3D11Texture2D> m_texture;// カラーバッファ
     ComPtr<ID3D11RenderTargetView> m_rtv;
     ComPtr<ID3D11ShaderResourceView> m_srv;
 

@@ -1,6 +1,5 @@
 ﻿#include "material.h"
 #include"moveGSEffect.h"
-//#include<WICTextureLoader.h> // もしビルドエラーが出たら後述の対策をします
 #include <directxtk/WICTextureLoader.h>
 
 
@@ -93,22 +92,22 @@ void Material::Bind(ID3D11DeviceContext* pContext)
     if (!m_pShader)return;
     if (m_pShader) m_pShader->Bind(pContext);
 
-    //test:GS
+    // ジオメトリシェーダー(オプション)のバインド。未設定ならGSステージを無効化
     if (m_pGSEffect)
         m_pGSEffect->Bind(pContext);
     else
-        pContext->GSSetShader(nullptr, nullptr, 0);  // ← ここに追加
+        pContext->GSSetShader(nullptr, nullptr, 0); 
 
-    // テクスチャとサンプラーをバインド (以前のコードのまま)
-    //どんなシェーダを使うかは知らないが、リソース情報をセットする
-    //本当はmaterialを派生させてクラスごとにbindさせる内容を変える
+    // テクスチャとサンプラーをバインド
+    // このクラスはシェーダー種別を問わず共通のリソースをセットする。
+// シェーダー固有の追加バインドは派生クラス（DeferredCBMaterial等）のBind内で行う
     pContext->PSSetShaderResources(0, 1, &m_pTextureRV);
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 }
 
 void Material::Cleanup()
 {
-    // ★ m_pShader はマネージャーが管理・解放するので、ここでは delete しない！
+    //m_pShader はマネージャーが管理・解放するので、ここでは delete しない
     m_pShader = nullptr;
 
     if (m_pSamplerLinear) { m_pSamplerLinear->Release(); m_pSamplerLinear = nullptr; }
@@ -123,7 +122,7 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
     m_pShader = pShader;
     if (!m_pShader) return false;
 
-    // 2. ★ファイルからテクスチャ（SRV）を直接生成する
+    // 2.ファイルからテクスチャ（SRV）を直接生成する
     // WICTextureLoaderが、PNGやJPGのデコード、D3D11Texture2Dの作成、SRVの生成まで
     // 一発でやってくれます
     hr = DirectX::CreateWICTextureFromFile(pDevice, pFileName, nullptr, &m_pTextureRV);
@@ -138,7 +137,7 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
 
     // 3. サンプラーの作成（既存のコードと全く同じ）
     D3D11_SAMPLER_DESC sampDesc = {};
-    // 💡ファイル画像用なのでPOINTからLINEARに変えると綺麗になります
+    //ファイル画像用なのでPOINTからLINEARに変えると綺麗になります
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;

@@ -1,4 +1,3 @@
-// MoveGSEffect.h
 #include"gsEffect.h"
 
 class MoveGSEffect : public GSEffect {
@@ -40,6 +39,6 @@ public:
 
         // GSとcbufferをバインド
         pContext->GSSetShader(m_pGS, nullptr, 0);
-        pContext->GSSetConstantBuffers(3, 1, &m_pCB);//3
+        pContext->GSSetConstantBuffers(3, 1, &m_pCB);// スロット3にオフセット用CBをバインド
     }
 };

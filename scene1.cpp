@@ -1,5 +1,5 @@
 #include"scene1.h"
-#include <DirectXPackedVector.h> // 必要に応じてインクルード 新規
+#include <DirectXPackedVector.h> 
 
 #include"litMaterial.h"
 #include"unLitMaterial.h"
@@ -7,11 +7,8 @@
 #include"normalMappingMaterial.h"
 #include"parallaxMappingMaterial.h"
 #include"deferredCBMaterial.h"
-#include"outLineMaterial.h"
 #include"mesh.h"
 #include"resourceManager.h"
-#include"outLine.h"
-
 #include"moveGSEffect.h"
 #include"normalVizGSEffect.h"
 
@@ -27,7 +24,7 @@ bool Scene1::Enter() {
 	//material
 	LitMaterial* g_pLitMaterial = nullptr;
 	//model
-	Model* g_pMainModel = nullptr;//宙に浮かぶ立体cube
+	Model* g_pMainModel = nullptr;// 宙に浮かぶキューブ（メインの描画対象）
 	
 
 	// Mesh作成（Cube）
@@ -35,7 +32,6 @@ bool Scene1::Enter() {
 
 	// Material
 		//texture
-	UINT32 checker[4] = { 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF };
 	UINT32 white = 0xFFFFFFFF;
 	//HDR用の白（各チャンネル 1.0f の輝度）
 	DirectX::PackedVector::XMHALF4 whiteHDR(1.0f, 1.0f, 1.0f, 1.0f);
@@ -45,7 +41,6 @@ bool Scene1::Enter() {
 		GetShader(ShaderID::BasicColor), &whiteHDR, 1, 1, true, true)) return false;
 	g_pLitMaterial->CreateMaterialBuffer(m_device);
 	g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
-		//unLitMaterial
 	// Model
 		//Model1
 	g_pMainModel = new Model(m_device, g_pCubeMesh, g_pLitMaterial);

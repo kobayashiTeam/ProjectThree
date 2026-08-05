@@ -108,23 +108,14 @@
     <ClCompile Include="modelResource.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="outLine.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="litMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
     <ClCompile Include="material.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
-    <ClCompile Include="outLineMaterial.cpp">
-      <Filter>ソース ファイル\material</Filter>
-    </ClCompile>
     <ClCompile Include="unLitMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
-    </ClCompile>
-    <ClCompile Include="renderQueue.cpp">
-      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="blendStates.cpp">
       <Filter>ソース ファイル\states</Filter>
@@ -141,12 +132,6 @@
     <ClCompile Include="renderTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="postProcess.cpp">
-      <Filter>ソース ファイル\postProcess</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\OutlineShader.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\ScreenBlit.hlsl">
       <Filter>リソース ファイル</Filter>
     </ClCompile>
@@ -155,9 +140,6 @@
     </ClCompile>
     <ClCompile Include="Shaders\SkyBoxShader.hlsl">
       <Filter>リソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="main2.cpp">
-      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Shaders\InversionShader.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
@@ -192,9 +174,6 @@
     <ClCompile Include="normalVizMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
     </ClCompile>
-    <ClCompile Include="main3.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\PointSpriteGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
     </ClCompile>
@@ -209,9 +188,6 @@
     </ClCompile>
     <ClCompile Include="instancedModel.cpp">
       <Filter>ソース ファイル\model</Filter>
-    </ClCompile>
-    <ClCompile Include="main4.cpp">
-      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Shaders\Lit_InstancingShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
@@ -356,16 +332,10 @@
     <ClInclude Include="modelResource.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="outLine.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="litMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
     <ClInclude Include="material.h">
-      <Filter>ヘッダー ファイル\material</Filter>
-    </ClInclude>
-    <ClInclude Include="outLineMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
     <ClInclude Include="unLitMaterial.h">

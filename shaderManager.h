@@ -1,4 +1,3 @@
-// ShaderManager.h
 #pragma once
 #include <unordered_map>
 #include "graphicsCommon.h"
@@ -16,7 +15,7 @@ private:
 
     // シングルトンのお作法
     ShaderManager() = default;
-    ~ShaderManager() { /* 全シェーダーの delete 処理 */ }
+    ~ShaderManager() {}
 
 public:
     static ShaderManager& GetInstance() {
@@ -26,11 +25,9 @@ public:
 
     // 初期化時に、ゲームで使う全シェーダーを一括コンパイルしてしまう
     bool LoadAllShaders(ID3D11Device* pDevice) {
-        // 対応表に基づいて一気に生成（内部で GetOrCreate を呼ぶ）
+        // 使用するシェーダーを初期化時に生成する
         //basic material
         if (!GetOrCreate(pDevice, ShaderID::Lit, L"Shaders/LitShader.hlsl")) return false;
-        //if (!GetOrCreate(pDevice, ShaderID::LitInstancing, L"Shaders/Lit_InstancingShader.hlsl")) return false;
-        if (!GetOrCreate(pDevice, ShaderID::Outline, L"Shaders/OutlineShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::NormalViz, L"Shaders/NormalVizShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::PointSprite, L"Shaders/PointSpriteShader.hlsl")) return false;
@@ -46,7 +43,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SimpleBoxBlur, L"Shaders/SimpleBoxBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sharpen, L"Shaders/SharpenShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
-            //特殊Bloom
+        // Bloom用ポストプロセス
         if (!GetOrCreate(pDevice, ShaderID::HoriBlur, L"Shaders/HorizontalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::VerBlur, L"Shaders/VerticalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::BloomCombine, L"Shaders/BloomCombineShader.hlsl")) return false;
@@ -61,7 +58,7 @@ public:
         //SSAO
         if (!GetOrCreate(pDevice, ShaderID::SSAO, L"Shaders/SSAOShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::SSAOBlur, L"Shaders/SSAOBlurShader.hlsl")) return false;
-        //Scene3デバッグ表示
+        //デバッグ表示
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebug, L"Shaders/GBufferDebugBlit.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebugDepth, L"Shaders/GBufferDebugDepthBlit.hlsl")) return false;
         return true;
@@ -74,7 +71,7 @@ public:
         return nullptr;
     }
 
-    //テスト：gemetryShader
+    // Geometry Shader
     bool LoadAllGeometryShaders(ID3D11Device* pDevice) {
         // GSが必要なShaderIDだけここに列挙する
         if (!loadGeometryShader(pDevice, ShaderID::NormalVizGS,
@@ -88,7 +85,6 @@ public:
         if (!loadGeometryShader(pDevice, ShaderID::ShadowCubeGS,
             L"Shaders/ShadowCubeGS.hlsl")) return false;
 
-        // 必要になったら追加していく
         return true;
     }
 
@@ -99,11 +95,7 @@ public:
 private:
     bool GetOrCreate(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
 
-        //meshは0:pos,1:normal:1,color:2,uv:3の順番でIAsetVertexBuffers登録される
-        //inputLauoutも対応した番号でなければならない
-        //meshで登録された情報のうち、inputLayout(shader内部)で実際に使われているものが
-        //draw時にキャッシュメモリに登録される
-
+        // 頂点バッファの入力順とInputLayoutのslot番号を一致させる必要がある
         // IDごとにlayoutを定義
         D3D11_INPUT_ELEMENT_DESC standardLayout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,             D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -142,11 +134,7 @@ private:
             layout = standardLayout;
             layoutCount = 4;
             break;
-        case ShaderID::Outline:
-            layout = standardLayout;
-            layoutCount = 4;
-            break;
-        case ShaderID::SkyBox://今回は全対応で
+        case ShaderID::SkyBox:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;
@@ -225,7 +213,6 @@ private:
         case ShaderID::Sharpen:
         case ShaderID::Vignette:
         default:
-            // Lit, Outline, UnLit は standardLayout
             break;
         }
 

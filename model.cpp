@@ -2,16 +2,14 @@
 #include "mesh.h"
 #include "material.h"
 #include"litMaterial.h"
-#include"outLineMaterial.h"
 
-// 従来のコンストラクタ：単一のパーツとしてリストに1個だけ登録する（これで立方体も動く！）
+// 従来のコンストラクタ：単一のパーツとしてリストに1個だけ登録する（これで立方体も動く）
 Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
     : m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
 {
     ModelPart singlePart;
     singlePart.pMesh = pMesh;
     singlePart.pMaterial = pMaterial;
-    //単位行列を書けるようなもの、変化なし。
     singlePart.localTransform = DirectX::XMMatrixIdentity(); // 立方体はオフセットなし
     m_Parts.push_back(singlePart);
 
@@ -78,7 +76,7 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
         // 1. マテリアルの適用
         part.pMaterial->Bind(pContext);
 
-        // 2. ★超重要：このパーツ専用の行列を計算
+        // 2.このパーツ専用の行列を計算
         // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
         DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, 
            GetWorldMatrix());
@@ -96,47 +94,8 @@ void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
     }
 }
 
-void Model::DrawWithOutLine(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer,
-    OutLineMaterial* m_pOutLineMaterial) {
 
-    // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回
-    pContext->VSSetConstantBuffers(0, 1, &pFrameBuffer);
-    pContext->PSSetConstantBuffers(0, 1, &pFrameBuffer);
-
-    // モデルが持つすべてのパーツをループ描画
-    for (const auto& part : m_Parts)
-    {
-        if (!part.pMesh || !part.pMaterial) continue;
-
-        // 1. マテリアルの適用
-        part.pMaterial->Bind(pContext);
-
-        // ★★★ ここを追加：Pixel Shaderのオーバーライド
-        if (m_pOutLineMaterial)
-        {
-            m_pOutLineMaterial->Bind(pContext);
-        }
-
-        // 2. ★超重要：このパーツ専用の行列を計算
-        // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
-        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
-            GetWorldMatrix());
-
-        //バッファは初期化時に生成されている。今はデータを作る
-        Model::PerObjectCB objCB;
-        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX用に転置
-
-        // 3. 定数バッファをパーツごとに書き換えてスロット1にバインド
-        pContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
-        pContext->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
-
-        // 4. メッシュの描画
-        part.pMesh->Render(pContext);
-    }
-}
-
-
-// Model側に追加
+// シャドウマップ生成など、マテリアルを介さずジオメトリのみ描画したい場面向け
 void Model::DrawGeometryOnly(ID3D11DeviceContext* ctx, ID3D11Buffer* pPerFrameCB)
 {
     // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回
@@ -149,9 +108,8 @@ void Model::DrawGeometryOnly(ID3D11DeviceContext* ctx, ID3D11Buffer* pPerFrameCB
         if (!part.pMesh || !part.pMaterial) continue;
 
         // 1. マテリアルの適用をしない。同じシェーダをセットし続ければ問題ない
-        //part.pMaterial->Bind(pContext);
 
-        // 2. ★超重要：このパーツ専用の行列を計算
+        // 2.このパーツ専用の行列を計算
         // 「パーツ自身のローカルオフセット」 × 「モデル全体の配置行列」
         DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
             GetWorldMatrix());

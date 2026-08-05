@@ -1,5 +1,5 @@
-// MoveGS.hlsl
-
+// Geometry Shader
+// 生成された三角形全体を指定量だけ移動する
 struct GSIn
 {
     float4 Pos : SV_POSITION;

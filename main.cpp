@@ -1,5 +1,4 @@
-﻿// main.cpp
-#include <windows.h>
+﻿#include <windows.h>
 #include "game.h"
 #include"input.h"
 
@@ -17,7 +16,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (wParam == VK_RIGHT) g_keyRight = true;
         if (wParam == VK_UP)    g_keyUp = true;
         if (wParam == VK_DOWN)  g_keyDown = true;
-        //test
         Input::OnKeyDown(wParam);
         return 0;
     case WM_KEYUP:

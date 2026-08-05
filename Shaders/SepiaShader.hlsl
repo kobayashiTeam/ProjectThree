@@ -23,7 +23,7 @@ SamplerState linearSampler : register(s0);
 // スロット2：C++側の PerEffectCB と完全に一致させる
 cbuffer PerEffectCB : register(b2)
 {
-    float g_intensity; // 0.0～1.0
+    float g_intensity; // 0.0 = 元の色, 1.0 = 完全なセピア
     float3 g_dummy;
 };
 

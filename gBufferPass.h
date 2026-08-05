@@ -1,5 +1,4 @@
 #pragma once
-// GBufferPass.h
 #include<d3d11.h>
 #include"renderTarget.h"
 
@@ -23,6 +22,13 @@ public:
         if (FAILED(device->CreateSamplerState(&pointDesc, m_depthSampler.GetAddressOf()))) return false;
 
         return true;
+    }
+
+    ~GBufferPass() {
+        delete m_position;
+        delete m_normal;
+        delete m_albedo;
+        delete m_depthOnly;
     }
 
     // MRTのクリア＋バインドのみ。ステート設定とキュー実行はRenderer側に残す

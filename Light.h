@@ -1,4 +1,3 @@
-// Light.h
 #pragma once
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -8,7 +7,7 @@
 //Directional Light
 struct DirectionalLight {
     LightType             type = LightType::Directional;
-    DirectX::XMFLOAT3     position = { 0.0f, 10.0f, 0.0f };//y5
+    DirectX::XMFLOAT3     position = { 0.0f, 10.0f, 0.0f };// シーン全体を見渡せる高さに配置
     DirectX::XMFLOAT3     direction = { 0.0f, -1.0f, 0.0f };
     DirectX::XMFLOAT4     color = { 1.0f, 1.0f, 1.0f, 1.0f };
     float                 intensity = 1.0f;
@@ -34,8 +33,8 @@ struct DirectionalLight {
     DirectX::XMMATRIX GetProjectionMatrix() const
     {
         using namespace DirectX;
-        // 平行光源は正射影・範囲は決め打ち（後で調整）
-        return XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 50.0f);//20,20,0.1,50
+        // 平行光源は正射影。シーンの規模に合わせて範囲を20x20に固定
+        return XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 50.0f);
     }
 };
 

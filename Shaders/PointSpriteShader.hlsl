@@ -1,6 +1,3 @@
-// PointSprite_VSPS.hlsl
-// “_ŒQ‚©‚çGS‚Å”Âƒ|ƒŠ‚ğ¶¬‚·‚é‚½‚ß‚ÌVS/PS
-
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;

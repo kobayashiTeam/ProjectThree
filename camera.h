@@ -10,7 +10,7 @@ public:
     // 毎フレーム更新（必要に応じてカメラの位置を動かせるようにする）
     void Update(DirectX::XMVECTOR eye, DirectX::XMVECTOR at, DirectX::XMVECTOR up);
 
-    // ゲッター関数（Render関数で定数バッファに渡すために取得する）
+    // 定数バッファへ渡すためのアクセサ
     DirectX::XMMATRIX GetViewMatrix() const { return m_view; }
     DirectX::XMMATRIX GetProjectionMatrix() const { return m_projection; }
     DirectX::XMFLOAT4 GetEyePosition() const { return m_eyePos; }
@@ -24,7 +24,6 @@ private:
     float m_windowWidth;
     float m_windowHeight;
 
-    // 追加
     float m_yaw;// 左右（ラジアン）
     float m_pitch;  // 上下（ラジアン）
 };

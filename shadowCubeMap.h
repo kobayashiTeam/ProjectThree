@@ -6,7 +6,7 @@
 
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-class PointLight;  // forward
+class PointLight;  
 
 class ShadowCubeMap {
 public:

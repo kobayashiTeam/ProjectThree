@@ -1,4 +1,3 @@
-// MathUtils.h
 #pragma once
 #include <DirectXMath.h>
 
@@ -12,7 +11,7 @@ namespace MyEngine {
         return dist;
     }
 
-    // ‚Â‚¢‚Å‚É«—ˆg‚¢‚»‚¤‚È‚à‚Ì‚à‚±‚±‚É“ü‚ê‚Ä‚¢‚­
+    // üŒ`•âŠÔ
     inline float Lerp(float start, float end, float t) {
         return start + t * (end - start);
     }

@@ -46,7 +46,7 @@ VS_OUTPUT VS(VS_INPUT input)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     float4 sum = 0.0f;
-    int radius = 2; // 変更するとぼかし強度が変わる（奇数推奨）
+    int radius = 2; // ぼかし範囲。大きくするほど強くぼける（サンプル数は常に奇数になる設計）
 
     for (int x = -radius; x <= radius; ++x)
     {

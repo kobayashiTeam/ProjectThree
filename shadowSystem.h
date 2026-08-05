@@ -1,5 +1,4 @@
 #pragma once
-// ShadowSystem.h
 #include<d3d11.h>
 #include<vector>
 #include <wrl/client.h>
@@ -54,22 +53,20 @@ public:
     void SubmitShadowPass(RenderQueue& opaqueQueue) {
         opaqueQueue.SetOverrideVS(m_shadowShader);
     }
-    //test
-    // Scene4用：DirectionalLightの向きを外部から書き換える（既存要素のin-place更新、
-    // 配列の再確保はしない）
+    // DirectionalLightの方向を更新する
     void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir) {
         if (!m_directionalLights.empty()) {
             m_directionalLights[0].direction = dir;
         }
     }
-    // Scene5用：PointLightの位置を書き換える（既存要素をin-place更新、再確保はしない）
+    // PointLightの位置を更新する
     void SetPointLightPosition(DirectX::XMFLOAT3 pos) {
         if (!m_pointLights.empty()) {
             m_pointLights[0].position = pos;
         }
     }
 
-    // Scene5用：Directional/Point/Bothの表示切り替え（UpdateLightDataConstantBuffer内で分岐に使用）
+    // 有効化するライト種別を設定する
     void SetLightVisibilityMode(LightVisibilityMode mode) {
         m_lightVisibilityMode = mode;
     }
@@ -87,6 +84,7 @@ private:
 
     ComPtr<ID3D11SamplerState> m_shadowSampler;
     ComPtr<ID3D11SamplerState> m_shadowCubeSampler;
-    ComPtr<ID3D11Buffer> m_pointLightCB;//shadowCubeMaシェーダ使うcb
-	ComPtr<ID3D11Buffer> m_lightCB;//全てで使う
+    // ShadowCubeMap用シェーダーの定数バッファ
+    ComPtr<ID3D11Buffer> m_pointLightCB;
+	ComPtr<ID3D11Buffer> m_lightCB;
 };

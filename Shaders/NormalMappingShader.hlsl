@@ -49,7 +49,7 @@ struct VS_INPUT
     float3 Normal : NORMAL;
     float4 Color : COLOR;
     float2 Tex : TEXCOORD0;
-    float3 Tangent : TANGENT; // ★C++側の5番目のストリームから受け取る
+    float3 Tangent : TANGENT; // C++側の5番目のストリームから受け取る
 };
 
 struct PS_INPUT
@@ -59,14 +59,14 @@ struct PS_INPUT
     float2 Tex : TEXCOORD0;
     float3 WorldPos : TEXCOORD2;
     float4 LightSpacePos : TEXCOORD1;
-    // ★ピクセルシェーダーにワールド空間の「法線」と「接線」を別々で渡す
+    // ピクセルシェーダーにワールド空間の「法線」と「接線」を別々で渡す
     float3 WorldNormal : NORMAL;
     float3 WorldTangent : TANGENT;
 };
 
 // テクスチャ・サンプラー（t1に法線マップを追加）
 Texture2D txDiffuse : register(t0);
-Texture2D txNormalMap : register(t1); // ★法線マップ用スロット
+Texture2D txNormalMap : register(t1); // 法線マップ用スロット
 SamplerState samLinear : register(s0);
 
 Texture2D shadowMap : register(t3);
@@ -90,7 +90,7 @@ PS_INPUT VS(VS_INPUT input)
     output.Pos = mul(worldPos, mView);
     output.Pos = mul(output.Pos, mProjection);
 
-    // ★ワールド空間における「法線」と「接線」をそれぞれ計算してPSへ送る
+    // ワールド空間における「法線」と「接線」をそれぞれ計算してPSへ送る
     output.WorldNormal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
     output.WorldTangent = normalize(mul(float4(input.Tangent, 0.0f), mModel).xyz);
 
@@ -143,7 +143,7 @@ float4 PS(PS_INPUT input) : SV_Target
     float4 objectColor = texColor * input.Color * vMaterialColor;
 
     // ---------------------------------------------------------
-    // ★ ノーマルマッピングによる法線ベクトルの生成
+    //  ノーマルマッピングによる法線ベクトルの生成
     // ---------------------------------------------------------
     float3 N = normalize(input.WorldNormal);
     float3 T = normalize(input.WorldTangent);
@@ -163,10 +163,6 @@ float4 PS(PS_INPUT input) : SV_Target
     // カラー値 [0.0 〜 1.0] を ベクトル成分 [-1.0 〜 1.0] へデコード
     float3 localNormal = normalMapColor * 2.0f - 1.0f;
     
-    // 【重要】もしOpenGL形式（LearnOpenGLの素材など）の画像を使って
-    // 凹凸の上下が逆に見える場合は、以下の行のコメントアウトを解除してください。
-    // localNormal.y = -localNormal.y; 
-
     // 接空間の法線を、TBN行列を用いてワールド空間へ変換する
     float3 normal = normalize(mul(localNormal, TBN));
     // ---------------------------------------------------------
@@ -183,7 +179,7 @@ float4 PS(PS_INPUT input) : SV_Target
     for (int i = 0; i < lightCount; i++)
     {
         // ライト方向の計算
-        float3 lightDir;
+        float3 lightDir; // 初期値（Spotライトは現状未対応）
         if (lights[i].type == 0) // Directional
         {
             lightDir = normalize(-lights[i].direction.xyz);
@@ -234,9 +230,6 @@ float4 PS(PS_INPUT input) : SV_Target
 
     // 最終的なカラー出力（環境光 ＋ 直射光の総和）
     float3 finalColor = globalAmbient + totalDirectLight;
-    //test
-    //finalColor *= 8.0f;
-    //return float4(diffuse,1.0f);
-    //return texColor;
+    
     return float4(finalColor, objectColor.a);
 }

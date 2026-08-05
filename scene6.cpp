@@ -1,6 +1,5 @@
 #include "scene6.h"
 #include <DirectXPackedVector.h>
-
 #include "deferredCBMaterial.h"
 #include "mesh.h"
 #include "shaderManager.h"

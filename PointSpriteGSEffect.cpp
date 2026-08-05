@@ -27,7 +27,7 @@ bool PointSpriteGSEffect::Init(ID3D11Device* pDevice) {
 	if (!m_vb)return false;
 
 	//cbを2つ生成
-	// modelのほう
+	// モデル用CBの生成
 	bd = {};
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 	bd.ByteWidth = sizeof(PerObjectCB);
@@ -36,7 +36,7 @@ bool PointSpriteGSEffect::Init(ID3D11Device* pDevice) {
 	hr=pDevice->CreateBuffer(&bd, nullptr, &m_cbModelb);
 	if (FAILED(hr))return false;
 
-	// spriteのほう
+	// スプライト用CBの生成
 	bd = {};
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 	bd.ByteWidth = sizeof(PerSpriteCB);
@@ -48,21 +48,20 @@ bool PointSpriteGSEffect::Init(ID3D11Device* pDevice) {
 	if (!m_cbModelb || !m_cbSpriteb)return false;
 
 	//初期化
-	// Init()の中でデータを初期化してください
 	m_cbModelData.mModel = DirectX::XMMatrixIdentity(); // 単位行列で初期化
 
 	m_cbSpriteData.SpriteSize = 0.3f;                          // 0より大きい値
-	m_cbSpriteData.SpriteColor = DirectX::XMFLOAT3(1, 1, 0);  // 黄色
+	m_cbSpriteData.SpriteColor = DirectX::XMFLOAT3(1, 1, 0);
 
 	return true;
 }
 
 void PointSpriteGSEffect::Bind(ID3D11DeviceContext* pContext) {
-
+	// このエフェクトはDraw内でシェーダ・バッファのバインドを完結させるため、Bindでは何もしない
 }
 
 void PointSpriteGSEffect::Draw(ID3D11DeviceContext* pContext) {
-	// 描画前に
+	// トポロジをPointListに変更
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	//シェーダバインド(layout,vs,psをバインド)
 	m_pShader->Bind(pContext);
@@ -74,7 +73,6 @@ void PointSpriteGSEffect::Draw(ID3D11DeviceContext* pContext) {
 	UINT offsets[1] = { 0};
 	pContext->IASetVertexBuffers(0, 1, vbs, strides, offsets);
 	//インデックスバインド:今回は何もなし
-	//pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
 	// cbuffer
 		//model
 	D3D11_MAPPED_SUBRESOURCE mapped;
@@ -97,7 +95,7 @@ void PointSpriteGSEffect::Draw(ID3D11DeviceContext* pContext) {
 	//描画
 	pContext->Draw(1, 0);
 
-	//非効率かもしれないが、pointlistはここでしか使わないので、もう戻す
+	// PointListはこの描画専用のため、描画後はTriangleListに戻す
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 }

@@ -1,4 +1,3 @@
-// scene0.h:それぞれのシーン番号と内容の説明を表示するシーン
 #pragma once
 #include "IScene.h"
 #include"gameObject.h"
@@ -6,7 +5,6 @@
 #include <memory>
 #include"uiLayoutCommon.h"
 
-//test
 #include"textRenderer.h"
 
 class GameObject;
@@ -25,7 +23,6 @@ public:
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
 
-    // TextRendererの動作確認用の仮実装。Scene0(Title)ができたら削除してよい。
     void SubmitUI(TextRenderer* textRenderer, float dt) override {
         textRenderer->DrawString(L"Scene1 - Basic Color", 20.0f, 20.0f);
         //トータル時間の更新
@@ -34,7 +31,6 @@ public:
         displayCurrentScene(textRenderer,1);
         //現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer, dt);
-        //test
         DrawSceneNavigationHint(textRenderer);
 
     }

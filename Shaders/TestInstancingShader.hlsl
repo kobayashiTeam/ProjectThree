@@ -1,5 +1,3 @@
-// Lit_InstancingShader.hlsl
-
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;

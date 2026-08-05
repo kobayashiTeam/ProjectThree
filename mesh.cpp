@@ -60,7 +60,7 @@ bool Mesh::Create(
         if (FAILED(pDevice->CreateBuffer(&bd, &initData, &m_pTangentBuffer))) return false;
     }
     else {
-        // ★Tangentデータが渡されなかった場合は、ダミー（ゼロ）でバッファを作成
+        //Tangentデータが渡されなかった場合は、ダミー（ゼロ）でバッファを作成
         std::vector<DirectX::XMFLOAT3> dummyTangents(vertexCount, DirectX::XMFLOAT3(0, 0, 0));
         bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * vertexCount;
         initData.pSysMem = dummyTangents.data();
@@ -104,7 +104,6 @@ void Mesh::Cleanup()
 
 Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
 
-    //float size = 0.5f;
     DirectX::XMFLOAT3 positions[] =
     {
         {-0.5f,  0.5f, -0.5f},
@@ -238,7 +237,6 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
     };
 
 
-    // ★既存の positions, normals, colors, uvs の後ろに追加してください
     DirectX::XMFLOAT3 tangents[] =
     {
         // 1. 手前面 (Normal: 0, 0, -1) -> UVの右方向は「空間の右(+X)」
@@ -299,11 +297,10 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
 }
 
 Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
-    // サイズから半分の幅を計算 (size=2.0f のとき、half=1.0f になり -1.0 〜 1.0 を覆う)
+    // サイズから半分の幅を計算 
     float half = size * 0.5f;
 
-    // 4頂点で構成される1枚の四角形（XY平面）
-    // 構造体の並び：位置(x,y,z), 法線(x,y,z), カラー(r,g,b,a), UV(u,v) と仮定しています
+    // XY平面上の四角形
 
     DirectX::XMFLOAT3 positions[] =
     {
@@ -337,7 +334,6 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
         { 0.0f, 1.0f }  // 左下
     };
 
-    // ★既存の positions, normals, colors, uvs の後ろに追加してください
     DirectX::XMFLOAT3 tangents[] =
     {
         { 1.0f,  0.0f,  0.0f }, // 左上頂点に対する接線
@@ -379,7 +375,7 @@ void Mesh::RenderInstanced(ID3D11DeviceContext* context, UINT instanceCount, ID3
         sizeof(DirectX::XMFLOAT3), // Normal
         sizeof(DirectX::XMFLOAT4), // Color
         sizeof(DirectX::XMFLOAT2), // UV
-        instanceStride             // ★引数で受け取ったサイズ (sizeof(InstanceData))
+        instanceStride             // InstanceData のサイズ
     };
 
     UINT offsets[5] = { 0, 0, 0, 0, 0 };

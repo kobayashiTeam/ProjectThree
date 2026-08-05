@@ -11,7 +11,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT size)
     texDesc.Height = size;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R32_TYPELESS; // ← ポイント
+    texDesc.Format = DXGI_FORMAT_R32_TYPELESS; 
     texDesc.SampleDesc.Count = 1;
     texDesc.Usage = D3D11_USAGE_DEFAULT;
     texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
@@ -51,8 +51,8 @@ DirectX::XMMATRIX ShadowMap::GetLightSpaceMatrix() const
 
 void ShadowMap::BeginRender(ID3D11DeviceContext* ctx)
 {
-    
-    ctx->OMSetRenderTargets(0, nullptr, m_dsv.Get()); // ✅ 第1引数0、第2引数nullptr
+    // カラーバッファは使わないため0/nullptr、深度書き込み先のみ指定
+    ctx->OMSetRenderTargets(0, nullptr, m_dsv.Get());
     ctx->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     D3D11_VIEWPORT vp = {};
@@ -64,8 +64,6 @@ void ShadowMap::BeginRender(ID3D11DeviceContext* ctx)
 
 void ShadowMap::EndRender(ID3D11DeviceContext* ctx)
 {
-   
-    //colorBuffer利用しないときは１が０、２が具体的な参照、ゆえにnullptr
-    //第三はdsv　明示的に空にしておく
-    ctx->OMSetRenderTargets(0, nullptr, nullptr); // ✅ DSVも含めて完全にクリア
+    // レンダーターゲット・深度バッファともに解除し、影描画専用の状態を完全にクリアする
+    ctx->OMSetRenderTargets(0, nullptr, nullptr); //DSVも含めて完全にクリア
 }

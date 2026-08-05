@@ -1,4 +1,3 @@
-// ParallaxMappingMaterial.cpp
 #include "parallaxMappingMaterial.h"
 #include <directxtk/WICTextureLoader.h>
 
@@ -49,11 +48,10 @@ void ParallaxMappingMaterial::Bind(ID3D11DeviceContext* pContext)
 
 bool ParallaxMappingMaterial::
 InitializeParallaxMapFromFile(ID3D11Device* pDevice, const wchar_t* pFileName) {
-
-    HRESULT // 派生クラスの 法線マップ 読み込み（通常データとして強制指定）
-        hr = DirectX::CreateWICTextureFromFileEx(
+    // 派生クラスの 法線マップ 読み込み（通常データとして強制指定）
+    HRESULT hr = DirectX::CreateWICTextureFromFileEx(
             pDevice, pFileName, 0, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
-            DirectX::WIC_LOADER_IGNORE_SRGB, // ★法線マップは絶対にsRGBにしない！
+            DirectX::WIC_LOADER_IGNORE_SRGB, // 法線・高さマップは方向/数値データのため、sRGB(ガンマ)デコードを無効化
             nullptr, &m_pNormalHeightMapTextureRV
         );
     if (FAILED(hr)) {

@@ -6,9 +6,6 @@
 // ---------------------------------------------------------
 // 定数バッファ
 // ---------------------------------------------------------
-// ---------------------------------------------------------
-// 定数バッファの分割
-// ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
     matrix mView;
@@ -49,7 +46,7 @@ cbuffer LightBuffer : register(b3)
 };
 
 // =========================================================
-// 【新設】SSAO専用のデータを空きスロット (b6) に配置！
+// SSAO専用のデータを空きスロット (b6) に配置
 // =========================================================
 cbuffer SSAOParamBuffer : register(b6)
 {
@@ -110,7 +107,6 @@ float4 PS(PS_INPUT input) : SV_Target
     // 1. G-Bufferから情報を取得 (World Space)
     float3 worldPos = txPosition.Sample(samPointClamp, input.Tex).xyz;
     float3 worldNormal = txNormal.Sample(samPointClamp, input.Tex).xyz;
-    //float3 worldNormal = normalize(txNormal.Sample(samPointClamp, input.Tex).xyz * 2.0f - 1.0f);
     
     // ※もし背景（モデルがない場所）ならSSAOは計算せず白(1.0)を返す
     // 深度値や、Normalがゼロベクトルかどうか等で判定できます（ここでは単純な0判定）
@@ -154,7 +150,7 @@ float4 PS(PS_INPUT input) : SV_Target
         // ※DirectXはY軸が下向きなので反転させる (-0.5)
         float2 sampleUV = offset.xy * float2(0.5f, -0.5f) + 0.5f;
         
-        // ★変更: 背景かどうかを先にチェック
+        // 背景かどうかを先にチェック
         float4 sampleData = txPosition.SampleLevel(samPointClamp, sampleUV, 0);
         if (sampleData.w == 0.0f)
         {
@@ -171,7 +167,7 @@ float4 PS(PS_INPUT input) : SV_Target
         }
     }
     
-    // 9. 最終的なオクルージョン値の算出 (0.0=真っ暗, 1.0=遮蔽なし)
+    // 7. 最終的なオクルージョン値の算出 (0.0=真っ暗, 1.0=遮蔽なし)
     occlusion = 1.0f - (occlusion / (float) kernelSize);
     
     // Rチャンネルのみを使用しますが、結果を見やすくするためにfloat4で出力

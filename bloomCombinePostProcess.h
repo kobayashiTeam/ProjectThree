@@ -1,8 +1,7 @@
 #pragma once
 #include "postProcess.h"
-#include <wrl/client.h> // Microsoft::WRL::ComPtr 用
+#include <wrl/client.h> 
 
-//using Microsoft::WRL::ComPtr;
 
 // Bloom合成用ポストプロセスクラス
 class BloomCombinePostProcess : public PostProcess {
@@ -19,7 +18,7 @@ public:
         return PostProcess::Initialize(pDevice, pShader);
     }
 
-    // ★【重要】チェーンが回る前に、Renderer側からボケ画像をこの窓口に放り込んでもらう
+    // Renderer側が、ポストプロセスチェーン実行前にボケ画像をここへ渡す
     void SetBrightBlurTexture(ID3D11ShaderResourceView* srv) {
         m_pBrightBlurSRV = srv;
     }
@@ -35,7 +34,7 @@ public:
         PostProcess::Render(pContext, sourceRT);
 
         // 2. 【このクラス固有の処理】
-        // 事前にセットしておいた「ボケ画像」を「スロット t1 (register(t1))」にバインドする！
+        // 事前にセットしておいた「ボケ画像」を「スロット t1 (register(t1))」にバインドする
         if (m_pBrightBlurSRV) {
             ID3D11ShaderResourceView* srvArray[] = { m_pBrightBlurSRV.Get() };
             pContext->PSSetShaderResources(1, 1, srvArray); // 第1引数「1」がスロット t1 を指します

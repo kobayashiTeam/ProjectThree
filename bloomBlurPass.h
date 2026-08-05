@@ -8,16 +8,21 @@
 
 class BloomBlurPass {
 public:
-    // brightRTを受け取り、ぼかし済みSRVを返すだけの存在
+    // brightRT（輝度抽出済みテクスチャ）を受け取り、水平・垂直ブラーを適用してSRVを返す
     bool Initialize(ID3D11Device* device, UINT width, UINT height) {
         m_hBlur.Initialize(device, ShaderManager::GetInstance().GetShader(ShaderID::HoriBlur));
         m_vBlur.Initialize(device, ShaderManager::GetInstance().GetShader(ShaderID::VerBlur));
 
         m_tmpRT = new RenderTarget();
-        m_tmpRT->Initialize(device, width, height); // 実際のRenderTargetのAPIに合わせて調整
+        m_tmpRT->Initialize(device, width, height); 
         m_pingRT = new RenderTarget();
         m_pingRT->Initialize(device, width, height);
         return true;
+    }
+
+    ~BloomBlurPass() {
+        delete m_tmpRT;
+        delete m_pingRT;
     }
 
     ID3D11ShaderResourceView* Execute(
@@ -36,7 +41,8 @@ public:
         return m_pingRT->GetSRV();
     }
 private:
-    RenderTarget* m_tmpRT; RenderTarget* m_pingRT;
+    RenderTarget* m_tmpRT =nullptr ; 
+    RenderTarget* m_pingRT =nullptr ;
     HorizontalBlurPostProcess m_hBlur;
     VerticalBlurPostProcess m_vBlur;
 };

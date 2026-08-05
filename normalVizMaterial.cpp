@@ -1,4 +1,3 @@
-// NormalVizMaterial.cpp
 #include "normalVizMaterial.h"
 
 // ==========================================================

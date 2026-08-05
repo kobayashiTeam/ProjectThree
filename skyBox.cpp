@@ -1,9 +1,8 @@
 #include "SkyBox.h"
-// DirectXTKのDDSローダーをインクルード（導入方法は後述）
 #include <directxtk/DDSTextureLoader.h> 
 #include"shaderManager.h"
-#include <directxtk/WICTextureLoader.h>  // 追加
-#include <array>                          // 追加
+#include <directxtk/WICTextureLoader.h> 
+#include <array>                        
 #include <filesystem>
 
 
@@ -13,7 +12,6 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // ==========================================
     // 1. 6枚のPNGからキューブマップを作る
     // ==========================================
-    //OutputDebugStringW(L"SkyBox file not found\n");
 
     // ① 各面のテクスチャを一時的に読み込む
     ID3D11Texture2D* faceTex[6] = {};
@@ -69,7 +67,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     cubeDesc.SampleDesc.Count = 1;
     cubeDesc.Usage = D3D11_USAGE_DEFAULT;
     cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE; // ★キューブマップフラグ
+    cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE; //キューブマップフラグ
 
     Microsoft::WRL::ComPtr<ID3D11Texture2D> cubeTex;
     hr = device->CreateTexture2D(&cubeDesc, nullptr, cubeTex.GetAddressOf());
@@ -108,7 +106,7 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     // キューブマップをサンプリング（補間）するための設定です。
     D3D11_SAMPLER_DESC samplerDesc{};
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // 線形補間（綺麗に見せる）
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // 範囲外はループ（基本はみ出さないが安全のため）
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // 範囲外は端の色で埋める（スカイボックスの継ぎ目対策）
     samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;    // キューブマップはW軸（3次元）も必要
     samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
@@ -118,14 +116,11 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     hr = device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
     if (FAILED(hr)) return false;
 
-    // (次回以降のステップ：ここに頂点バッファ、インデックスバッファ、シェーダー、ステートの生成が続きます)
     // ==========================================
     // 3. 立方体の頂点データ (位置情報のみ)
     // ==========================================
     // 立方体の8つの頂点座標を定義します。
     // SkyBox::Initialize 内の頂点定義部分
-    float size = 100.0f;
-    // 置き換え
     DirectX::XMFLOAT3 positions[] = {
         {-1.0f,  1.0f, -1.0f},
         { 1.0f,  1.0f, -1.0f},
@@ -152,18 +147,9 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     
 
     // 頂点バッファの生成
-    /*D3D11_BUFFER_DESC vbd{};
-    vbd.Usage = D3D11_USAGE_DEFAULT;
-    vbd.ByteWidth = sizeof(vertices);
-    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA vinitData{};
-    vinitData.pSysMem = vertices;
-    hr = device->CreateBuffer(&vbd, &vinitData, &m_pVertexBuffer);
-    if (FAILED(hr)) return false;*/
     D3D11_BUFFER_DESC bd{};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(positions);//sizeof(DirectX::XMFLOAT3) * 8
+    bd.ByteWidth = sizeof(positions);
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA initData{};
@@ -197,7 +183,6 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::array<std::wstring, 6>&
     if (FAILED(hr)) return false;
 
     // ShaderManagerからスカイボックス用シェーダーの参照を貰う
-    // (ShaderManagerがstaticシングルトン等の場合の一例です)
     m_shaderProgram = ShaderManager::GetInstance().GetShader(ShaderID::SkyBox);
     if (!m_shaderProgram) return false;
 
@@ -214,7 +199,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     if (!m_pPosBuffer || !m_indexBuffer || !m_shaderProgram || !m_cubeMapSRV) return;
 
     // =========================================================================
-    // 1. 【核心】ビュー行列から平行移動成分（位置情報）を消し去る
+    // 1. ビュー行列から平行移動成分（位置情報）を消し去る
     // =========================================================================
     // 4x4行列の右側3マス（_41, _42, _43）がカメラの座標を表しています。
     // ここを 0.0f に書き換えることで、カメラがどれだけ移動しても空が追従します。
@@ -238,13 +223,8 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // =========================================================================
     // レンダラーが保持しているマネジメントクラス、あるいはRenderer自身が用意した
     // 特殊ステート（Cull_Front、Less_Equal）をここでコンテキストにセットします。
-    // ※Renderer側で直前にBindしている場合は、ここでの重複Bindは省略可能です。
-
-    // 例：Renderer側でセットされたステートを使う、
-    // もしくはSkybox側で直接設定を流し込む場合は以下のように行います。
-    // context->RSSetState(m_rasterizerState.Get());       // Cull_Front
-    // context->OMSetDepthStencilState(m_depthStencilState.Get(), 0); // Less_Equal
-
+    // ラスタライザステート・深度ステートは呼び出し元（Renderer）が
+    // 描画パス開始時に設定済みである前提とし、ここでは再設定しない
     // =========================================================================
     // 3. パイプラインへのリソース・シェーダーのバインド
     // =========================================================================
@@ -258,11 +238,11 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // シェーダーの適用 (自作のShaderクラスのBind処理などを呼ぶ)
     // 内部で IASetInputLayout, VSSetShader, PSSetShader が走る想定です
     m_shaderProgram->Bind(context);
-    context->GSSetShader(nullptr, nullptr, 0);  // ← 追加
+    context->GSSetShader(nullptr, nullptr, 0);  // 前の描画でGSが設定されている可能性があるため、明示的に無効化
 
-    // 頂点シェーダーに定数バッファをセット（スロット1）//一応１にしてみる
+    // 頂点シェーダーに定数バッファをセット（スロット1）
     ID3D11Buffer* cbPtr = m_constantBuffer.Get();
-    context->VSSetConstantBuffers(3, 1, &cbPtr);//第一引数がslot
+    context->VSSetConstantBuffers(3, 1, &cbPtr);// スロット3にビュー・プロジェクション行列をバインド
 
     // ピクセルシェーダーにキューブマップテクスチャ（SRV）とサンプラーをセット（スロット0）
     ID3D11ShaderResourceView* srvPtr = m_cubeMapSRV.Get();
@@ -273,7 +253,7 @@ void SkyBox::Draw(ID3D11DeviceContext* context,
     // =========================================================================
     // 4. 描画実行（インデックス数は立方体の 36）
     // =========================================================================
-    context->DrawIndexed(36, 0, 0);//36
+    context->DrawIndexed(36, 0, 0);
 }
 
 
@@ -285,9 +265,8 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& ddsPath) {
     // ==========================================
     // 1. DDSファイルからキューブマップ（SRV）を直接生成する
     // ==========================================
-    // DirectXTK のおかげで、テクスチャの生成から SRV の作成まで1関数で終わります。
-    // DDS内部に「キューブマップであること（D3D11_RESOURCE_MISC_TEXTURECUBE）」が
-    // 既に記録されているため、関数側がそれを自動判別して適切なSRVを作ってくれます。
+    // DDSにはキューブマップ情報が含まれているため、DirectXTKが自動的にSRVを生成する。
+
 
     hr = DirectX::CreateDDSTextureFromFile(
         device,
@@ -321,7 +300,6 @@ bool SkyBox::Initialize(ID3D11Device* device, const std::wstring& ddsPath) {
     // ==========================================
     // 3. 立方体の頂点データ (位置情報のみ)
     // ==========================================
-    float size = 500.0f;
     SkyboxVertex vertices[] = {
         // 前面 (Z = 0.5)
         { { DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f) }, {}, {}, {} }, // 左上手前

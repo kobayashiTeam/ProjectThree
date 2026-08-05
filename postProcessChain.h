@@ -1,5 +1,4 @@
 #pragma once
-// PostProcessChain.h
 #include<d3d11.h>
 #include<vector>
 #include"shaderManager.h"
@@ -17,6 +16,13 @@ public:
         effect->SetActive(activeByDefault);
         m_effects.push_back(effect);
         return effect;
+    }
+
+    ~PostProcessChain() {
+        for (PostProcess* fx : m_effects) {
+            delete fx;
+        }
+        m_effects.clear();
     }
 
     // 戻り値：チェーンを抜けた後、最新の絵がどっちのRTに入っているか

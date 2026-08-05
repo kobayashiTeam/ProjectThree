@@ -1,4 +1,3 @@
-// input.cpp
 #include "input.h"
 
 bool Input::s_currKeys[256] = {};

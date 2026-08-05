@@ -1,4 +1,3 @@
-// IScene.h
 #pragma once
 #include<d3d11.h>
 class Renderer;
@@ -24,7 +23,7 @@ public:
     void SetDevice(ID3D11Device* device) { m_device = device; }
 
 protected:
-    // 全シーン共通：数字キー(0～5)でどのシーンからでも直接遷移できるようにする
+    // 全シーン共通：数字キー(0～8)でどのシーンからでも直接遷移できるようにする
     // 定義はiScene.cpp側（各SceneのヘッダをIScene.hから直接includeすると循環includeになるため分離）
     void CheckSceneNumberKeys();
     // 全シーン共通：画面右下に全シーンの簡易説明を1行表示する

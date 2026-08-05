@@ -23,7 +23,7 @@ SamplerState linearSampler : register(s0);
 // スロット2：C++側の PerEffectCB と完全に一致させる
 cbuffer PerEffectCB : register(b2)
 {
-    float g_intensity; // 0.0～1.0
+    float g_intensity; // 0.0 = ビネット無し, 1.0 = 最大限に暗くなる
     float g_radius; // 0.5～1.0くらい
     float g_softness; // 0.1～0.5
     float g_dummy;

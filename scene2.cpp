@@ -1,5 +1,4 @@
 #include"scene2.h"
-
 #include"litMaterial.h"
 #include"mesh.h"
 #include"shaderManager.h"
@@ -9,7 +8,7 @@ bool Scene2::Enter() {
     //宣言
     Mesh* g_pCubeMesh = nullptr;
     LitMaterial* g_pLitMaterial = nullptr;
-    Model* g_pMainModel = nullptr; //宙に浮かぶ立体cube
+    Model* g_pMainModel = nullptr; 
 
     // Mesh作成（Cube）
     g_pCubeMesh = Mesh::CreateCube(m_device, 1);
@@ -32,7 +31,7 @@ bool Scene2::Enter() {
     g_pLitMaterial->CreateMaterialBuffer(m_device);
     g_pLitMaterial->SetMaterialColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // Model：浮かぶキューブ
+    // Model
     g_pMainModel = new Model(m_device, g_pCubeMesh, g_pLitMaterial);
     g_pMainModel->SetScale(2, 2, 2);
     g_pMainModel->SetPosition(0.0f, -0.5f, 3.0f);

@@ -1,5 +1,4 @@
-// DeferredLightingPass.h
-#include"d3d11.h"
+#include<d3d11.h>
 #include"shaderManager.h"
 #include"gBufferPass.h"
 #include"depthStencilStates.h"

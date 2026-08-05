@@ -1,12 +1,10 @@
 #pragma once
-
 #include<d3d11.h>
 #include<DirectXMath.h>
 #include<wrl/client.h>
 
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-//forward
 class DirectionalLight;
 
 class ShadowMap {
@@ -23,6 +21,6 @@ private:
     ComPtr<ID3D11Texture2D>          m_texture;
     ComPtr<ID3D11DepthStencilView>   m_dsv;
     ComPtr<ID3D11ShaderResourceView> m_srv;
-    const DirectionalLight* m_pLight;  // 外から受け取る（所有しない）
-    UINT m_size;
+    const DirectionalLight* m_pLight =nullptr ;  // 外から受け取る（所有しない）
+    UINT m_size=0;
 };

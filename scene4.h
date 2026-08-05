@@ -1,4 +1,3 @@
-// scene4.h：Scene4 - 法線マッピング（DirectionalLightをWASDで動かして陰影変化を確認）
 #pragma once
 #include "IScene.h"
 #include "gameObject.h"
@@ -38,7 +37,7 @@ public:
 
     void Submit(Renderer* renderer) override {
         // ゼロベクトル回避：両軸が0付近の間は直前有効値を維持し、書き換えをスキップ
-        DirectX::XMFLOAT3 dir(m_dirX, m_dirY, 1.0f);//z0
+        DirectX::XMFLOAT3 dir(m_dirX, m_dirY, 1.0f);// Z成分は正面固定
         float lenSq = dir.x * dir.x + dir.y * dir.y;
         if (lenSq > 0.0001f) {
             DirectX::XMVECTOR v = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&dir));
@@ -57,13 +56,12 @@ public:
         swprintf_s(buf, L"Light Dir : (%.2f, %.2f)", m_dirX, m_dirY);
         textRenderer->DrawString(buf, 20.0f, 140.0f);
 
-        //トータル時間の更新
+        // トータル時間の更新
         m_uiTime += dt;
-        //現在のsceneを表示する
+        // 現在のsceneを表示する
         displayCurrentScene(textRenderer, 4);
-        //現在sceneでの操作説明を表示する
+        // 現在sceneでの操作説明を表示する
         displayHowToUse(textRenderer, dt);
-        //test
         DrawSceneNavigationHint(textRenderer);
     }
 
@@ -73,7 +71,7 @@ private:
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
 
-    // 固有：DirectionalLightのdirection.x / direction.y（正規化前の生値）
-    float m_dirX = 3.0f;//0から3へ
+    // DirectionalLightのdirection.x / direction.y（正規化前の生値）
+    float m_dirX = 3.0f;// 初期状態でライトが横から差し込むように設定
     float m_dirY = -1.0f; // 初期値は既存デフォルト方向(0,-1,0)に一致
 };

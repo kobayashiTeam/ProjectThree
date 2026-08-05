@@ -10,7 +10,7 @@ cbuffer ShadowCubeCB : register(b4)
 
 struct GSIn
 {
-    float4 posW : TEXCOORD0;//texcoordであることに意味はない、何の自動処理もせずにfloat4で運ぶ指示
+    float4 posW : TEXCOORD0; // TEXCOORDセマンティクスを利用してワールド座標を受け渡す
 };
 
 struct GSOut

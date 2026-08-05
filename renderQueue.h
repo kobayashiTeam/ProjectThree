@@ -5,33 +5,29 @@
 #include"blendStates.h"
 #include"graphicsCommon.h"
 
-// ソート担当クラスの簡易イメージ
+// 描画コマンドを管理し、描画順を制御するクラス
 class RenderQueue {
 public:
     struct RenderCommand {
         Model* pModel;
         float depth; // カメラからの距離
-        // 追加
         Shader* pOverrideShader = nullptr;
     };
 
 private:
-    // BlendModeの数（Count = 3）だけ、コマンドの配列（バッファ）を用意する
-    // m_queues[0] が不透明、m_queues[1] が半透明、m_queues[2] が加算...となる
+    // BlendModeごとに描画コマンドを管理するキュー
     std::vector<RenderCommand> m_queues[static_cast<int>(BlendMode::Count)];
 
-    // 外部から借りてくるブレンドステートのポインタ配列
-    //BlendState* m_pBlendStates[static_cast<int>(BlendMode::Count)] = {};
 
 public:
 	RenderQueue() = default;
 
-    // ② 登録時は、どのブレンドタイプで描画したいかを指定してキューに入れる
+    // 登録時は、どのブレンドタイプで描画したいかを指定してキューに入れる
     void Submit(Model* pModel, float depth, BlendMode mode) {
         m_queues[static_cast<int>(mode)].push_back({ pModel, depth });
     }
 
-    // ③ 実行（描画）
+    // 実行（描画）
     void Execute(ID3D11DeviceContext* pContext, 
         ID3D11Buffer* pPerFrameCB,
         BlendStates* pBlendStates,
@@ -54,7 +50,7 @@ public:
         for (int i = 0; i < static_cast<int>(BlendMode::Count); ++i) {
             if (m_queues[i].empty()) continue;
 
-            // 事前に登録しておいた対応するブレンドステートをバインド（参照してBind）
+            // ブレンドモードに対応するステートを設定
             if (pBlendStates) {
                 pBlendStates->Bind(pContext,static_cast<BlendMode>(i));
             }
@@ -71,7 +67,7 @@ public:
         }
     }
 
-    //test:各modelにシェーダをbindさせずvertex,index描画だけさせる
+    // 各modelにシェーダをbindさせずvertex,index描画だけさせる
     void ExecuteGeometryOnly(ID3D11DeviceContext* pContext,
         ID3D11Buffer* pPerFrameCB,
         BlendStates* pBlendStates,
@@ -110,7 +106,6 @@ public:
         }
     }
 
-    // RenderQueue側にオーバーライド設定メソッドを追加
     void SetOverrideVS(Shader* pVS)
     {
         int opaqueIdx = static_cast<int>(BlendMode::Opaque);
