@@ -348,6 +348,16 @@ void Renderer::Execute()
         m_gBufferPass->GetPositionSRV(), 
         m_finalRenderMesh);
 
+    ////ssaoSRVを視覚化する
+    //m_graphics->bindDefaultRenderTarget(); // 本物の画面をセット＋クリア
+    //m_blendStates->Bind(pContext, BlendMode::Opaque);
+    //ShaderManager::GetInstance().GetShader(ShaderID::GBufferDebug)->Bind(pContext);
+    //pContext->PSSetShaderResources(0, 1, &ssaoSRV);
+    //ID3D11SamplerState* depthSampler = m_gBufferPass->GetDepthSampler();
+    //pContext->PSSetSamplers(0, 1, &depthSampler);
+    //m_finalRenderMesh->Render(pContext);
+    //return;
+
     // オフスクリーンMRTに再バインド
     targets[0] = m_offscreenRTwithMSAA;
 	targets[1] = m_brightRTwithMSAA;

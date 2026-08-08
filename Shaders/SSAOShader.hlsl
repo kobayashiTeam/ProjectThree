@@ -106,12 +106,13 @@ float4 PS(PS_INPUT input) : SV_Target
 {
     // 1. G-Bufferから情報を取得 (World Space)
     float3 worldPos = txPosition.Sample(samPointClamp, input.Tex).xyz;
-    float3 worldNormal = txNormal.Sample(samPointClamp, input.Tex).xyz;
-    
-    // ※もし背景（モデルがない場所）ならSSAOは計算せず白(1.0)を返す
-    // 深度値や、Normalがゼロベクトルかどうか等で判定できます（ここでは単純な0判定）
-    if (length(worldNormal) < 0.1f)
+    float3 rawNormal = txNormal.Sample(samPointClamp, input.Tex).xyz;
+
+// ※もし背景（モデルがない場所）ならSSAOは計算せず白(1.0)を返す
+    if (length(rawNormal) < 0.1f)
         return float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    float3 worldNormal = normalize(rawNormal * 2.0f - 1.0f);
 
     // 2. World Space -> View Space への変換
     // 位置の変換（平行移動を含むため mul(float4(v, 1), m)）
