@@ -1,5 +1,5 @@
 ﻿#include "material.h"
-#include"moveGSEffect.h"
+#include "moveGSEffect.h"
 #include <directxtk/WICTextureLoader.h>
 
 
@@ -17,7 +17,7 @@ bool Material::Initialize(
 {
     HRESULT hr;
 
-    // 1. シェーダーポインタを貰うだけ
+    // 1. シェーダーポインタを預かる
     m_pShader = pShader;
     if (!m_pShader) return false;
 
@@ -36,20 +36,20 @@ bool Material::Initialize(
     // --- フォーマットの3分岐処理 ---
     if (isHDR)
     {
-        // 【HDRテクスチャ】 1画素あたり16bit float × 4チャンネル = 64bit (8バイト)
-        // HDR画像は常にリニア空間として扱うため、_SRGB版はありません。
+        // 「HDRテクスチャ」1画素あたり16bit float × 4チャンネル = 64bit (8バイト)
+        // HDR画像は常にリニア空間として扱いたいため、SRGB版はありません。
         td.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
         bytesPerPixel = sizeof(unsigned short) * 4; // 2バイト * 4 = 8バイト
     }
     else if (isSRGB)
     {
-        // 【通常カラー用SDR】 ガンマ補正あり (4バイト)
+        // 「通常カラー用SDR」 ガンマ補正あり (4バイト)
         td.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
         bytesPerPixel = sizeof(UINT32); // 4バイト
     }
     else
     {
-        // 【データ用SDR】 ガンマ補正なし (4バイト)
+        // 「データ用SDR」 ガンマ補正なし (4バイト)
         td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         bytesPerPixel = sizeof(UINT32); // 4バイト
     }
@@ -57,7 +57,7 @@ bool Material::Initialize(
     // 具体的なテクスチャ内容を渡すための構造体
     D3D11_SUBRESOURCE_DATA tInitData = {};
     tInitData.pSysMem = pTexturePixels;
-    // フォーマットに合わせて1行のバイト数を正しく計算する
+    // フォーマットに合わせて1行あたりのバイト数を正しく計算する
     tInitData.SysMemPitch = txtWidth * bytesPerPixel;
 
     ID3D11Texture2D* pTexture2D = nullptr;
@@ -96,11 +96,11 @@ void Material::Bind(ID3D11DeviceContext* pContext)
     if (m_pGSEffect)
         m_pGSEffect->Bind(pContext);
     else
-        pContext->GSSetShader(nullptr, nullptr, 0); 
+        pContext->GSSetShader(nullptr, nullptr, 0);
 
     // テクスチャとサンプラーをバインド
     // このクラスはシェーダー種別を問わず共通のリソースをセットする。
-// シェーダー固有の追加バインドは派生クラス（DeferredCBMaterial等）のBind内で行う
+    // シェーダー固有の追加バインドは派生クラス（DeferredCBMaterial等）のBind内で行う
     pContext->PSSetShaderResources(0, 1, &m_pTextureRV);
     pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 }
@@ -118,12 +118,12 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
 {
     HRESULT hr;
 
-    // 1. シェーダーポインタを貰うだけ
+    // 1. シェーダーポインタを預かる
     m_pShader = pShader;
     if (!m_pShader) return false;
 
     // 2.ファイルからテクスチャ（SRV）を直接生成する
-    // WICTextureLoaderが、PNGやJPGのデコード、D3D11Texture2Dの作成、SRVの生成まで
+    // WICTextureLoaderが、PNG/JPGのデコードからID3D11Texture2Dの作成、SRVの生成まで
     // 一発でやってくれます
     hr = DirectX::CreateWICTextureFromFile(pDevice, pFileName, nullptr, &m_pTextureRV);
     if (FAILED(hr))
@@ -152,3 +152,21 @@ bool Material::InitializeFromFile(ID3D11Device* pDevice, Shader* pShader, const 
     return true;
 }
 
+// 追加：複製処理のデフォルト実装
+// 「重い資源（テクスチャ・シェーダー）は複製せず共有し、参照カウントだけ増やす」というのが基本方針。
+// 個別パラメータを持たないMaterial単体では、これだけで複製として成立する。
+Material* Material::Clone(ID3D11Device* pDevice) const
+{
+    Material* clone = new Material();
+
+    clone->m_pShader = m_pShader;     // シェーダーはマネージャー管理のため共有でよい
+    clone->m_pGSEffect = m_pGSEffect; // GSエフェクトも共有でよい
+
+    clone->m_pTextureRV = m_pTextureRV;
+    if (clone->m_pTextureRV) clone->m_pTextureRV->AddRef(); // 参照カウントを増やしてから共有
+
+    clone->m_pSamplerLinear = m_pSamplerLinear;
+    if (clone->m_pSamplerLinear) clone->m_pSamplerLinear->AddRef();
+
+    return clone;
+}

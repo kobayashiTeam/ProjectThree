@@ -1,20 +1,21 @@
-#include "model.h"
+ï»¿#include "model.h"
 #include "mesh.h"
 #include "material.h"
-#include"litMaterial.h"
+#include "litMaterial.h"
+#include "deferredCBMaterial.h"
 
-// ]—ˆ‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^F’Pˆê‚Ìƒp[ƒc‚Æ‚µ‚ÄƒŠƒXƒg‚É1ŒÂ‚¾‚¯“o˜^‚·‚éi‚±‚ê‚Å—§•û‘Ì‚à“®‚­j
+// å¾“æ¥ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼šå˜ä¸€ã®ãƒ‘ãƒ¼ãƒ„ã¨ã—ã¦ãƒªã‚¹ãƒˆã«1å€‹ã ã‘ç™»éŒ²ã™ã‚‹ï¼ˆã“ã‚Œã§ç«‹æ–¹ä½“ã‚‚å‹•ãï¼‰
 Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
     : m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
 {
     ModelPart singlePart;
     singlePart.pMesh = pMesh;
     singlePart.pMaterial = pMaterial;
-    singlePart.localTransform = DirectX::XMMatrixIdentity(); // —§•û‘Ì‚ÍƒIƒtƒZƒbƒg‚È‚µ
+    singlePart.localTransform = DirectX::XMMatrixIdentity(); // ç«‹æ–¹ä½“ã¯ã‚ªãƒ•ã‚»ãƒƒãƒˆãªã—
     m_Parts.push_back(singlePart);
 
-    // ’è”ƒoƒbƒtƒ@¶¬
-    //ƒ‚ƒfƒ‹‚ÍmModels—ñ‚¾‚¯‚ÂB•`‰æ‚ÌÛ‚ÉƒXƒƒbƒg‚É“o˜^‚·‚éB
+    // å®šæ•°ãƒãƒƒãƒ•ã‚¡ç”Ÿæˆ
+    //ãƒ¢ãƒ‡ãƒ«ã¯mModelè¡Œåˆ—ã ã‘æŒã¤ã€‚æç”»ã®éš›ã«ã‚¹ãƒ­ãƒƒãƒˆã«ç™»éŒ²ã™ã‚‹ã€‚
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
     cbd.ByteWidth = sizeof(PerObjectCB);
@@ -24,16 +25,16 @@ Model::Model(ID3D11Device* pDevice, Mesh* pMesh, Material* pMaterial)
 
 }
 
-// VİƒRƒ“ƒXƒgƒ‰ƒNƒ^FModelResource‚ª“Ç‚İ‚ñ‚¾ƒp[ƒcŒQ‚ğ‚Ü‚é‚²‚ÆƒRƒs[‚·‚é
+// æ–°è¨­ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼šModelResourceãŒèª­ã¿è¾¼ã‚“ã ãƒ‘ãƒ¼ãƒ„ç¾¤ã‚’ã¾ã‚‹ã”ã¨ã‚³ãƒ”ãƒ¼ã™ã‚‹
 Model::Model(ID3D11Device* pDevice, const ModelResource* pResource)
     : m_Position(0.0f, 0.0f, 0.0f), m_Rotation(0.0f, 0.0f, 0.0f), m_Scale(1.0f, 1.0f, 1.0f)
 {
     if (pResource)
     {
-        m_Parts = pResource->GetParts(); // ƒxƒNƒ^[‚ğ‚Ü‚é‚²‚ÆƒRƒs[
+        m_Parts = pResource->GetParts(); // ãƒ™ã‚¯ã‚¿ãƒ¼ã‚’ã¾ã‚‹ã”ã¨ã‚³ãƒ”ãƒ¼
     }
 
-    // ’è”ƒoƒbƒtƒ@¶¬
+    // å®šæ•°ãƒãƒƒãƒ•ã‚¡ç”Ÿæˆ
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DEFAULT;
     cbd.ByteWidth = sizeof(PerObjectCB);
@@ -49,80 +50,123 @@ Model::~Model()
         m_pObjectBuffer->Release();
         m_pObjectBuffer = nullptr;
     }
+
+    // â˜…è¿½åŠ ï¼šCloneMaterialsForInstance()ã§è¤‡è£½ã—ãŸãƒãƒ†ãƒªã‚¢ãƒ«ã¯
+    // ModelResourceãŒè§£æ”¾ã—ã¦ãã‚Œãªã„ã®ã§ã€ã“ã“ã§è‡ªåˆ†ã§è§£æ”¾ã™ã‚‹
+    for (Material* mat : m_ownedClonedMaterials)
+    {
+        delete mat;
+    }
+    m_ownedClonedMaterials.clear();
 }
 
 DirectX::XMMATRIX Model::GetWorldMatrix() const
 {
-    DirectX::XMMATRIX mScale = 
+    DirectX::XMMATRIX mScale =
         DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z);
-    DirectX::XMMATRIX mRot = 
+    DirectX::XMMATRIX mRot =
         DirectX::XMMatrixRotationRollPitchYaw(m_Rotation.x, m_Rotation.y, m_Rotation.z);
-    DirectX::XMMATRIX mTrans = 
+    DirectX::XMMATRIX mTrans =
         DirectX::XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
     return mScale * mRot * mTrans;
 }
 
 void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
 {
-    // ƒtƒŒ[ƒ€ƒoƒbƒtƒ@iƒXƒƒbƒg0j‚Ì“K—p‚ÍƒIƒuƒWƒFƒNƒg‹¤’Ê‚È‚Ì‚Åƒ‹[ƒv‚Ì‘O‚Å1‰ñ
+    // ãƒ•ãƒ¬ãƒ¼ãƒ ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¹ãƒ­ãƒƒãƒˆ0ï¼‰ã®é©ç”¨ã¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆå…±é€šãªã®ã§ãƒ«ãƒ¼ãƒ—ã®å‰ã§1å›
     pContext->VSSetConstantBuffers(0, 1, &pFrameBuffer);
     pContext->PSSetConstantBuffers(0, 1, &pFrameBuffer);
 
-    // ƒ‚ƒfƒ‹‚ª‚Â‚·‚×‚Ä‚Ìƒp[ƒc‚ğƒ‹[ƒv•`‰æ
+    // ãƒ¢ãƒ‡ãƒ«ãŒæŒã¤ã™ã¹ã¦ã®ãƒ‘ãƒ¼ãƒ„ã‚’ãƒ«ãƒ¼ãƒ—æç”»
     for (const auto& part : m_Parts)
     {
         if (!part.pMesh || !part.pMaterial) continue;
 
-        // 1. ƒ}ƒeƒŠƒAƒ‹‚Ì“K—p
+        // 1. ãƒãƒ†ãƒªã‚¢ãƒ«ã®é©ç”¨
         part.pMaterial->Bind(pContext);
 
-        // 2.‚±‚Ìƒp[ƒcê—p‚Ìs—ñ‚ğŒvZ
-        // uƒp[ƒc©g‚Ìƒ[ƒJƒ‹ƒIƒtƒZƒbƒgv ~ uƒ‚ƒfƒ‹‘S‘Ì‚Ì”z’us—ñv
-        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform, 
-           GetWorldMatrix());
+        // 2.ã“ã®ãƒ‘ãƒ¼ãƒ„å°‚ç”¨ã®è¡Œåˆ—ã‚’è¨ˆç®—
+        // ã€Œãƒ‘ãƒ¼ãƒ„è‡ªèº«ã®ãƒ­ãƒ¼ã‚«ãƒ«ã‚ªãƒ•ã‚»ãƒƒãƒˆã€ Ã— ã€Œãƒ¢ãƒ‡ãƒ«å…¨ä½“ã®é…ç½®è¡Œåˆ—ã€
+        DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
+            GetWorldMatrix());
 
-        //ƒoƒbƒtƒ@‚Í‰Šú‰»‚É¶¬‚³‚ê‚Ä‚¢‚éB¡‚Íƒf[ƒ^‚ğì‚é
+        //ãƒãƒƒãƒ•ã‚¡ã¯åˆæœŸåŒ–æ™‚ã«ç”Ÿæˆã•ã‚Œã¦ã„ã‚‹ã€‚ä»Šã¯ãƒ‡ãƒ¼ã‚¿ã‚’ä½œã‚‹
         Model::PerObjectCB objCB;
-        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX—p‚É“]’u
+        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectXç”¨ã«è»¢ç½®
 
-        // 3. ’è”ƒoƒbƒtƒ@‚ğƒp[ƒc‚²‚Æ‚É‘‚«Š·‚¦‚ÄƒXƒƒbƒg1‚ÉƒoƒCƒ“ƒh
+        // 3. å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚’ãƒ‘ãƒ¼ãƒ„ã”ã¨ã«æ›¸ãæ›ãˆã¦ã‚¹ãƒ­ãƒƒãƒˆ1ã«ãƒã‚¤ãƒ³ãƒ‰
         pContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
         pContext->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
 
-        // 4. ƒƒbƒVƒ…‚Ì•`‰æ
+        // 4. ãƒ¡ãƒƒã‚·ãƒ¥ã®æç”»
         part.pMesh->Render(pContext);
     }
 }
 
 
-// ƒVƒƒƒhƒEƒ}ƒbƒv¶¬‚È‚ÇAƒ}ƒeƒŠƒAƒ‹‚ğ‰î‚³‚¸ƒWƒIƒƒgƒŠ‚Ì‚İ•`‰æ‚µ‚½‚¢ê–ÊŒü‚¯
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ç”Ÿæˆãªã©ã€ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ä»‹ã•ãšã‚¸ã‚ªãƒ¡ãƒˆãƒªã®ã¿æç”»ã—ãŸã„å ´é¢å‘ã‘
 void Model::DrawGeometryOnly(ID3D11DeviceContext* ctx, ID3D11Buffer* pPerFrameCB)
 {
-    // ƒtƒŒ[ƒ€ƒoƒbƒtƒ@iƒXƒƒbƒg0j‚Ì“K—p‚ÍƒIƒuƒWƒFƒNƒg‹¤’Ê‚È‚Ì‚Åƒ‹[ƒv‚Ì‘O‚Å1‰ñ
+    // ãƒ•ãƒ¬ãƒ¼ãƒ ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¹ãƒ­ãƒƒãƒˆ0ï¼‰ã®é©ç”¨ã¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆå…±é€šãªã®ã§ãƒ«ãƒ¼ãƒ—ã®å‰ã§1å›
     ctx->VSSetConstantBuffers(0, 1, &pPerFrameCB);
     ctx->PSSetConstantBuffers(0, 1, &pPerFrameCB);
 
-    // ƒ‚ƒfƒ‹‚ª‚Â‚·‚×‚Ä‚Ìƒp[ƒc‚ğƒ‹[ƒv•`‰æ
+    // ãƒ¢ãƒ‡ãƒ«ãŒæŒã¤ã™ã¹ã¦ã®ãƒ‘ãƒ¼ãƒ„ã‚’ãƒ«ãƒ¼ãƒ—æç”»
     for (const auto& part : m_Parts)
     {
         if (!part.pMesh || !part.pMaterial) continue;
 
-        // 1. ƒ}ƒeƒŠƒAƒ‹‚Ì“K—p‚ğ‚µ‚È‚¢B“¯‚¶ƒVƒF[ƒ_‚ğƒZƒbƒg‚µ‘±‚¯‚ê‚Î–â‘è‚È‚¢
+        // 1. ãƒãƒ†ãƒªã‚¢ãƒ«ã®é©ç”¨ã‚’ã—ãªã„ã€‚åŒã˜ã‚·ã‚§ãƒ¼ãƒ€ã‚’ã‚»ãƒƒãƒˆã—ç¶šã‘ã‚Œã°å•é¡Œãªã„
 
-        // 2.‚±‚Ìƒp[ƒcê—p‚Ìs—ñ‚ğŒvZ
-        // uƒp[ƒc©g‚Ìƒ[ƒJƒ‹ƒIƒtƒZƒbƒgv ~ uƒ‚ƒfƒ‹‘S‘Ì‚Ì”z’us—ñv
+        // 2.ã“ã®ãƒ‘ãƒ¼ãƒ„å°‚ç”¨ã®è¡Œåˆ—ã‚’è¨ˆç®—
+        // ã€Œãƒ‘ãƒ¼ãƒ„è‡ªèº«ã®ãƒ­ãƒ¼ã‚«ãƒ«ã‚ªãƒ•ã‚»ãƒƒãƒˆã€ Ã— ã€Œãƒ¢ãƒ‡ãƒ«å…¨ä½“ã®é…ç½®è¡Œåˆ—ã€
         DirectX::XMMATRIX finalWorld = DirectX::XMMatrixMultiply(part.localTransform,
             GetWorldMatrix());
 
-        //ƒoƒbƒtƒ@‚Í‰Šú‰»‚É¶¬‚³‚ê‚Ä‚¢‚éB¡‚Íƒf[ƒ^‚ğì‚é
+        //ãƒãƒƒãƒ•ã‚¡ã¯åˆæœŸåŒ–æ™‚ã«ç”Ÿæˆã•ã‚Œã¦ã„ã‚‹ã€‚ä»Šã¯ãƒ‡ãƒ¼ã‚¿ã‚’ä½œã‚‹
         Model::PerObjectCB objCB;
-        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectX—p‚É“]’u
+        objCB.mModel = DirectX::XMMatrixTranspose(finalWorld); // DirectXç”¨ã«è»¢ç½®
 
-        // 3. ’è”ƒoƒbƒtƒ@‚ğƒp[ƒc‚²‚Æ‚É‘‚«Š·‚¦‚ÄƒXƒƒbƒg1‚ÉƒoƒCƒ“ƒh
+        // 3. å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚’ãƒ‘ãƒ¼ãƒ„ã”ã¨ã«æ›¸ãæ›ãˆã¦ã‚¹ãƒ­ãƒƒãƒˆ1ã«ãƒã‚¤ãƒ³ãƒ‰
         ctx->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &objCB, 0, 0);
         ctx->VSSetConstantBuffers(1, 1, &m_pObjectBuffer);
 
-        // 4. ƒƒbƒVƒ…‚Ì•`‰æ
+        // 4. ãƒ¡ãƒƒã‚·ãƒ¥ã®æç”»
         part.pMesh->Render(ctx);
+    }
+}
+
+// è¿½åŠ ï¼šãƒãƒ†ãƒªã‚¢ãƒ«ã®è¤‡è£½å‡¦ç†
+// ã€Œã“ã®Modelã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å°‚ç”¨ã®ãƒãƒ†ãƒªã‚¢ãƒ«ãŒæ¬²ã—ã„ã€ã¨ãã«1å›ã ã‘å‘¼ã¶ã€‚
+// å„ãƒ‘ãƒ¼ãƒ„ã®pMaterialã‚’ã€Clone()ã§ä½œã£ãŸè¤‡è£½ã«å·®ã—æ›¿ãˆã‚‹ã€‚
+void Model::CloneMaterialsForInstance(ID3D11Device* pDevice)
+{
+    for (auto& part : m_Parts)
+    {
+        if (!part.pMaterial) continue;
+
+        Material* clonedMat = part.pMaterial->Clone(pDevice);
+        if (clonedMat)
+        {
+            part.pMaterial = clonedMat;
+            m_ownedClonedMaterials.push_back(clonedMat); // è§£æ”¾è²¬ä»»ã‚’ã“ã®ModelãŒæŒã¤
+        }
+    }
+}
+
+// è¿½åŠ ï¼šmetallic/roughnessã‚’ã“ã®Modelã®å…¨ãƒ‘ãƒ¼ãƒ„ã«é©ç”¨ã™ã‚‹
+// å‘¼ã³å‡ºã—å‰ã«CloneMaterialsForInstance()ã—ã¦ã„ãªã„ã¨ã€ä»–ã®Modelã¨ã‚‚å…±æœ‰ã—ã¦ã„ã‚‹
+// å…ƒã®ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ç›´æ¥æ›¸ãæ›ãˆã¦ã—ã¾ã†ã®ã§æ³¨æ„ï¼ˆä»–ã®å€‹ä½“ã‚‚ä¸€ç·’ã«å¤‰ã‚ã£ã¦ã—ã¾ã†ï¼‰
+void Model::SetMetallicRoughness(float metallic, float roughness)
+{
+    for (auto& part : m_Parts)
+    {
+        // DeferredCBMaterialã§ãªã„å ´åˆï¼ˆLitMaterialç­‰ï¼‰ã¯ä½•ã‚‚ã—ãªã„
+        DeferredCBMaterial* deferredMat = dynamic_cast<DeferredCBMaterial*>(part.pMaterial);
+        if (deferredMat)
+        {
+            deferredMat->SetMetallic(metallic);
+            deferredMat->SetRoughness(roughness);
+        }
     }
 }
