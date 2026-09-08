@@ -35,14 +35,14 @@ bool Scene10::Enter() {
 
     Model* bag = new Model(m_device, bagResource);
 
-    // ★このシーン専用の複製を作る（Scene9側の個体や、リソース本体の値には影響させない）
+    //  このシーン専用の複製を作る（Scene9側の個体や、リソース本体の値には影響させない）
     bag->CloneMaterialsForInstance(m_device);
     bag->SetMetallicRoughness(m_metallic, m_roughness); // 初期値を反映
 
-    bag->SetPosition(0.0f, 0.0f, 6.0f);
-    bag->SetScale(1.5f, 1.5f, 1.5f); // ★モデルの実寸に応じて調整してください
+    bag->SetPosition(0.0f, 0.0f, 4.0f);
+    bag->SetScale(1.5f, 1.5f, 1.5f); //  モデルの実寸に応じて調整してください
 
-    // ★毎フレームUpdate()から値を書き換えられるように、生ポインタを控えておく
+    //  毎フレームUpdate()から値を書き換えられるように、生ポインタを控えておく
     // （GameObjectは所有権を持たない「借用」なので、二重解放の心配はない）
     m_targetModel = bag;
 

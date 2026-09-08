@@ -29,10 +29,10 @@ public:
 
         // 矢印キーでmetallic/roughnessをリアルタイム変更
         const float paramSpeed = 0.5f;
-        if (Input::IsKeyDown(VK_UP))    m_metallic += paramSpeed * dt;
-        if (Input::IsKeyDown(VK_DOWN))  m_metallic -= paramSpeed * dt;
-        if (Input::IsKeyDown(VK_RIGHT)) m_roughness += paramSpeed * dt;
-        if (Input::IsKeyDown(VK_LEFT))  m_roughness -= paramSpeed * dt;
+        if (Input::IsKeyDown('P'))    m_metallic += paramSpeed * dt;
+        if (Input::IsKeyDown('O'))  m_metallic -= paramSpeed * dt;
+        if (Input::IsKeyDown('M')) m_roughness += paramSpeed * dt;
+        if (Input::IsKeyDown('N'))  m_roughness -= paramSpeed * dt;
 
         if (m_metallic > 1.0f) m_metallic = 1.0f;
         if (m_metallic < 0.0f) m_metallic = 0.0f;
@@ -86,7 +86,7 @@ public:
 
     void SubmitUI(TextRenderer* textRenderer, float dt) override {
         textRenderer->DrawString(L"Scene10 - PBR Interactive (Controlled Comparison)", 20.0f, 20.0f);
-        textRenderer->DrawString(L"Up/Down : Metallic   Left/Right : Roughness", 20.0f, 80.0f);
+        textRenderer->DrawString(L"P/O : Metallic   M/N : Roughness", 20.0f, 80.0f);
         textRenderer->DrawString(L"WASD : Move Directional Light   Tab : Switch View", 20.0f, 140.0f);
 
         std::wstringstream ss;
