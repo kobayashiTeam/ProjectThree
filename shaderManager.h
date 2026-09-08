@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <unordered_map>
 #include "graphicsCommon.h"
 #include "shader.h"
@@ -8,12 +8,12 @@ template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class ShaderManager {
 private:
-    //•`‰æ‚É•K{‚ÈƒVƒF[ƒ_iVS,PSj‚ÆAgeometryƒVƒF[ƒ_‚ğ•ª‚¯‚Ä•ÛŠÇ‚·‚é
+    //æç”»ã«å¿…é ˆãªã‚·ã‚§ãƒ¼ãƒ€ï¼ˆVS,PSï¼‰ã¨ã€geometryã‚·ã‚§ãƒ¼ãƒ€ã‚’åˆ†ã‘ã¦ä¿ç®¡ã™ã‚‹
     std::unordered_map<ShaderID, Shader*> m_shaders;
     std::unordered_map<ShaderID, ID3D11GeometryShader*> m_geometryShaders;
 
 
-    // ƒVƒ“ƒOƒ‹ƒgƒ“‚Ì‚¨ì–@
+    // ã‚·ãƒ³ã‚°ãƒ«ãƒˆãƒ³ã®ãŠä½œæ³•
     ShaderManager() = default;
     ~ShaderManager() {}
 
@@ -23,9 +23,9 @@ public:
         return instance;
     }
 
-    // ‰Šú‰»‚ÉAƒQ[ƒ€‚Åg‚¤‘SƒVƒF[ƒ_[‚ğˆêŠ‡ƒRƒ“ƒpƒCƒ‹‚µ‚Ä‚µ‚Ü‚¤
+    // åˆæœŸåŒ–æ™‚ã«ã€ã‚²ãƒ¼ãƒ ã§ä½¿ã†å…¨ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’ä¸€æ‹¬ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã—ã¦ã—ã¾ã†
     bool LoadAllShaders(ID3D11Device* pDevice) {
-        // g—p‚·‚éƒVƒF[ƒ_[‚ğ‰Šú‰»‚É¶¬‚·‚é
+        // ä½¿ç”¨ã™ã‚‹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’åˆæœŸåŒ–æ™‚ã«ç”Ÿæˆã™ã‚‹
         //basic material
         if (!GetOrCreate(pDevice, ShaderID::Lit, L"Shaders/LitShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::UnLit, L"Shaders/UnLitShader.hlsl")) return false;
@@ -43,7 +43,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SimpleBoxBlur, L"Shaders/SimpleBoxBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sharpen, L"Shaders/SharpenShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
-        // Bloom—pƒ|ƒXƒgƒvƒƒZƒX
+        // Bloomç”¨ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹
         if (!GetOrCreate(pDevice, ShaderID::HoriBlur, L"Shaders/HorizontalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::VerBlur, L"Shaders/VerticalBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::BloomCombine, L"Shaders/BloomCombineShader.hlsl")) return false;
@@ -58,13 +58,14 @@ public:
         //SSAO
         if (!GetOrCreate(pDevice, ShaderID::SSAO, L"Shaders/SSAOShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::SSAOBlur, L"Shaders/SSAOBlurShader.hlsl")) return false;
-        //ƒfƒoƒbƒO•\¦
+        //ãƒ‡ãƒãƒƒã‚°è¡¨ç¤º
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebug, L"Shaders/GBufferDebugBlit.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebugDepth, L"Shaders/GBufferDebugDepthBlit.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::GBufferDebugAlpha, L"Shaders/GBufferDebugAlphaBlit.hlsl")) return false;
         return true;
     }
 
-    // Enum ‚ğw’è‚µ‚ÄˆÀ‘S‚ÉƒVƒF[ƒ_[‚ğæ‚èo‚·
+    // Enum ã‚’æŒ‡å®šã—ã¦å®‰å…¨ã«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’å–ã‚Šå‡ºã™
     Shader* GetShader(ShaderID id) {
         auto it = m_shaders.find(id);
         if (it != m_shaders.end()) return it->second;
@@ -73,7 +74,7 @@ public:
 
     // Geometry Shader
     bool LoadAllGeometryShaders(ID3D11Device* pDevice) {
-        // GS‚ª•K—v‚ÈShaderID‚¾‚¯‚±‚±‚É—ñ‹“‚·‚é
+        // GSãŒå¿…è¦ãªShaderIDã ã‘ã“ã“ã«åˆ—æŒ™ã™ã‚‹
         if (!loadGeometryShader(pDevice, ShaderID::NormalVizGS,
             L"Shaders/NormalVizGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::PassThrough,
@@ -95,8 +96,8 @@ public:
 private:
     bool GetOrCreate(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
 
-        // ’¸“_ƒoƒbƒtƒ@‚Ì“ü—Í‡‚ÆInputLayout‚Ìslot”Ô†‚ğˆê’v‚³‚¹‚é•K—v‚ª‚ ‚é
-        // ID‚²‚Æ‚Élayout‚ğ’è‹`
+        // é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®å…¥åŠ›é †ã¨InputLayoutã®slotç•ªå·ã‚’ä¸€è‡´ã•ã›ã‚‹å¿…è¦ãŒã‚ã‚‹
+        // IDã”ã¨ã«layoutã‚’å®šç¾©
         D3D11_INPUT_ELEMENT_DESC standardLayout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,             D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    1, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -121,7 +122,7 @@ private:
             { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,       4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
-        // ID‚ÅU‚è•ª‚¯
+        // IDã§æŒ¯ã‚Šåˆ†ã‘
         const D3D11_INPUT_ELEMENT_DESC* layout = standardLayout;
         UINT layoutCount = 4;
 
@@ -158,47 +159,51 @@ private:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;
-		case ShaderID::NormalMapping:
-			layout = normalMappingLayout;
-			layoutCount = 5;
-			break;
-		case ShaderID::ParallaxMapping:
-			layout = normalMappingLayout;
-			layoutCount = 5;
-			break;
+        case ShaderID::NormalMapping:
+            layout = normalMappingLayout;
+            layoutCount = 5;
+            break;
+        case ShaderID::ParallaxMapping:
+            layout = normalMappingLayout;
+            layoutCount = 5;
+            break;
         case ShaderID::HoriBlur:
             layout = standardLayout;
-			layoutCount = 4;
+            layoutCount = 4;
             break;
         case ShaderID::VerBlur:
-			layout = standardLayout;
-			layoutCount = 4;
-			break;
-		case ShaderID::BloomCombine:
-			layout = standardLayout;
-			layoutCount = 4;
-			break;
-		case ShaderID::DeferredGB:
-			layout = standardLayout;
-			layoutCount = 4;
-			break;
-		case ShaderID::DeferredLighting:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::BloomCombine:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::DeferredGB:
+            layout = standardLayout;
+            layoutCount = 4;
+            break;
+        case ShaderID::DeferredLighting:
             layout = screenBlitLayout;
-			layoutCount = 2;
-			break;
-		case ShaderID::SSAO:
-			layout = screenBlitLayout;
-			layoutCount = 2;
-			break;
-		case ShaderID::SSAOBlur:
-			layout = screenBlitLayout;
-			layoutCount = 2;
-			break;
+            layoutCount = 2;
+            break;
+        case ShaderID::SSAO:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
+        case ShaderID::SSAOBlur:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
         case ShaderID::GBufferDebug:
             layout = screenBlitLayout;
             layoutCount = 2;
             break;
         case ShaderID::GBufferDebugDepth:
+            layout = screenBlitLayout;
+            layoutCount = 2;
+            break;
+        case ShaderID::GBufferDebugAlpha:
             layout = screenBlitLayout;
             layoutCount = 2;
             break;
@@ -225,7 +230,7 @@ private:
         return true;
     }
 
-    
+
     bool loadGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
         ComPtr<ID3DBlob> blob, errBlob;
         HRESULT hr = D3DCompileFromFile(
@@ -245,6 +250,6 @@ private:
         return true;
     }
 
-    
-    
+
+
 };

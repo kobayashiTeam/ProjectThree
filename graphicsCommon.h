@@ -1,7 +1,7 @@
-#pragma once
+ï»¿#pragma once
 #include <DirectXMath.h>
 
-// ƒVƒF[ƒ_[‚Ì Constant Buffer (b0) ‚Ì•¨—“I‚ÈƒŒƒCƒAƒEƒg‚ÉŠ®‘Sˆê’v‚³‚¹‚é\‘¢‘Ì
+// ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã® Constant Buffer (b0) ã®ç‰©ç†çš„ãªãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆã«å®Œå…¨ä¸€è‡´ã•ã›ã‚‹æ§‹é€ ä½“
 struct PerFrameCB
 {
     DirectX::XMMATRIX matView;
@@ -12,32 +12,34 @@ struct PerFrameCB
     DirectX::XMFLOAT4 vAttenuation;
 };
 
-//ƒuƒŒƒ“ƒhƒ^ƒCƒv‚Ì‹¤’ÊQÆenum
+//ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚¿ã‚¤ãƒ—ã®å…±é€šå‚ç…§enum
 enum class BlendMode
 {
-	Opaque,       // •s“§–¾iNonej
-	AlphaBlend,   // ”¼“§–¾
-	Additive,     // ‰ÁZ‡¬iƒGƒtƒFƒNƒg—pj
-	Count         // ƒoƒbƒtƒ@‚Ì”i©“®“I‚É 3 ‚É‚È‚éj
+    Opaque,       // ä¸é€æ˜ï¼ˆNoneï¼‰
+    AlphaBlend,   // åŠé€æ˜
+    Additive,     // åŠ ç®—åˆæˆï¼ˆã‚¨ãƒ•ã‚§ã‚¯ãƒˆç”¨ï¼‰
+    Count         // ãƒãƒƒãƒ•ã‚¡ã®æ•°ï¼ˆè‡ªå‹•çš„ã« 3 ã«ãªã‚‹ï¼‰
 };
 
-// •`‰æ‚ÌH’öiƒQ[ƒ€‚ÌƒŒƒ“ƒ_ƒŠƒ“ƒOƒXƒeƒbƒvj
+// æç”»ã®å·¥ç¨‹ï¼ˆã‚²ãƒ¼ãƒ ã®ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã‚¹ãƒ†ãƒƒãƒ—ï¼‰
 enum class RenderPass {
-    Opaque,       // ’Êí‚Ì•s“§–¾ƒIƒuƒWƒFƒNƒg
-    Transparent,  // ”¼“§–¾ƒIƒuƒWƒFƒNƒg
-    DeferredOpaque, // LitŒnƒVƒF[ƒ_[‚ğg‚¤ƒIƒuƒWƒFƒNƒg‚Í‚±‚¿‚ç‚É“o˜^
+    Opaque,       // é€šå¸¸ã®ä¸é€æ˜ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+    Transparent,  // åŠé€æ˜ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+    DeferredOpaque, // Litç³»ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’ä½¿ã†ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã¯ã“ã¡ã‚‰ã«ç™»éŒ²
     Count
 };
 
-// Scene3FGƒoƒbƒtƒ@‚Ì‚Ç‚Ì¬•ª‚ğÅIo—Í‚·‚é‚©iRenderer‘¤‚Å‚±‚Ìó‘Ô‚ğ•Û‚·‚éİŒvj
+// Scene3ï¼šGãƒãƒƒãƒ•ã‚¡ã®ã©ã®æˆåˆ†ã‚’æœ€çµ‚å‡ºåŠ›ã™ã‚‹ã‹ï¼ˆRendererå´ã§ã“ã®çŠ¶æ…‹ã‚’ä¿æŒã™ã‚‹è¨­è¨ˆï¼‰
 enum class GBufferDebugView {
-    Lit,     // ’Êí’Ê‚èALightingÏ‚İ‚ÌÅIŒ‹‰Ê
+    Lit,     // é€šå¸¸é€šã‚Šã€Lightingæ¸ˆã¿ã®æœ€çµ‚çµæœ
     Albedo,
     Normal,
-    Depth
+    Depth,
+    Metallic,  // â˜…è¿½åŠ ï¼šAlbedo.aã®ç”Ÿãƒ‡ãƒ¼ã‚¿ã‚’ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«è¡¨ç¤ºï¼ˆPBRãƒ‡ãƒ¼ã‚¿æ¤œè¨¼ç”¨ï¼‰
+    Roughness  // â˜…è¿½åŠ ï¼šNormal.aã®ç”Ÿãƒ‡ãƒ¼ã‚¿ã‚’ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«è¡¨ç¤ºï¼ˆPBRãƒ‡ãƒ¼ã‚¿æ¤œè¨¼ç”¨ï¼‰
 };
 
-// Scene5FƒVƒƒƒhƒEƒ}ƒbƒsƒ“ƒO‚Å‚Ç‚¿‚ç‚ÌŒõŒ¹‚ğƒ‰ƒCƒeƒBƒ“ƒO‚É”½‰f‚·‚é‚©
+// Scene5ï¼šã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ”ãƒ³ã‚°ã§ã©ã¡ã‚‰ã®å…‰æºã‚’ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã«åæ˜ ã™ã‚‹ã‹
 enum class LightVisibilityMode {
     DirectionalOnly,
     PointOnly,
@@ -52,7 +54,7 @@ enum class ShaderID {
     NormalViz,
     PointSprite,
     NormalMapping,
-	ParallaxMapping,
+    ParallaxMapping,
     BasicColor,
     // postProcess
     Monochromatic,
@@ -76,18 +78,19 @@ enum class ShaderID {
     //shadow
     Shadow,
     ShadowCube,
-	//deferred
+    //deferred
     DeferredGB,
     DeferredLighting,
     //SSAO
-	SSAO,
+    SSAO,
     SSAOBlur,
-    //Scene3ƒfƒoƒbƒO•\¦—piGƒoƒbƒtƒ@‚ğ‚»‚Ì‚Ü‚ÜƒuƒŠƒbƒgj
+    //Scene3ãƒ‡ãƒãƒƒã‚°è¡¨ç¤ºç”¨ï¼ˆGãƒãƒƒãƒ•ã‚¡ã‚’ãã®ã¾ã¾ãƒ–ãƒªãƒƒãƒˆï¼‰
     GBufferDebug,
-    GBufferDebugDepth //Depthê—pFüŒ`‰»{ƒOƒŒ[ƒXƒP[ƒ‹‰»
+    GBufferDebugDepth, //Depthå°‚ç”¨ï¼šç·šå½¢åŒ–ï¼‹ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«åŒ–
+    GBufferDebugAlpha  //â˜…è¿½åŠ ï¼šScene9ç”¨ã€‚ã‚¢ãƒ«ãƒ•ã‚¡ãƒãƒ£ãƒ³ãƒãƒ«(metallic/roughness)ã‚’ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«è¡¨ç¤º
 };
 
-//ƒ‰ƒCƒgŠÖ˜A
+//ãƒ©ã‚¤ãƒˆé–¢é€£
 #define MAX_LIGHTS 4
 
 enum class LightType {
@@ -97,21 +100,21 @@ enum class LightType {
 };
 
 
-// GPU‘¤‚É‘—‚é1ƒ‰ƒCƒg•ª‚Ìƒf[ƒ^itype ƒtƒB[ƒ‹ƒh‚Å Directional/Point/Spot ‚ğ”»•Êj
-struct LightData  // GPU‘¤‚É‘—‚é1ƒ‰ƒCƒg•ª‚Ìƒf[ƒ^
+// GPUå´ã«é€ã‚‹1ãƒ©ã‚¤ãƒˆåˆ†ã®ãƒ‡ãƒ¼ã‚¿ï¼ˆtype ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã§ Directional/Point/Spot ã‚’åˆ¤åˆ¥ï¼‰
+struct LightData  // GPUå´ã«é€ã‚‹1ãƒ©ã‚¤ãƒˆåˆ†ã®ãƒ‡ãƒ¼ã‚¿
 {
-    DirectX::XMFLOAT4 position;         // w–¢g—p
-    DirectX::XMFLOAT4 direction;        // w–¢g—p
+    DirectX::XMFLOAT4 position;         // wæœªä½¿ç”¨
+    DirectX::XMFLOAT4 direction;        // wæœªä½¿ç”¨
     DirectX::XMFLOAT4 color;
-    DirectX::XMMATRIX lightSpaceMatrix; // ƒVƒƒƒhƒE—p
+    DirectX::XMMATRIX lightSpaceMatrix; // ã‚·ãƒ£ãƒ‰ã‚¦ç”¨
     int   type;
     float intensity;
     float farPlane;
     float padding;
 };
 
-// ‘Sƒ‰ƒCƒg‚ğ‚Ü‚Æ‚ß‚Äb3‚É‘—‚éƒoƒbƒtƒ@
-struct LightBufferCB  //b3CB‚É‘—‚é“à—eBLightData“à—eiã‹Lj‚ÍƒVƒF[ƒ_‘¤‚ÅÄ’è‹`‚·‚é
+// å…¨ãƒ©ã‚¤ãƒˆã‚’ã¾ã¨ã‚ã¦b3ã«é€ã‚‹ãƒãƒƒãƒ•ã‚¡
+struct LightBufferCB  //b3CBã«é€ã‚‹å†…å®¹ã€‚LightDataå†…å®¹ï¼ˆä¸Šè¨˜ï¼‰ã¯ã‚·ã‚§ãƒ¼ãƒ€å´ã§å†å®šç¾©ã™ã‚‹
 {
     LightData lights[MAX_LIGHTS];
     int       lightCount;
@@ -119,26 +122,26 @@ struct LightBufferCB  //b3CB‚É‘—‚é“à—eBLightData“à—eiã‹Lj‚ÍƒVƒF[ƒ_‘¤‚ÅÄ’è‹
 };
 
 
-//Point ƒ‰ƒCƒg
-struct ShadowCubeCB//b4CB‚É‘—‚é“à—eB“à—e‚ªˆêŒÂiview*Projs—ñj‚µ‚©‚È‚¢‚Ì‚Å‚Ş‚«o‚µ‚Å‘—‚é
+//Point ãƒ©ã‚¤ãƒˆ
+struct ShadowCubeCB//b4CBã«é€ã‚‹å†…å®¹ã€‚å†…å®¹ãŒä¸€å€‹ï¼ˆview*Projè¡Œåˆ—ï¼‰ã—ã‹ãªã„ã®ã§ã‚€ãå‡ºã—ã§é€ã‚‹
 {
-    DirectX:: XMMATRIX gLightViewProj[6]; // GS‚ªg‚¤
+    DirectX::XMMATRIX gLightViewProj[6]; // GSãŒä½¿ã†
     DirectX::XMFLOAT3 gLightPos;
     float gFarPlane;
 };
 
-//ƒ|ƒXƒgƒvƒƒZƒX—p‚Ìcb
+//ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ç”¨ã®cb
 struct PostProcessConstantBuffer {
     float exposure = 1.0f;
-    float gammaCorrection = 1.0f; // Scene2—pF1.0=ONi•â³‚ ‚èjA0.0=OFFi•â³‚È‚µj
-    float padding[2] = { 0.0f, 0.0f }; // 16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg
+    float gammaCorrection = 1.0f; // Scene2ç”¨ï¼š1.0=ONï¼ˆè£œæ­£ã‚ã‚Šï¼‰ã€0.0=OFFï¼ˆè£œæ­£ãªã—ï¼‰
+    float padding[2] = { 0.0f, 0.0f }; // 16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆ
 };
 
-// SSAOƒpƒ‰ƒ[ƒ^—p\‘¢‘Ì (16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg‚ğ•ÛØ)
+// SSAOãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ç”¨æ§‹é€ ä½“ (16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆã‚’ä¿è¨¼)
 struct SSAOParam
 {
-    DirectX::XMFLOAT4 samples[64]; // 16ƒoƒCƒg * 64 = 1024ƒoƒCƒg
-    DirectX::XMFLOAT2 noiseScale;  // 8ƒoƒCƒg
-    float             radius;      // 4ƒoƒCƒg
-    float             bias;        // 4ƒoƒCƒg  (‡Œv 16ƒoƒCƒg)
-}; // ‘S‘Ì‚Å 1040 ƒoƒCƒgi16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg—vŒ‚ğ–‚½‚·j
+    DirectX::XMFLOAT4 samples[64]; // 16ãƒã‚¤ãƒˆ * 64 = 1024ãƒã‚¤ãƒˆ
+    DirectX::XMFLOAT2 noiseScale;  // 8ãƒã‚¤ãƒˆ
+    float             radius;      // 4ãƒã‚¤ãƒˆ
+    float             bias;        // 4ãƒã‚¤ãƒˆ  (åˆè¨ˆ 16ãƒã‚¤ãƒˆ)
+}; // å…¨ä½“ã§ 1040 ãƒã‚¤ãƒˆï¼ˆ16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆè¦ä»¶ã‚’æº€ãŸã™ï¼‰

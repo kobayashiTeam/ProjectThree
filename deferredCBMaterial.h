@@ -1,22 +1,22 @@
-#pragma once
+ï»¿#pragma once
 #include <DirectXMath.h> 
 #include"material.h"
 
 class DeferredCBMaterial : public Material
 {
 public:
-    // ‚±‚Ìƒ}ƒeƒŠƒAƒ‹ê—p‚Ì’è”ƒoƒbƒtƒ@\‘¢‘ÌiƒXƒƒbƒg2—pj
+    // ã“ã®ãƒãƒ†ãƒªã‚¢ãƒ«å°‚ç”¨ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡æ§‹é€ ä½“ï¼ˆã‚¹ãƒ­ãƒƒãƒˆ2ç”¨ï¼‰
     struct PerMaterialCB
     {
-        DirectX::XMFLOAT4 vMaterialColor; // ƒ}ƒeƒŠƒAƒ‹ŒÅ—L‚ÌF
-        float metallic;                   // ‹à‘®“x (0=”ñ‹à‘®, 1=‹à‘®)
-        float roughness;                  // ‘e‚³ (0=‚Â‚é‚Â‚é, 1=‚´‚ç‚´‚ç)
-        DirectX::XMFLOAT2 padding;        // 16ƒoƒCƒg‹«ŠE‚É‘µ‚¦‚é‚½‚ß‚Ì–„‚ß‡‚í‚¹
+        DirectX::XMFLOAT4 vMaterialColor; // ãƒãƒ†ãƒªã‚¢ãƒ«å›ºæœ‰ã®è‰²
+        float metallic;                   // é‡‘å±åº¦ (0=éé‡‘å±, 1=é‡‘å±)
+        float roughness;                  // ç²—ã• (0=ã¤ã‚‹ã¤ã‚‹, 1=ã–ã‚‰ã–ã‚‰)
+        DirectX::XMFLOAT2 padding;        // 16ãƒã‚¤ãƒˆå¢ƒç•Œã«æƒãˆã‚‹ãŸã‚ã®åŸ‹ã‚åˆã‚ã›
     };
 
 private:
-    ID3D11Buffer* m_pMaterialBuffer = nullptr; // ƒXƒƒbƒg2—pƒoƒbƒtƒ@
-    PerMaterialCB m_cbData;                    // ƒpƒ‰ƒ[ƒ^‚Ì¶ƒf[ƒ^
+    ID3D11Buffer* m_pMaterialBuffer = nullptr; // ã‚¹ãƒ­ãƒƒãƒˆ2ç”¨ãƒãƒƒãƒ•ã‚¡
+    PerMaterialCB m_cbData;                    // ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®ç”Ÿãƒ‡ãƒ¼ã‚¿
 
 public:
     DeferredCBMaterial() : m_pMaterialBuffer(nullptr) {
@@ -27,16 +27,20 @@ public:
     }
     ~DeferredCBMaterial() override { if (m_pMaterialBuffer) m_pMaterialBuffer->Release(); }
 
-    // ƒoƒbƒtƒ@‚ğ¶¬‚·‚é‚½‚ß‚Ì‰Šú‰»ŠÖ”
+    // ãƒãƒƒãƒ•ã‚¡ã‚’ç”Ÿæˆã™ã‚‹ãŸã‚ã®åˆæœŸåŒ–é–¢æ•°
     bool CreateMaterialBuffer(ID3D11Device* pDevice);
 
-    // ƒpƒ‰ƒ[ƒ^‚ğ•ÏX‚·‚éƒAƒNƒZƒTiŠO•”‚©‚çF‚ğ•Ï‚¦‚ç‚ê‚é‚æ‚¤‚É‚·‚éj
+    // ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’å¤‰æ›´ã™ã‚‹ã‚¢ã‚¯ã‚»ã‚µï¼ˆå¤–éƒ¨ã‹ã‚‰è‰²ã‚’å¤‰ãˆã‚‰ã‚Œã‚‹ã‚ˆã†ã«ã™ã‚‹ï¼‰
     void SetMaterialColor(float r, float g, float b, float a) {
         m_cbData.vMaterialColor = DirectX::XMFLOAT4(r, g, b, a);
     }
     void SetMetallic(float m) { m_cbData.metallic = m; }
     void SetRoughness(float r) { m_cbData.roughness = r; }
 
-    //e‚ÌBind‚ğã‘‚«iƒI[ƒo[ƒ‰ƒCƒhj‚µ‚ÄA©•ªê—p‚Ìƒoƒbƒtƒ@‚àƒZƒbƒg‚·‚é
+    //è¦ªã®Bindã‚’ä¸Šæ›¸ãï¼ˆã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰ï¼‰ã—ã¦ã€è‡ªåˆ†å°‚ç”¨ã®ãƒãƒƒãƒ•ã‚¡ã‚‚ã‚»ãƒƒãƒˆã™ã‚‹
     void Bind(ID3D11DeviceContext* pContext) override;
+
+    //  è¿½åŠ ï¼šè‡ªåˆ†ã®è¤‡è£½ã‚’ä½œã‚‹ã€‚ãƒ†ã‚¯ã‚¹ãƒãƒ£/ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã¯å…±æœ‰ã—ã€
+    //         å€‹åˆ¥ã«å¤‰æ›´ã—ãŸã„å®šæ•°ãƒãƒƒãƒ•ã‚¡(m_pMaterialBuffer)ã ã‘æ–°è¦ã«ä½œã‚Šç›´ã™
+    Material* Clone(ID3D11Device* pDevice) const override;
 };

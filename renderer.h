@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include <wrl/client.h>
 #include "rasterizerStates.h"
@@ -8,13 +8,13 @@
 #pragma comment(lib, "d3d11.lib")
 template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-//À‘ÌéŒ¾
+//å®Ÿä½“å®£è¨€
 #include"renderQueue.h"
 #include"light.h"
 #include"shadowMap.h"
 #include"shadowCubeMap.h"
 
-//‘O•ûéŒ¾
+//å‰æ–¹å®£è¨€
 class Graphics;
 class Camera;
 class Model;
@@ -55,37 +55,37 @@ public:
     void BeginFrame(Camera* camera, float r, float g, float b, float a);
     void EndFrame();
 
-    // ‹——£ŒvZ‚ğŠÜ‚ß‚Äƒ‚ƒfƒ‹‚ğ“KØ‚ÈƒpƒX‚É“o˜^‚·‚é
-    void Submit(Model* model, RenderPass pass,BlendMode mode);
+    // è·é›¢è¨ˆç®—ã‚’å«ã‚ã¦ãƒ¢ãƒ‡ãƒ«ã‚’é©åˆ‡ãªãƒ‘ã‚¹ã«ç™»éŒ²ã™ã‚‹
+    void Submit(Model* model, RenderPass pass, BlendMode mode);
     void Execute();
 
-    // ƒXƒe[ƒg§Œä
+    // ã‚¹ãƒ†ãƒ¼ãƒˆåˆ¶å¾¡
     void SetCullMode(RasterizerStates::CullMode mode);
-    
-    //defaultRT‚É–ß‚µ‚Ä‚©‚ç•`‰æ‚·‚éQuadƒIƒuƒWƒFƒNƒg
+
+    //defaultRTã«æˆ»ã—ã¦ã‹ã‚‰æç”»ã™ã‚‹Quadã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
     bool createFinalRenderQuad();
 
-    //ƒ|ƒXƒgƒvƒƒZƒXƒoƒbƒtƒ@
+    //ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ãƒãƒƒãƒ•ã‚¡
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
     float GetExposure() const { return m_postProcessData.exposure; }
-    // BloomiBloomCombinePostProcessj‚ÌON/OFFØ‚è‘Ö‚¦
+    // Bloomï¼ˆBloomCombinePostProcessï¼‰ã®ON/OFFåˆ‡ã‚Šæ›¿ãˆ
     void SetBloomActive(bool isOn);
     bool IsBloomActive() const;
-    // ƒKƒ“ƒ}•â³‚ÌON/OFFØ‚è‘Ö‚¦iScreenBlitƒpƒX‚Ìpow(1/2.2)‚ğ•ªŠòj
+    // ã‚¬ãƒ³ãƒè£œæ­£ã®ON/OFFåˆ‡ã‚Šæ›¿ãˆï¼ˆScreenBlitãƒ‘ã‚¹ã®pow(1/2.2)ã‚’åˆ†å²ï¼‰
     void SetGammaCorrection(bool isOn) { m_postProcessData.gammaCorrection = isOn ? 1.0f : 0.0f; }
 
-    // Gƒoƒbƒtƒ@‚ÌƒfƒoƒbƒO•\¦ƒ‚[ƒhØ‚è‘Ö‚¦iˆÄAj
+    // Gãƒãƒƒãƒ•ã‚¡ã®ãƒ‡ãƒãƒƒã‚°è¡¨ç¤ºãƒ¢ãƒ¼ãƒ‰åˆ‡ã‚Šæ›¿ãˆï¼ˆæ¡ˆAï¼‰
     void SetDebugView(GBufferDebugView view) { m_debugView = view; }
-    // DirectionalLight‚ÌŒü‚«‚ğ•ÏXiShadowSystem‚ÖˆÏ÷j
+    // DirectionalLightã®å‘ãã‚’å¤‰æ›´ï¼ˆShadowSystemã¸å§”è­²ï¼‰
     void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir);
-    // PointLight‚ÌˆÊ’u‚ğ•ÏXiShadowSystem‚ÖˆÏ÷j
+    // PointLightã®ä½ç½®ã‚’å¤‰æ›´ï¼ˆShadowSystemã¸å§”è­²ï¼‰
     void SetPointLightPosition(DirectX::XMFLOAT3 pos);
-    // Directional/Point/Both‚Ì•\¦Ø‚è‘Ö‚¦iShadowSystem‚ÖˆÏ÷j
+    // Directional/Point/Bothã®è¡¨ç¤ºåˆ‡ã‚Šæ›¿ãˆï¼ˆShadowSystemã¸å§”è­²ï¼‰
     void SetLightVisibilityMode(LightVisibilityMode mode);
-    // GPUƒCƒ“ƒXƒ^ƒ“ƒVƒ“ƒO‚Ì•\¦ŒÂ”‚ğ•ÏXiInstancedModel‚ÖˆÏ÷j
+    // GPUã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚·ãƒ³ã‚°ã®è¡¨ç¤ºå€‹æ•°ã‚’å¤‰æ›´ï¼ˆInstancedModelã¸å§”è­²ï¼‰
     void SetInstanceCount(UINT count);
-    // •\¦ŒÂ”‚Ì•ÏX‚É‰Á‚¦AŒQ‘S‘Ì‚ğƒIƒtƒZƒbƒg•ª‚¾‚¯ˆÚ“®‚³‚¹‚é
+    // è¡¨ç¤ºå€‹æ•°ã®å¤‰æ›´ã«åŠ ãˆã€ç¾¤å…¨ä½“ã‚’ã‚ªãƒ•ã‚»ãƒƒãƒˆåˆ†ã ã‘ç§»å‹•ã•ã›ã‚‹
     void SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset);
 
 
@@ -94,41 +94,41 @@ private:
 
 private:
     Graphics* m_graphics = nullptr;
-    Camera* m_currentCamera = nullptr; // ƒpƒ‰ƒ[ƒ^XV‚â‹——£ŒvZ—p‚É•Û
+    Camera* m_currentCamera = nullptr; // ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿æ›´æ–°ã‚„è·é›¢è¨ˆç®—ç”¨ã«ä¿æŒ
 
-    // ƒƒ“ƒo‚ğ“Æ©ƒ|ƒCƒ“ƒ^‚©‚çComPtr‚â“KØ‚ÈƒNƒ‰ƒXƒ|ƒCƒ“ƒ^‚ÅŠÇ—
+    // ãƒ¡ãƒ³ãƒã‚’ç‹¬è‡ªãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ComPtrã‚„é©åˆ‡ãªã‚¯ãƒ©ã‚¹ãƒã‚¤ãƒ³ã‚¿ã§ç®¡ç†
     RasterizerStates* m_rasterStates = nullptr;
     DepthStencilStates* m_dsStates = nullptr;
     BlendStates* m_blendStates = nullptr;
-    // ƒŒƒ“ƒ_[ƒpƒX‚Ì”‚¾‚¯AŒÂ•Ê‚ÌRenderQueue‚ğ‚Â
+    // ãƒ¬ãƒ³ãƒ€ãƒ¼ãƒ‘ã‚¹ã®æ•°ã ã‘ã€å€‹åˆ¥ã®RenderQueueã‚’æŒã¤
     RenderQueue m_renderQueues[static_cast<int>(RenderPass::Count)];
 
     ComPtr<ID3D11Buffer> m_perFrameCB;
 
-    //ƒIƒtƒXƒNƒŠ[ƒ“ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg
-	RenderTarget* m_offscreenRT=nullptr;
-    RenderTarget* m_offscreenRTwithMSAA = nullptr;// MSAA—pƒIƒtƒXƒNƒŠ[ƒ“RT
-    RenderTarget* m_tmpRT = nullptr;//ƒsƒ“ƒ|ƒ“İŒv‚É‚·‚é‚½‚ß‚É‚à‚¤ˆê–‡
-    // bloom‘Î‰‚Ìrt
-	RenderTarget* m_brightRTwithMSAA = nullptr;
-	RenderTarget* m_brightRT = nullptr;
-   
+    //ã‚ªãƒ•ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
+    RenderTarget* m_offscreenRT = nullptr;
+    RenderTarget* m_offscreenRTwithMSAA = nullptr;// MSAAç”¨ã‚ªãƒ•ã‚¹ã‚¯ãƒªãƒ¼ãƒ³RT
+    RenderTarget* m_tmpRT = nullptr;//ãƒ”ãƒ³ãƒãƒ³è¨­è¨ˆã«ã™ã‚‹ãŸã‚ã«ã‚‚ã†ä¸€æš
+    // bloomå¯¾å¿œã®rt
+    RenderTarget* m_brightRTwithMSAA = nullptr;
+    RenderTarget* m_brightRT = nullptr;
 
-    //ƒ|ƒXƒgƒvƒƒZƒXŒã‚É•`‰æ‚·‚éQuad‚Ìmodel
+
+    //ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹å¾Œã«æç”»ã™ã‚‹Quadã®model
     ScreenBlitMaterial* m_finalRenderMat = nullptr;
     Mesh* m_finalRenderMesh = nullptr;
     Shader* m_finalRenderShader = nullptr;
-    // ÅI•`‰æ—pƒ|ƒXƒgƒvƒƒZƒX
+    // æœ€çµ‚æç”»ç”¨ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;
-   
-    // Bloom‡¬—pƒ|ƒXƒgƒvƒƒZƒX
-	BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
-        // postprocess‚ğ’S“–‚·‚éƒNƒ‰ƒX
-	PostProcessChain* m_postProcessChain = nullptr;
-        //—áŠO“I‚ÈbloomBlur‚Íê–åƒpƒX‚Æ‚µ‚Ä•ÊƒNƒ‰ƒX‚É
-	BloomBlurPass* m_bloomBlurPass = nullptr;
 
-    //ƒXƒJƒCƒ{ƒbƒNƒXƒIƒuƒWƒFƒNƒg
+    // Bloomåˆæˆç”¨ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹
+    BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
+    // postprocessã‚’æ‹…å½“ã™ã‚‹ã‚¯ãƒ©ã‚¹
+    PostProcessChain* m_postProcessChain = nullptr;
+    //ä¾‹å¤–çš„ãªbloomBlurã¯å°‚é–€ãƒ‘ã‚¹ã¨ã—ã¦åˆ¥ã‚¯ãƒ©ã‚¹ã«
+    BloomBlurPass* m_bloomBlurPass = nullptr;
+
+    //ã‚¹ã‚«ã‚¤ãƒœãƒƒã‚¯ã‚¹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
     SkyBox* m_pSkyBox = nullptr;
     //pointSprite
     PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
@@ -136,29 +136,31 @@ private:
     InstancedModel* m_pInstancedModel = nullptr;
 
 
-    //ƒ|ƒXƒgƒvƒƒZƒXƒoƒbƒtƒ@AQÆ
+    //ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ãƒãƒƒãƒ•ã‚¡ã€å‚ç…§
     ComPtr<ID3D11Buffer> m_pPostProcessCB = nullptr;
     PostProcessConstantBuffer m_postProcessData;
 
-    // Deferred Rendering—pG-BufferŠÖ˜AƒŠƒ\[ƒX
-        //ƒVƒF[ƒ_
-	Shader* m_pDeferredGBufferShader = nullptr;
-	Shader* m_pDeferredLightingShader = nullptr;
-        //ƒTƒ“ƒvƒ‰[
+    // Deferred Renderingç”¨G-Bufferé–¢é€£ãƒªã‚½ãƒ¼ã‚¹
+        //ã‚·ã‚§ãƒ¼ãƒ€
+    Shader* m_pDeferredGBufferShader = nullptr;
+    Shader* m_pDeferredLightingShader = nullptr;
+    //ã‚µãƒ³ãƒ—ãƒ©ãƒ¼
     ComPtr<ID3D11SamplerState> m_gBufferDepthSampler;
 
 
     // Gbuffer
-	GBufferPass* m_gBufferPass = nullptr;
-	// DeferredLightingPass
-	DeferredLightingPass* m_deferredLightingPass = nullptr;
+    GBufferPass* m_gBufferPass = nullptr;
+    // DeferredLightingPass
+    DeferredLightingPass* m_deferredLightingPass = nullptr;
     // SSAOPass
-	SSAOPass* m_ssaoPass = nullptr;
-	// ShadowSystem
-	ShadowSystem* m_shadowSystem = nullptr;
+    SSAOPass* m_ssaoPass = nullptr;
+    // ShadowSystem
+    ShadowSystem* m_shadowSystem = nullptr;
 
-    // Scene3‚ÌGƒoƒbƒtƒ@ƒfƒoƒbƒO•\¦iˆÄAj
+    // Scene3ã®Gãƒãƒƒãƒ•ã‚¡ãƒ‡ãƒãƒƒã‚°è¡¨ç¤ºï¼ˆæ¡ˆAï¼‰
     GBufferDebugView m_debugView = GBufferDebugView::Lit;
     GBufferDebugBlit* m_gBufferDebugBlit = nullptr;
+    // Scene9ç”¨ï¼šAlbedo.a/Normal.aï¼ˆmetallic/roughnessï¼‰ã‚’ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«è¡¨ç¤ºã™ã‚‹å°‚ç”¨ãƒ–ãƒªãƒƒãƒˆ
+    GBufferDebugBlit* m_gBufferDebugAlphaBlit = nullptr;
 
 };
