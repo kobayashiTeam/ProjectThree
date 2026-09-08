@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <unordered_map>
 #include <string>
 #include<d3d11.h>
@@ -21,25 +21,31 @@ public:
         }
     }
 
-    // ƒtƒ@ƒCƒ‹ƒpƒX‚ğƒL[‚Æ‚µ‚Äƒ‚ƒfƒ‹ƒŠƒ\[ƒX‚ğƒLƒƒƒbƒVƒ…‚·‚é
-    ModelResource* GetModel(ID3D11Device* device, const std::wstring& path) {
-        auto it = m_models.find(path);
+    // ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã‚’ã‚­ãƒ¼ã¨ã—ã¦ãƒ¢ãƒ‡ãƒ«ãƒªã‚½ãƒ¼ã‚¹ã‚’ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã™ã‚‹
+    //  å¤‰æ›´ï¼šmodeã‚’è¿½åŠ ã€‚åŒã˜ãƒ•ã‚¡ã‚¤ãƒ«ã§ã‚‚Litç”¨/Deferredç”¨ã¯åˆ¥ç‰©ã¨ã—ã¦æ‰±ã„ãŸã„ã®ã§ã€
+    //         ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã‚­ãƒ¼ã«modeã‚’å«ã‚ã‚‹ï¼ˆç‰‡æ–¹ã ã‘å¤‰ãˆã¦ã‚‚ã€ã‚‚ã†ç‰‡æ–¹ã«å½±éŸ¿ã—ãªã„ï¼‰
+    ModelResource* GetModel(ID3D11Device* device, const std::wstring& path,
+        ModelMaterialMode mode = ModelMaterialMode::Lit) {
+
+        std::wstring key = path + (mode == ModelMaterialMode::Deferred ? L"|deferred" : L"|lit");
+
+        auto it = m_models.find(key);
         if (it != m_models.end()) {
-            return it->second; // ƒLƒƒƒbƒVƒ…Ï‚İ ¨ Ä—˜—p
+            return it->second; // ã‚­ãƒ£ãƒƒã‚·ãƒ¥æ¸ˆã¿ â†’ å†åˆ©ç”¨
         }
 
         ModelResource* model = new ModelResource();
-        if (!model->LoadFromFile(device, &ShaderManager::GetInstance(), path)) {
+        if (!model->LoadFromFile(device, &ShaderManager::GetInstance(), path, mode)) {
             delete model;
             return nullptr;
         }
-        m_models[path] = model;
+        m_models[key] = model;
         return model;
     }
 
 private:
     ResourceManager() = default;
-    // “Ç‚İ‚ñ‚¾ƒ‚ƒfƒ‹ƒŠƒ\[ƒX‚ğƒpƒX‚²‚Æ‚É•Û
-    // ResourceManager‚ªŠ—L‚·‚é
+    // èª­ã¿è¾¼ã‚“ã ãƒ¢ãƒ‡ãƒ«ãƒªã‚½ãƒ¼ã‚¹ã‚’ãƒ‘ã‚¹+ãƒ¢ãƒ¼ãƒ‰ã”ã¨ã«ä¿æŒ
+    // ResourceManagerãŒæ‰€æœ‰ã™ã‚‹
     std::unordered_map<std::wstring, ModelResource*> m_models;
 };

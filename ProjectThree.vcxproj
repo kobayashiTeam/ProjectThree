@@ -180,6 +180,7 @@
     <ClCompile Include="scene6.cpp" />
     <ClCompile Include="scene7.cpp" />
     <ClCompile Include="scene8.cpp" />
+    <ClCompile Include="scene9.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="shadowCubeMap.cpp" />
     <ClCompile Include="shadowMap.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="scene6.h" />
     <ClInclude Include="scene7.h" />
     <ClInclude Include="scene8.h" />
+    <ClInclude Include="scene9.h" />
     <ClInclude Include="testScene.h" />
     <ClInclude Include="screenBlitPostProcess.h" />
     <ClInclude Include="sepiaPostProcess.h" />
