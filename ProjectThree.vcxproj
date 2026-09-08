@@ -173,6 +173,7 @@
     <ClCompile Include="renderTarget.cpp" />
     <ClCompile Include="scene0.cpp" />
     <ClCompile Include="scene1.cpp" />
+    <ClCompile Include="scene10.cpp" />
     <ClCompile Include="scene2.cpp" />
     <ClCompile Include="scene3.cpp" />
     <ClCompile Include="scene4.cpp" />
@@ -236,6 +237,7 @@
     <ClInclude Include="resourceManager.h" />
     <ClInclude Include="scene0.h" />
     <ClInclude Include="scene1.h" />
+    <ClInclude Include="scene10.h" />
     <ClInclude Include="scene2.h" />
     <ClInclude Include="scene3.h" />
     <ClInclude Include="scene4.h" />
@@ -429,16 +431,15 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-    </ClCompile>
     <ClCompile Include="Shaders\DeferredGBufferShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>

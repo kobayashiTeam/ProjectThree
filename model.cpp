@@ -51,7 +51,7 @@ Model::~Model()
         m_pObjectBuffer = nullptr;
     }
 
-    // ★追加：CloneMaterialsForInstance()で複製したマテリアルは
+    //  追加：CloneMaterialsForInstance()で複製したマテリアルは
     // ModelResourceが解放してくれないので、ここで自分で解放する
     for (Material* mat : m_ownedClonedMaterials)
     {

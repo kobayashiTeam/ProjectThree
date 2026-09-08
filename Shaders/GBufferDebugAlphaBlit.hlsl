@@ -1,5 +1,5 @@
 // GBufferDebugAlphaBlit.hlsl
-// Scene9（PBRマテリアルグリッド）用：G-Bufferのαチャンネル（metallic/roughness）を
+// Scene9（PBRマテリアルグリッド）用：G-Bufferのalphaチャンネル（metallic/roughness）を
 // グレースケールとしてそのままバックバッファへ映すだけの単純なシェーダー。
 // GBufferDebugBlit.hlsl（rgbを表示）の兄弟版で、aを表示する点だけが違う。
 

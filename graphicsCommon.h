@@ -35,8 +35,8 @@ enum class GBufferDebugView {
     Albedo,
     Normal,
     Depth,
-    Metallic,  // ★追加：Albedo.aの生データをグレースケール表示（PBRデータ検証用）
-    Roughness  // ★追加：Normal.aの生データをグレースケール表示（PBRデータ検証用）
+    Metallic,  //  追加：Albedo.aの生データをグレースケール表示（PBRデータ検証用）
+    Roughness  //  追加：Normal.aの生データをグレースケール表示（PBRデータ検証用）
 };
 
 // Scene5：シャドウマッピングでどちらの光源をライティングに反映するか
@@ -87,7 +87,7 @@ enum class ShaderID {
     //Scene3デバッグ表示用（Gバッファをそのままブリット）
     GBufferDebug,
     GBufferDebugDepth, //Depth専用：線形化＋グレースケール化
-    GBufferDebugAlpha  //★追加：Scene9用。アルファチャンネル(metallic/roughness)をグレースケール表示
+    GBufferDebugAlpha  //Scene9用。アルファチャンネル(metallic/roughness)をグレースケール表示
 };
 
 //ライト関連

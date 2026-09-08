@@ -10,6 +10,7 @@
 #include"scene7.h"
 #include"scene8.h"
 #include"scene9.h"
+#include"scene10.h"
 
 void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('0')) { m_nextScene = new Scene0(); return; }
@@ -22,6 +23,8 @@ void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('7')) { m_nextScene = new Scene7(); return; }
     if (Input::IsKeyPressed('8')) { m_nextScene = new Scene8(); return; }
     if (Input::IsKeyPressed('9')) { m_nextScene = new Scene9(); return; }
+    // ★Scene10は0〜9の数字を使い切っているのでF1に割り当て
+    if (Input::IsKeyPressed(VK_F1)) { m_nextScene = new Scene10(); return; }
 }
 
 void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
@@ -31,7 +34,7 @@ void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
         1.0f, 1.0f, 1.0f, 1.0f,   // 白色・不透明で表示
         0.7f);                    // scale：本文より小さく表示
     textRenderer->DrawString(
-        L"5:Shadow 6:HDR+Bloom 7:GPU Instancing 8:All 9:PBR Grid",
+        L"5:Shadow 6:HDR+Bloom 7:GPU Instancing 8:All 9:PBR Grid F1:PBR Interactive",
         500.0f, 660.0f,           // 画面右下寄り（1280x720基準）
         1.0f, 1.0f, 1.0f, 1.0f,   // 白色・不透明で表示
         0.7f);                    // scale：本文より小さく表示
@@ -41,7 +44,7 @@ void IScene::displayCurrentScene(TextRenderer* textRenderer, int current) {
     int posX = UILayoutCommon::currentScenePositionX;
     int posY = UILayoutCommon::currentScenePositionY;
 
-    std::wstring text = L"Scene" + std::to_wstring(current) + L"/9";
+    std::wstring text = L"Scene" + std::to_wstring(current) + L"/10";
 
     textRenderer->DrawString(text.c_str(), posX, posY);
 

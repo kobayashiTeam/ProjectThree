@@ -309,11 +309,11 @@
     <ClCompile Include="scene9.cpp">
       <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\DeferredGBufferShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
+    </ClCompile>
+    <ClCompile Include="scene10.cpp">
+      <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -521,10 +521,16 @@
     <ClInclude Include="scene9.h">
       <Filter>ヘッダー ファイル\scene</Filter>
     </ClInclude>
+    <ClInclude Include="scene10.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
