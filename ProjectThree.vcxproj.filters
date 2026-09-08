@@ -237,9 +237,6 @@
     <ClCompile Include="Shaders\BloomCombineShader.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\DeferredGBufferShader.hlsl">
-      <Filter>リソース ファイル\deferred</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
     </ClCompile>
@@ -516,6 +513,9 @@
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
       <Filter>リソース ファイル\shader_gs</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DeferredGBufferShader.hlsl">
+      <Filter>リソース ファイル\deferred</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------
-// ’è”ƒoƒbƒtƒ@iŠù‘¶‚Ì‚à‚Ì‚ğ‚»‚Ì‚Ü‚ÜˆÛj
+// å®šæ•°ãƒãƒƒãƒ•ã‚¡ï¼ˆæ—¢å­˜ã®ã‚‚ã®ã‚’ãã®ã¾ã¾ç¶­æŒï¼‰
 // ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
@@ -16,13 +16,17 @@ cbuffer PerObjectBuffer : register(b1)
     matrix mModel;
 };
 
+//å¤‰æ›´ç‚¹ï¼šmetallic / roughness ã‚’è¿½åŠ 
 cbuffer PerMaterialBuffer : register(b2)
 {
     float4 vMaterialColor;
+    float metallic;
+    float roughness;
+    float2 materialPadding;
 };
 
 // ---------------------------------------------------------
-// “üo—Í\‘¢‘Ì
+// å…¥å‡ºåŠ›æ§‹é€ ä½“
 // ---------------------------------------------------------
 struct VS_INPUT
 {
@@ -38,40 +42,40 @@ struct PS_INPUT
     float3 Normal : NORMAL;
     float4 Color : COLOR;
     float2 Tex : TEXCOORD0;
-    float3 WorldPos : TEXCOORD1; // ƒ[ƒ‹ƒhÀ•W‚ğPS‚É“n‚·
+    float3 WorldPos : TEXCOORD1; // ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ã‚’PSã«æ¸¡ã™
 };
 
-// --- y’x‰„—pz3–‡‚ÌG-BufferiMRTj‚Ö‚Ìo—Í’è‹` ---
+// --- é…å»¶ç”¨ 3æšã®G-Buffer(MRT)ã¸ã®å‡ºåŠ›å®šç¾© ---
 struct PS_OUTPUT
 {
-    float4 Color : SV_Target0; // RT0: ƒAƒ‹ƒxƒhiŠî–{Fj
-    float4 Normal : SV_Target1; // RT1: –@üiŒü‚«j
-    float4 Position : SV_Target2; // RT2: ƒ[ƒ‹ƒhÀ•WiˆÊ’uj
+    float4 Color : SV_Target0; // RT0: ã‚¢ãƒ«ãƒ™ãƒ‰(rgb) + metallic(a)
+    float4 Normal : SV_Target1; // RT1: æ³•ç·š(rgb) + roughness(a)
+    float4 Position : SV_Target2; // RT2: ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ï¼ˆä½ç½®ï¼‰
 };
 
-// ƒeƒNƒXƒ`ƒƒEƒTƒ“ƒvƒ‰[
+// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ»ã‚µãƒ³ãƒ—ãƒ©ãƒ¼
 Texture2D txDiffuse : register(t0);
 SamplerState samLinear : register(s0);
 
 // ---------------------------------------------------------
-// ’¸“_ƒVƒF[ƒ_[ (VS)
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ (VS)
 // ---------------------------------------------------------
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
 
-    // ƒ[ƒ‹ƒhÀ•W‚ÌŒvZ
+    // ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ã®è¨ˆç®—
     float4 worldPos = mul(input.Pos, mModel);
     output.WorldPos = worldPos.xyz;
 
-    // ƒXƒNƒŠ[ƒ“À•W‚Ö‚Ì•ÏŠ·
+    // ã‚¹ã‚¯ãƒªãƒ¼ãƒ³åº§æ¨™ã¸ã®å¤‰æ›
     output.Pos = mul(worldPos, mView);
     output.Pos = mul(output.Pos, mProjection);
 
-    // –@ü‚ÌŒvZiƒ‚ƒfƒ‹‚Ì‰ñ“]EŠg‘åk¬‚ğ”½‰fj
+    // æ³•ç·šã®è¨ˆç®—(ãƒ¢ãƒ‡ãƒ«ã®å›è»¢ãƒ»æ‹¡å¤§ç¸®å°ã‚’åæ˜ )
     output.Normal = normalize(mul(float4(input.Normal, 0.0f), mModel).xyz);
 
-    // F‚ÆUV‚Í‚»‚Ì‚Ü‚ÜPS‚ÖƒtƒHƒ[ƒh
+    // è‰²ã¨UVã¯ãã®ã¾ã¾PSã¸ãƒ•ã‚©ãƒ¯ãƒ¼ãƒ‰
     output.Color = input.Color;
     output.Tex = input.Tex;
     
@@ -79,32 +83,32 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_[ (PS)
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ (PS)
 // ---------------------------------------------------------
 PS_OUTPUT PS(PS_INPUT input)
 {
     PS_OUTPUT output;
 
     float4 testColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    // 1. yŠî–{F‚Ì’Šoz
+    // 1. åŸºæœ¬è‰²ã®æŠ½å‡º
     float4 texColor = txDiffuse.Sample(samLinear, input.Tex);
-    float4 objectColor = texColor * input.Color * testColor;//vMaterialColor
+    float4 objectColor = texColor * input.Color * testColor; //vMaterialColor
     
-    // RT0 ‚Éƒ}ƒeƒŠƒAƒ‹–{—ˆ‚ÌF‚ğ‚»‚Ì‚Ü‚Ü‘‚«‚Ş
-    output.Color = objectColor;
+    // RT0 ã«ãƒãƒ†ãƒªã‚¢ãƒ«æœ¬æ¥ã®è‰²ã‚’æ›¸ãè¾¼ã¿alphaã« metallic ã‚’æ ¼ç´ã™ã‚‹
+    // (æ—§: output.Color = objectColor; ã®alphaå€¤=ãƒ†ã‚¯ã‚¹ãƒãƒ£ç”±æ¥ã®alphaã¯ä»Šå›æ¨ã¦ã‚‹)
+    output.Color = float4(objectColor.rgb, metallic);
 
-    // 2. y–@üî•ñ‚Ì‘‚«‚İz
+    // 2. æ³•ç·šæƒ…å ±ã®æ›¸ãè¾¼ã¿
     float3 normal = normalize(input.Normal);
     
-    // –@ü‚ğ0`1”ÍˆÍ‚Ö•ÏŠ·‚µ‚Ä•Û‘¶
+    // æ³•ç·šã‚’0ã€œ1ç¯„å›²ã¸å¤‰æ›ã—ã¦ä¿å­˜
     float3 packedNormal = normal * 0.5f + 0.5f;
     
-    // RT1 ‚É–@ü‚ğ‘‚«‚ŞiW—v‘f‚Í«—ˆ‚Ìƒ}ƒeƒŠƒAƒ‹ID—p‚É1.0‚ğŠ„‚èU‚Á‚Ä‚¨‚«‚Ü‚·j
-    output.Normal = float4(packedNormal, 1.0f);
+    // RT1 ã«æ³•ç·šã‚’æ›¸ãè¾¼ã¿alphaã« roughness ã‚’æ ¼ç´ã™ã‚‹
+    // (æ—§: 1.0få›ºå®šã§ã€Œå°†æ¥ã®ãƒãƒ†ãƒªã‚¢ãƒ«IDç”¨ã€ã¨ã—ã¦ã„ãŸæ ã‚’å®Ÿéš›ã«ä½¿ã†)
+    output.Normal = float4(packedNormal, roughness);
 
-    // 3. yƒ[ƒ‹ƒhÀ•W‚Ì‘‚«‚İz
-    // RT2 ‚ÉƒsƒNƒZƒ‹‚Ì3ŸŒ³ˆÊ’uî•ñ‚ğ‚»‚Ì‚Ü‚Ü‘‚«‚Ş
-    // ¦RT2‚ÌƒtƒH[ƒ}ƒbƒg‚ÍC++‘¤‚ÅuDXGI_FORMAT_R32G32B32A32_FLOATv‚È‚Ç‚Ì‚¸“x‚È•‚“®¬”“_ƒeƒNƒXƒ`ƒƒ‚É‚µ‚Ä‚­‚¾‚³‚¢
+    // 3. ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ã®æ›¸ãè¾¼ã¿
     output.Position = float4(input.WorldPos, 1.0f);
 
     return output;
