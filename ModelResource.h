@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <string>
@@ -8,11 +8,17 @@ class Mesh;
 class Material;
 class ShaderManager;
 
-// 3Dƒ‚ƒfƒ‹‚ğ\¬‚·‚éu1‚Â‚Ìƒp[ƒcv‚ğŠÇ—‚·‚é\‘¢‘Ì
+// 3Dãƒ¢ãƒ‡ãƒ«ã‚’æ§‹æˆã™ã‚‹ã€Œ1ã¤ã®ãƒ‘ãƒ¼ãƒ„ã€ã‚’ç®¡ç†ã™ã‚‹æ§‹é€ ä½“
 struct ModelPart {
     Mesh* pMesh = nullptr;
     Material* pMaterial = nullptr;
-    DirectX::XMMATRIX localTransform; // ‚»‚Ìƒp[ƒcŒÅ—L‚Ì‰ŠúƒIƒtƒZƒbƒgs—ñ
+    DirectX::XMMATRIX localTransform; // ãã®ãƒ‘ãƒ¼ãƒ„å›ºæœ‰ã®åˆæœŸã‚ªãƒ•ã‚»ãƒƒãƒˆè¡Œåˆ—
+};
+
+//è¿½åŠ ï¼šèª­ã¿è¾¼ã‚“ã ãƒ¢ãƒ‡ãƒ«ã‚’ã©ã¡ã‚‰ã®ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ç”¨ãƒãƒ†ãƒªã‚¢ãƒ«ã«ã™ã‚‹ã‹
+enum class ModelMaterialMode {
+    Lit,        // å¾“æ¥ã®ãƒ•ã‚©ãƒ¯ãƒ¼ãƒ‰LitMaterialï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆãƒ»äº’æ›ç¶­æŒï¼‰
+    Deferred    // DeferredCBMaterialï¼ˆG-Bufferãƒ‘ã‚¹ç”¨ï¼‰
 };
 
 class ModelResource {
@@ -20,23 +26,28 @@ public:
     ModelResource();
     ~ModelResource();
 
-    // ƒtƒ@ƒCƒ‹‚©‚çƒ‚ƒfƒ‹‚ğ“Ç‚İ‚ŞiƒGƒ“ƒgƒŠ[ƒ|ƒCƒ“ƒgj
-    bool LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& filePath);
+    // ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ãƒ¢ãƒ‡ãƒ«ã‚’èª­ã¿è¾¼ã‚€ï¼ˆã‚¨ãƒ³ãƒˆãƒªãƒ¼ãƒã‚¤ãƒ³ãƒˆï¼‰
+    //å¤‰æ›´ï¼šç¬¬4å¼•æ•°ã§Lit/Deferredã‚’é¸æŠå¯èƒ½ã«ï¼ˆçœç•¥æ™‚ã¯Litã®ã¾ã¾ï¼æ—¢å­˜å‘¼ã³å‡ºã—ç®‡æ‰€ã¯ç„¡ä¿®æ­£ã§å‹•ãï¼‰
+    bool LoadFromFile(ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& filePath,
+        ModelMaterialMode mode = ModelMaterialMode::Lit);
 
-    // •`‰æ‚ÉQÆ‚·‚éƒ‚ƒfƒ‹ƒp[ƒcˆê——
+    // æç”»æ™‚ã«å‚ç…§ã™ã‚‹ãƒ¢ãƒ‡ãƒ«ãƒ‘ãƒ¼ãƒ„ä¸€è¦§
     const std::vector<ModelPart>& GetParts() const { return m_parts; }
 
 private:
-    // Assimp‚Ìƒm[ƒhŠK‘wƒcƒŠ[‚ğÄ‹A“I‚É‰ğÍ‚·‚éŠÖ”
+    // Assimpã®ãƒãƒ¼ãƒ‰éšå±¤ãƒ„ãƒªãƒ¼ã‚’å†å¸°çš„ã«è§£æã™ã‚‹é–¢æ•°
     void ProcessNode(struct aiNode* node, const struct aiScene* scene, ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX parentTransform);
 
-    // ŒÂX‚ÌƒƒbƒVƒ…i’¸“_EƒCƒ“ƒfƒbƒNƒXj‚ğ‰ğÍ‚µ‚Ä©‘O‚ÌMeshƒIƒuƒWƒFƒNƒg‚É•ÏŠ·‚·‚éŠÖ”
+    // å€‹ã€…ã®ãƒ¡ãƒƒã‚·ãƒ¥ï¼ˆé ‚ç‚¹ãƒ»ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ï¼‰ã‚’è§£æã—ã¦è‡ªå‰ã®Meshã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«å¤‰æ›ã™ã‚‹é–¢æ•°
     void ProcessMesh(struct aiMesh* mesh, const struct aiScene* scene, ID3D11Device* pDevice, ShaderManager* pShaderManager, const std::wstring& directory, DirectX::XMMATRIX transform);
 
 private:
     std::vector<ModelPart> m_parts;
 
-    // ‚±‚ÌƒŠƒ\[ƒX‚ªŠ—L‚·‚é¶¬Ï‚İƒAƒZƒbƒg‚ğ•Û
+    // ã“ã®ãƒªã‚½ãƒ¼ã‚¹ãŒæ‰€æœ‰ã™ã‚‹ç”Ÿæˆæ¸ˆã¿ã‚¢ã‚»ãƒƒãƒˆã‚’ä¿æŒ
     std::vector<Mesh*> m_ownedMeshes;
     std::vector<Material*> m_ownedMaterials;
+
+    //è¿½åŠ ï¼šProcessMeshå®Ÿè¡Œä¸­ã«å‚ç…§ã™ã‚‹ã€Œä»Šå›ã¯ã©ã£ã¡ã®ãƒãƒ†ãƒªã‚¢ãƒ«ã§ä½œã‚‹ã‹ã€
+    ModelMaterialMode m_materialMode = ModelMaterialMode::Lit;
 };
