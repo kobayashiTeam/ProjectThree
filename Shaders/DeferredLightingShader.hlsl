@@ -169,8 +169,8 @@ PS_OUTPUT PS(PS_INPUT input)
 
     float3 worldPos = positionData.xyz;
     float3 albedo = albedoData.rgb;
-    float metallic = albedoData.a; // ★G-Bufferから復元
-    float roughness = normalData.a; // ★G-Bufferから復元
+    float metallic = albedoData.a; //  G-Bufferから復元
+    float roughness = normalData.a; //  G-Bufferから復元
     roughness = max(roughness, 0.045f); // 0だとD項が発散するので下限を設ける
 
     float3 N = normalize(normalData.xyz * 2.0f - 1.0f);
