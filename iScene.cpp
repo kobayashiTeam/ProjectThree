@@ -23,7 +23,7 @@ void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('7')) { m_nextScene = new Scene7(); return; }
     if (Input::IsKeyPressed('8')) { m_nextScene = new Scene8(); return; }
     if (Input::IsKeyPressed('9')) { m_nextScene = new Scene9(); return; }
-    // ★Scene10は0〜9の数字を使い切っているのでF1に割り当て
+    //  Scene10は0〜9の数字を使い切っているのでF1に割り当て
     if (Input::IsKeyPressed(VK_F1)) { m_nextScene = new Scene10(); return; }
 }
 

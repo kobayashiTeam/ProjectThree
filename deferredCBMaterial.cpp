@@ -40,7 +40,7 @@ void DeferredCBMaterial::Bind(ID3D11DeviceContext* pContext)
     }
 }
 
-// ★追加：複製処理
+//  追加：複製処理
 // 「重い資源（シェーダー・テクスチャ・サンプラー）は共有」「軽いパラメータ（CB）だけ複製」
 // という考え方をそのままコードにしたもの
 Material* DeferredCBMaterial::Clone(ID3D11Device* pDevice) const

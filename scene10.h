@@ -106,7 +106,7 @@ private:
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
 
-    Model* m_targetModel = nullptr; // ★所有権はm_objects側（GameObjectが借用）。値変更のためだけに参照を持つ
+    Model* m_targetModel = nullptr; //  所有権はm_objects側（GameObjectが借用）。値変更のためだけに参照を持つ
 
     float m_metallic = 0.0f;
     float m_roughness = 0.5f;
