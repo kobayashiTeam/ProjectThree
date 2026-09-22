@@ -312,9 +312,6 @@
     <ClCompile Include="scene10.cpp">
       <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
-      <Filter>リソース ファイル\deferred</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -524,6 +521,9 @@
     <ClInclude Include="scene10.h">
       <Filter>ヘッダー ファイル\scene</Filter>
     </ClInclude>
+    <ClInclude Include="IrradianceConvolutionPass.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
@@ -531,6 +531,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\IrradianceConvolution.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
+      <Filter>リソース ファイル\deferred</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

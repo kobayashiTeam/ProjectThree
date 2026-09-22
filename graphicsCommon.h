@@ -68,6 +68,8 @@ enum class ShaderID {
     BloomCombine,
     //skybox
     SkyBox,
+    //IBL
+    IrradianceConvolution,
     Count,
     //geometry
     NormalVizGS,

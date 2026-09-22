@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -7,18 +7,18 @@
 #include <memory>
 #include "shader.h"  
 
-// ƒ‰ƒCƒuƒ‰ƒŠ‚ÌƒŠƒ“ƒNw’è
+// ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ãƒªãƒ³ã‚¯æŒ‡å®š
 #pragma comment(lib, "d3d11.lib")
 
-// CubeMap‚ğ—˜—p‚µ‚½”wŒi•`‰æ‚ğŠÇ—‚·‚éƒNƒ‰ƒX
+// CubeMapã‚’åˆ©ç”¨ã—ãŸèƒŒæ™¯æç”»ã‚’ç®¡ç†ã™ã‚‹ã‚¯ãƒ©ã‚¹
 class SkyBox {
 public:
 
     struct SkyboxVertex {
         DirectX::XMFLOAT3 position;
-        DirectX::XMFLOAT3 normal;   // InputLayoutŒİŠ·—p
-        DirectX::XMFLOAT4 color;    // InputLayoutŒİŠ·—p
-        DirectX::XMFLOAT2 texcoord; // InputLayoutŒİŠ·—p
+        DirectX::XMFLOAT3 normal;   // InputLayoutäº’æ›ç”¨
+        DirectX::XMFLOAT4 color;    // InputLayoutäº’æ›ç”¨
+        DirectX::XMFLOAT2 texcoord; // InputLayoutäº’æ›ç”¨
     };
 
     SkyBox() = default;
@@ -31,11 +31,14 @@ public:
         const DirectX::XMMATRIX& viewMatrix,
         const DirectX::XMMATRIX& projectionMatrix);
 
+    // IBLç„¼ãè¾¼ã¿ç­‰ã€å¤–éƒ¨ã‹ã‚‰ç’°å¢ƒã‚­ãƒ¥ãƒ¼ãƒ–ãƒãƒƒãƒ—ã‚’å‚ç…§ã—ãŸã„å ´åˆã«ä½¿ã†ã‚²ãƒƒã‚¿ãƒ¼
+    ID3D11ShaderResourceView* GetCubeMapSRV() const { return m_cubeMapSRV.Get(); }
+
 
 private:
     template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-    // •`‰æ—pƒŠƒ\[ƒX
+    // æç”»ç”¨ãƒªã‚½ãƒ¼ã‚¹
     ID3D11Buffer* m_pVertexBuffer = nullptr;
     ID3D11Buffer* m_indexBuffer = nullptr;
     Shader* m_shaderProgram = nullptr;
@@ -46,12 +49,12 @@ private:
     ID3D11Buffer* m_pUvBuffer = nullptr;
 
 
-    // D3D11ƒŠƒ\[ƒX & ƒXƒe[ƒgƒIƒuƒWƒFƒNƒg
+    // D3D11ãƒªã‚½ãƒ¼ã‚¹ & ã‚¹ãƒ†ãƒ¼ãƒˆã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
     ComPtr<ID3D11ShaderResourceView> m_cubeMapSRV;
-    ComPtr<ID3D11RasterizerState>    m_rasterizerState;   // SkyBox•`‰æ—piFront Cullj
-    ComPtr<ID3D11DepthStencilState>  m_depthStencilState; // Less_Equal—p
-    ComPtr<ID3D11SamplerState>       m_samplerState;      // ƒLƒ…[ƒuƒ}ƒbƒv—pƒTƒ“ƒvƒ‰[
+    ComPtr<ID3D11RasterizerState>    m_rasterizerState;   // SkyBoxæç”»ç”¨ï¼ˆFront Cullï¼‰
+    ComPtr<ID3D11DepthStencilState>  m_depthStencilState; // Less_Equalç”¨
+    ComPtr<ID3D11SamplerState>       m_samplerState;      // ã‚­ãƒ¥ãƒ¼ãƒ–ãƒãƒƒãƒ—ç”¨ã‚µãƒ³ãƒ—ãƒ©ãƒ¼
 
-    // s—ñ‚ğƒVƒF[ƒ_[‚É“n‚·‚½‚ß‚Ì’è”ƒoƒbƒtƒ@
+    // è¡Œåˆ—ã‚’ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã«æ¸¡ã™ãŸã‚ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡
     ComPtr<ID3D11Buffer>             m_constantBuffer;
 };

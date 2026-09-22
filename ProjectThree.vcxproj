@@ -211,6 +211,7 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionPostProcess.h" />
+    <ClInclude Include="IrradianceConvolutionPass.h" />
     <ClInclude Include="iScene.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="litMaterial.h" />
@@ -431,12 +432,15 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
+    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    </FxCompile>
     <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\IrradianceConvolution.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>

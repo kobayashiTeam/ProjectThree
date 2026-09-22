@@ -61,6 +61,7 @@ Texture2D gBufferNormal : register(t9); // G-Buffer 1: 法線(rgb) + roughness(a
 Texture2D gBufferPosition : register(t10); // G-Buffer 2: ワールド座標
 Texture2D gBufferDepth : register(t11); // G-Bufferのジオメトリパスで書かれた本物の深度
 Texture2D txSSAOBlur : register(t12); // ブラー済みの完成SSAOマップ
+TextureCube irradianceMap : register(t13); // IBL：Diffuse用に畳み込み済みのirradianceキューブマップ
 
 SamplerState samLinear : register(s0);
 SamplerState samPoint : register(s3);
@@ -239,8 +240,10 @@ PS_OUTPUT PS(PS_INPUT input)
         Lo += (diffuse + specular) * radiance * NdotL;
     }
 
-    // 環境光（IBL未実装のため、簡易な定数アンビエントで代用。SSAOで隙間を暗くする）
-    float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * ssao;
+    // 環境光（Diffuse IBL）：法線方向のirradianceをサンプリングし、
+    // 金属は拡散反射を持たないため(1-metallic)を掛ける。SSAOで隙間をさらに暗くする
+    float3 irradiance = irradianceMap.Sample(samLinear, N).rgb;
+    float3 ambient = irradiance * albedo * (1.0f - metallic) * ssao;
 
     float3 finalColor = ambient + Lo;
 

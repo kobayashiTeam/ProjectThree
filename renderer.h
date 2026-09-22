@@ -42,6 +42,7 @@ class GBufferDebugBlit;
 class SSAOPass;
 class ShadowSystem;
 class DeferredLightingPass;
+class IrradianceConvolutionPass;
 
 class Renderer
 {
@@ -162,5 +163,8 @@ private:
     GBufferDebugBlit* m_gBufferDebugBlit = nullptr;
     // Scene9用：Albedo.a/Normal.a（metallic/roughness）をグレースケール表示する専用ブリット
     GBufferDebugBlit* m_gBufferDebugAlphaBlit = nullptr;
+
+    // IBL：スカイボックスから焼き込んだDiffuse Irradianceキューブマップ（起動時に一度だけBake）
+    IrradianceConvolutionPass* m_irradianceConvolutionPass = nullptr;
 
 };

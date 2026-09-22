@@ -36,6 +36,7 @@
 #include"ssaoPass.h"
 #include"shadowSystem.h"
 #include"deferredLightingPass.h"
+#include"irradianceConvolutionPass.h"
 
 Renderer::~Renderer()
 {
@@ -149,6 +150,14 @@ bool Renderer::Initialize(Graphics* graphics)
     if (!m_pSkyBox->Initialize(pDevice, skyboxFaces)) {
         return false;
     }
+
+    // IBL：スカイボックスからDiffuse Irradianceキューブマップを一度だけ焼き込む
+    // （環境自体は変化しない前提の軽量IBLのため、毎フレームではなく起動時1回のみ実行）
+    m_irradianceConvolutionPass = new IrradianceConvolutionPass();
+    if (!m_irradianceConvolutionPass->Initialize(pDevice)) {
+        return false;
+    }
+    m_irradianceConvolutionPass->Bake(pContext, m_pSkyBox->GetCubeMapSRV(), m_rasterStates, m_dsStates);
 
     //点をポリゴンに変えるクラスの生成、初期化
     m_pPointSpriteGSEffect = new PointSpriteGSEffect();
@@ -369,7 +378,8 @@ void Renderer::Execute()
     RenderTarget::BindMultiple(pContext, 2, targets, dsv);
 
     // ===== Lighting Pass =====
-    m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh);
+    m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh,
+        m_irradianceConvolutionPass->GetIrradianceSRV());
 
 
     // ─── 工程1: 不透明パス ───

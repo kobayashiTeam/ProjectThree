@@ -1,4 +1,4 @@
-#include<d3d11.h>
+ï»¿#include<d3d11.h>
 #include"shaderManager.h"
 #include"gBufferPass.h"
 #include"depthStencilStates.h"
@@ -20,29 +20,31 @@ public:
         return true;
     }
 
-    // GBufferPassESSAO‚ÌŒ‹‰Ê‚ðŽó‚¯Žæ‚Á‚ÄAŒ»ÝƒoƒCƒ“ƒh’†‚ÌMRTioffscreen+brightj‚É
-    // ƒ‰ƒCƒeƒBƒ“ƒOŒ‹‰Ê‚ð•`‚«ž‚ÞBŒÄ‚Ño‚µ‘O‚ÉRT‚ÌƒoƒCƒ“ƒh‚ÍRenderer‘¤‚ÅÏ‚Ü‚¹‚Ä‚¨‚­‘O’ñ
+    // GBufferPassãƒ»SSAOã®çµæžœã‚’å—ã‘å–ã£ã¦ã€ç¾åœ¨ãƒã‚¤ãƒ³ãƒ‰ä¸­ã®MRTï¼ˆoffscreen+brightï¼‰ã«
+    // ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°çµæžœã‚’æãè¾¼ã‚€ã€‚å‘¼ã³å‡ºã—å‰ã«RTã®ãƒã‚¤ãƒ³ãƒ‰ã¯Rendererå´ã§æ¸ˆã¾ã›ã¦ãŠãå‰æ
     void Execute(
         ID3D11DeviceContext* ctx,
         GBufferPass* gbufferPass,
         ID3D11ShaderResourceView* ssaoSRV,
         DepthStencilStates* dsStates,
-        Mesh* fullscreenQuad)
+        Mesh* fullscreenQuad,
+        ID3D11ShaderResourceView* irradianceSRV = nullptr) // IBLï¼šã‚¹ã‚«ã‚¤ãƒœãƒƒã‚¯ã‚¹ã‹ã‚‰ç„¼ãè¾¼ã‚“ã irradianceã‚­ãƒ¥ãƒ¼ãƒ–ãƒžãƒƒãƒ—ï¼ˆt13ï¼‰
     {
-        ID3D11ShaderResourceView* gbufferSRVs[5] = {
+        ID3D11ShaderResourceView* gbufferSRVs[6] = {
             gbufferPass->GetAlbedoSRV(),
             gbufferPass->GetNormalSRV(),
             gbufferPass->GetPositionSRV(),
             gbufferPass->GetDepthSRV(),
-            ssaoSRV
+            ssaoSRV,
+            irradianceSRV
         };
-        ctx->PSSetShaderResources(8, 5, gbufferSRVs);
+        ctx->PSSetShaderResources(8, 6, gbufferSRVs);
 
         m_shader->Bind(ctx);
         ID3D11SamplerState* pointSampler = m_depthSampler.Get();
         ctx->PSSetSamplers(3, 1, &pointSampler);
 
-        dsStates->Bind(ctx, DepthStencilStates::Mode::DepthTest); // SV_Depth‘‚«ž‚Ý‚Ì‚½‚ß•K—v
+        dsStates->Bind(ctx, DepthStencilStates::Mode::DepthTest); // SV_Depthæ›¸ãè¾¼ã¿ã®ãŸã‚å¿…è¦
         fullscreenQuad->Render(ctx);
     }
 
