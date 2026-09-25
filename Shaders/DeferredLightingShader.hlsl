@@ -62,6 +62,7 @@ Texture2D gBufferPosition : register(t10); // G-Buffer 2: ワールド座標
 Texture2D gBufferDepth : register(t11); // G-Bufferのジオメトリパスで書かれた本物の深度
 Texture2D txSSAOBlur : register(t12); // ブラー済みの完成SSAOマップ
 TextureCube irradianceMap : register(t13); // IBL：Diffuse用に畳み込み済みのirradianceキューブマップ
+TextureCube prefilterMap : register(t14); // IBL：Specular用に畳み込み済みのprefilterキューブマップ（mipでroughnessを表現）
 
 SamplerState samLinear : register(s0);
 SamplerState samPoint : register(s3);
@@ -152,6 +153,28 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
     return F0 + (1.0f - F0) * pow(saturate(1.0f - cosTheta), 5.0f);
 }
 
+// F項（IBL用）：ラフネスを考慮したFresnel-Schlick近似
+// ラフい面ほど法線がばらけているため、Fresnelの立ち上がりを穏やかにする
+float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+{
+    float3 F90 = max(float3(1.0f - roughness, 1.0f - roughness, 1.0f - roughness), F0);
+    return F0 + (F90 - F0) * pow(saturate(1.0f - cosTheta), 5.0f);
+}
+
+// Specular IBL用の環境BRDF近似（Karisのモバイル向け近似式）
+// 本来はBRDF LUTテクスチャ（2枚目のプリコンピュート済みテクスチャ）を用意して
+// スケール(A)とバイアス(B)を引くが、コンピュートシェーダー実装（工程⑥）は今回のスコープ外のため、
+// 多項式による近似で代用し、LUTテクスチャなしで同等の効果を得る
+float2 EnvBRDFApprox(float NdotV, float roughness)
+{
+    const float4 c0 = float4(-1.0f, -0.0275f, -0.572f, 0.022f);
+    const float4 c1 = float4(1.0f, 0.0425f, 1.04f, -0.04f);
+    float4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28f * NdotV)) * r.x + r.y;
+    float2 AB = float2(-1.04f, 1.04f) * a004 + r.zw;
+    return AB;
+}
+
 // ---------------------------------------------------------
 // ピクセルシェーダー (PS)
 // ---------------------------------------------------------
@@ -240,10 +263,24 @@ PS_OUTPUT PS(PS_INPUT input)
         Lo += (diffuse + specular) * radiance * NdotL;
     }
 
-    // 環境光（Diffuse IBL）：法線方向のirradianceをサンプリングし、
-    // 金属は拡散反射を持たないため(1-metallic)を掛ける。SSAOで隙間をさらに暗くする
+    // 環境光（Diffuse + Specular IBL）
+    // ---- Diffuse側：法線方向のirradianceをサンプリング ----
     float3 irradiance = irradianceMap.Sample(samLinear, N).rgb;
-    float3 ambient = irradiance * albedo * (1.0f - metallic) * ssao;
+    float3 diffuseIBL = irradiance * albedo;
+
+    // ---- Specular側：反射ベクトルでprefilterMapをroughness依存のミップからサンプリング ----
+    float3 R = reflect(-V, N);
+    const float PREFILTER_MAX_LOD = 4.0f; // PrefilterSpecularPass::kMipCount(5) - 1 と対応させる
+    float3 prefilteredColor = prefilterMap.SampleLevel(samLinear, R, roughness * PREFILTER_MAX_LOD).rgb;
+    float2 envBRDF = EnvBRDFApprox(NdotV, roughness);
+    float3 specularIBL = prefilteredColor * (F0 * envBRDF.x + envBRDF.y);
+
+    // ---- Diffuse/Specularの配分：ラフネス考慮のFresnelでkS/kDを決める ----
+    // 金属は拡散反射を持たないため(1-metallic)を掛ける。SSAOで隙間をさらに暗くする
+    float3 kS_ambient = FresnelSchlickRoughness(NdotV, F0, roughness);
+    float3 kD_ambient = (1.0f - kS_ambient) * (1.0f - metallic);
+
+    float3 ambient = (kD_ambient * diffuseIBL + specularIBL) * ssao;
 
     float3 finalColor = ambient + Lo;
 

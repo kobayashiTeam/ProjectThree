@@ -231,6 +231,7 @@
     <ClInclude Include="pointSpriteGSEffect.h" />
     <ClInclude Include="postProcess.h" />
     <ClInclude Include="postProcessChain.h" />
+    <ClInclude Include="prefilterSpecularPass.h" />
     <ClInclude Include="rasterizerStates.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderQueue.h" />
@@ -432,10 +433,11 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
+    <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </FxCompile>
+    </ClCompile>
     <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -543,6 +545,10 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <FxCompile Include="Shaders\PrefilterSpecular.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Shaders\ShadowCubeGS.hlsl">

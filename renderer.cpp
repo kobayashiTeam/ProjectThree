@@ -37,6 +37,7 @@
 #include"shadowSystem.h"
 #include"deferredLightingPass.h"
 #include"irradianceConvolutionPass.h"
+#include"prefilterSpecularPass.h"
 
 Renderer::~Renderer()
 {
@@ -158,6 +159,13 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
     m_irradianceConvolutionPass->Bake(pContext, m_pSkyBox->GetCubeMapSRV(), m_rasterStates, m_dsStates);
+
+    // IBL：スカイボックスからSpecular Prefilterキューブマップ（roughnessごとのミップ付き）を焼き込む
+    m_prefilterSpecularPass = new PrefilterSpecularPass();
+    if (!m_prefilterSpecularPass->Initialize(pDevice)) {
+        return false;
+    }
+    m_prefilterSpecularPass->Bake(pContext, m_pSkyBox->GetCubeMapSRV(), m_rasterStates, m_dsStates);
 
     //点をポリゴンに変えるクラスの生成、初期化
     m_pPointSpriteGSEffect = new PointSpriteGSEffect();
@@ -379,7 +387,8 @@ void Renderer::Execute()
 
     // ===== Lighting Pass =====
     m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh,
-        m_irradianceConvolutionPass->GetIrradianceSRV());
+        m_irradianceConvolutionPass->GetIrradianceSRV(),
+        m_prefilterSpecularPass->GetPrefilterSRV());
 
 
     // ─── 工程1: 不透明パス ───

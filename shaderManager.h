@@ -51,6 +51,7 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
         //IBL
         if (!GetOrCreate(pDevice, ShaderID::IrradianceConvolution, L"Shaders/IrradianceConvolution.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::PrefilterSpecular, L"Shaders/PrefilterSpecular.hlsl")) return false;
         //shadow
         if (!GetOrCreate(pDevice, ShaderID::Shadow, L"Shaders/ShadowShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::ShadowCube, L"Shaders/ShadowCubeShader.hlsl")) return false;
@@ -142,6 +143,10 @@ private:
             layoutCount = 1;
             break;
         case ShaderID::IrradianceConvolution:
+            layout = posOnlyLayout;
+            layoutCount = 1;
+            break;
+        case ShaderID::PrefilterSpecular:
             layout = posOnlyLayout;
             layoutCount = 1;
             break;

@@ -43,6 +43,7 @@ class SSAOPass;
 class ShadowSystem;
 class DeferredLightingPass;
 class IrradianceConvolutionPass;
+class PrefilterSpecularPass;
 
 class Renderer
 {
@@ -166,5 +167,7 @@ private:
 
     // IBL：スカイボックスから焼き込んだDiffuse Irradianceキューブマップ（起動時に一度だけBake）
     IrradianceConvolutionPass* m_irradianceConvolutionPass = nullptr;
+    // IBL：スカイボックスから焼き込んだSpecular Prefilterキューブマップ（roughnessごとにミップが分かれる）
+    PrefilterSpecularPass* m_prefilterSpecularPass = nullptr;
 
 };

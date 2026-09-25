@@ -28,17 +28,19 @@ public:
         ID3D11ShaderResourceView* ssaoSRV,
         DepthStencilStates* dsStates,
         Mesh* fullscreenQuad,
-        ID3D11ShaderResourceView* irradianceSRV = nullptr) // IBL：スカイボックスから焼き込んだirradianceキューブマップ（t13）
+        ID3D11ShaderResourceView* irradianceSRV = nullptr,  // IBL：Diffuse用irradianceキューブマップ（t13）
+        ID3D11ShaderResourceView* prefilterSRV = nullptr)   // IBL：Specular用prefilterキューブマップ（t14、roughnessでミップ選択）
     {
-        ID3D11ShaderResourceView* gbufferSRVs[6] = {
+        ID3D11ShaderResourceView* gbufferSRVs[7] = {
             gbufferPass->GetAlbedoSRV(),
             gbufferPass->GetNormalSRV(),
             gbufferPass->GetPositionSRV(),
             gbufferPass->GetDepthSRV(),
             ssaoSRV,
-            irradianceSRV
+            irradianceSRV,
+            prefilterSRV
         };
-        ctx->PSSetShaderResources(8, 6, gbufferSRVs);
+        ctx->PSSetShaderResources(8, 7, gbufferSRVs);
 
         m_shader->Bind(ctx);
         ID3D11SamplerState* pointSampler = m_depthSampler.Get();

@@ -70,6 +70,7 @@ enum class ShaderID {
     SkyBox,
     //IBL
     IrradianceConvolution,
+    PrefilterSpecular,
     Count,
     //geometry
     NormalVizGS,
