@@ -90,6 +90,13 @@ public:
     // 表示個数の変更に加え、群全体をオフセット分だけ移動させる
     void SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset);
 
+    // CSM（カスケードシャドウマップ）の制御（ShadowSystemへ委譲）
+    // 有効/デバッグ表示はBeginFrameで毎フレーム無効に戻るので、使うシーンはSubmit()内で毎フレーム呼ぶ
+    void SetCascadedShadowEnabled(bool isOn);
+    void SetCascadeDebug(bool isOn);
+    void SetCascadeLambda(float lambda);
+    float GetCascadeSplit(int index) const;
+
 
 private:
     void UpdatePerFrameConstantBuffer();

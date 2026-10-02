@@ -133,6 +133,30 @@ struct ShadowCubeCB//b4CBに送る内容。内容が一個（view*Proj行列）�
     float gFarPlane;
 };
 
+// ===== カスケードシャドウマップ（CSM） =====
+#define NUM_CASCADES 3
+#define CASCADE_SHADOW_MAP_SIZE 2048
+
+// シャドウマップ描画パス（VS）用：「今描いている1枚」のライト行列だけを渡すb8
+// 旧実装はShadowShaderがb3のlights[0]を決め打ちで読んでいたため、
+// PointOnlyモードでlights[0]が点光源になるとゼロ行列で描画される潜在バグがあった
+struct ShadowPassCB
+{
+    DirectX::XMMATRIX lightViewProj;
+};
+
+// ライティングパス（PS）用：全カスケードの行列と境界深度を渡すb7
+struct CascadeShadowCB
+{
+    DirectX::XMMATRIX cascadeViewProj[NUM_CASCADES]; // 各段のライトView×正射影
+    DirectX::XMFLOAT4 cascadeSplits;  // x,y,z：各段の「奥側の境界」（カメラのビュー空間深度）
+    DirectX::XMFLOAT4 cascadeBias;    // x,y,z：各段の深度バイアス（段ごとに1テクセルの大きさが違うため）
+    int   cascadeEnabled;             // 0ならライティングは旧20x20シャドウマップを使う
+    int   cascadeDebug;               // 1なら段ごとに色を付けて表示する
+    float cascadeTexelSize;           // PCF用：1テクセルのUV幅（1/2048）
+    float padding;
+};
+
 //ポストプロセス用のcb
 struct PostProcessConstantBuffer {
     float exposure = 1.0f;

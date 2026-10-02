@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="blendStates.cpp" />
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="cascadedShadowMap.cpp" />
     <ClCompile Include="deferredCBMaterial.cpp" />
     <ClCompile Include="depthStencilStates.cpp" />
     <ClCompile Include="game.cpp" />
@@ -174,6 +175,7 @@
     <ClCompile Include="scene0.cpp" />
     <ClCompile Include="scene1.cpp" />
     <ClCompile Include="scene10.cpp" />
+    <ClCompile Include="scene11.cpp" />
     <ClCompile Include="scene2.cpp" />
     <ClCompile Include="scene3.cpp" />
     <ClCompile Include="scene4.cpp" />
@@ -197,6 +199,7 @@
     <ClInclude Include="bloomBlurPass.h" />
     <ClInclude Include="bloomCombinePostProcess.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="cascadedShadowMap.h" />
     <ClInclude Include="deferredCBMaterial.h" />
     <ClInclude Include="deferredLightingPass.h" />
     <ClInclude Include="depthStencilStates.h" />
@@ -240,6 +243,7 @@
     <ClInclude Include="scene0.h" />
     <ClInclude Include="scene1.h" />
     <ClInclude Include="scene10.h" />
+    <ClInclude Include="scene11.h" />
     <ClInclude Include="scene2.h" />
     <ClInclude Include="scene3.h" />
     <ClInclude Include="scene4.h" />
@@ -433,11 +437,10 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Shaders\DeferredLightingShader.hlsl">
+    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    </FxCompile>
     <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -482,15 +485,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Shaders\TestInstancingShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Shaders\ShadowShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -546,6 +540,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <FxCompile Include="Shaders\PrefilterSpecular.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\ShadowShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>

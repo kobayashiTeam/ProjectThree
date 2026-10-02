@@ -3,34 +3,21 @@ cbuffer PerObjectBuffer : register(b1)
     matrix mModel;
 };
 
-// LightData��1���C�g��
-struct LightData
+// シャドウマップ1枚ぶんのライト行列（View×正射影）
+// 旧シャドウマップ（20x20固定）でも、CSMの各段でも、同じこのシェーダーを使い回す。
+// 「どの1枚を描いているか」はC++側がb8の中身を差し替えることで表現する
+cbuffer ShadowPassBuffer : register(b8)
 {
-    float4 position;
-    float4 direction;
-    float4 color;
-    matrix lightSpaceMatrix;
-    int type;
-    float intensity;
-    float farPlane;
-    float padding;
-};
-
-cbuffer LightBuffer : register(b3)
-{
-    LightData lights[4];
-    int lightCount;
-    float3 padding;
+    matrix lightViewProj;
 };
 
 float4 VS(float4 pos : POSITION) : SV_POSITION
 {
     float4 worldPos = mul(pos, mModel);
-    float4 lightViewPos = mul(worldPos, lights[0].lightSpaceMatrix);
-    return lightViewPos;
+    return mul(worldPos, lightViewProj);
 }
 
-// ���PS�i�R���p�C���G���[���p�j
+// ダミーPS（コンパイルエラー回避用）
 float4 PS() : SV_Target
 {
     return float4(0, 0, 0, 0);

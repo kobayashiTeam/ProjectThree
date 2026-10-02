@@ -228,6 +228,11 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     m_shadowSystem->UpdateLightDataConstantBuffer(pContext);
     //PointLightも送る(b4)
     m_shadowSystem->UpdatePointLightConstantBuffer(pContext);
+
+    // CSMは毎フレーム「無効」に戻し、使いたいシーンだけがSubmit()内で有効化する
+    // （Rendererの状態がシーン遷移後に残り、他のシーンの見た目を変えてしまうのを防ぐ）
+    m_shadowSystem->SetCascadeEnabled(false);
+    m_shadowSystem->SetCascadeDebug(false);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -288,6 +293,21 @@ void Renderer::Execute()
     m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowSystem->EndDirectionalPass(pContext);
+
+    // ===== DirectionalLight のCSMパス（Deferred専用の新経路） =====
+    // 行列の計算とb7への転送は毎フレーム行う（無効時も「無効」フラグを伝えるため）
+    m_shadowSystem->UpdateCascades(pContext, m_currentCamera);
+    if (m_shadowSystem->IsCascadeEnabled())
+    {
+        // 段ごとに「描き込み先のスライス」と「b8の行列」だけを差し替えて、同じ物体を3回描く
+        for (int c = 0; c < NUM_CASCADES; c++)
+        {
+            m_shadowSystem->BeginCascadePass(pContext, c);
+            m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+            m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+            m_shadowSystem->EndCascadePass(pContext);
+        }
+    }
 
 
     // ===== PointLight のシャドウパス =====
@@ -579,4 +599,24 @@ void Renderer::SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset)
     if (m_pInstancedModel) {
         m_pInstancedModel->SetActiveCount(count, offset);
     }
+}
+
+void Renderer::SetCascadedShadowEnabled(bool isOn)
+{
+    if (m_shadowSystem) m_shadowSystem->SetCascadeEnabled(isOn);
+}
+
+void Renderer::SetCascadeDebug(bool isOn)
+{
+    if (m_shadowSystem) m_shadowSystem->SetCascadeDebug(isOn);
+}
+
+void Renderer::SetCascadeLambda(float lambda)
+{
+    if (m_shadowSystem) m_shadowSystem->SetCascadeLambda(lambda);
+}
+
+float Renderer::GetCascadeSplit(int index) const
+{
+    return m_shadowSystem ? m_shadowSystem->GetCascadeSplit(index) : 0.0f;
 }

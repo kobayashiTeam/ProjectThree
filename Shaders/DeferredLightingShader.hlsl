@@ -73,6 +73,21 @@ TextureCube shadowCubeMap : register(t4);
 SamplerComparisonState shadowSampler : register(s1);
 SamplerState shadowCubeSampler : register(s2);
 
+// カスケードシャドウマップ（CSM）：Deferred専用の新経路
+// cascadeEnabled==0 のシーンでは使われず、従来のshadowMap(t3)がそのまま使われる
+#define NUM_CASCADES 3
+cbuffer CascadeShadowBuffer : register(b7)
+{
+    matrix cascadeViewProj[NUM_CASCADES];
+    float4 cascadeSplits; // x,y,z：各段の奥側の境界（ビュー空間の深度）
+    float4 cascadeBias; // x,y,z：各段の深度バイアス
+    int cascadeEnabled;
+    int cascadeDebug;
+    float cascadeTexelSize;
+    float cascadePadding;
+};
+Texture2DArray cascadeShadowMap : register(t15);
+
 static const float PI = 3.14159265f;
 
 // ---------------------------------------------------------
@@ -94,6 +109,48 @@ float ShadowCalculation_Directional(float4 lightSpacePos)
     shadowUV.y = -projCoords.y * 0.5f + 0.5f;
     float currentDepth = projCoords.z;
     return shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, currentDepth - 0.005f);
+}
+
+// ビュー空間の深度から、どの段のシャドウマップを使うかを決める
+// -1 は「影を出す最大距離より奥」＝影なし扱い
+int SelectCascade(float viewDepth)
+{
+    if (viewDepth < cascadeSplits.x)
+        return 0;
+    if (viewDepth < cascadeSplits.y)
+        return 1;
+    if (viewDepth < cascadeSplits.z)
+        return 2;
+    return -1;
+}
+
+float ShadowCalculation_Cascaded(float3 worldPos, int cascade)
+{
+    if (cascade < 0)
+        return 1.0f;
+
+    float4 lightSpacePos = mul(float4(worldPos, 1.0f), cascadeViewProj[cascade]);
+    float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+    float2 shadowUV;
+    shadowUV.x = projCoords.x * 0.5f + 0.5f;
+    shadowUV.y = -projCoords.y * 0.5f + 0.5f;
+    float currentDepth = projCoords.z - cascadeBias[cascade];
+
+    // 3x3のPCF：周囲9テクセルで比較し、影の縁をなめらかにする
+    // （段の境界で精度が切り替わる「継ぎ目」を目立ちにくくする効果もある）
+    float shadow = 0.0f;
+    [unroll]
+    for (int y = -1; y <= 1; y++)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; x++)
+        {
+            float2 offset = float2(x, y) * cascadeTexelSize;
+            shadow += cascadeShadowMap.SampleCmpLevelZero(
+                shadowSampler, float3(shadowUV + offset, cascade), currentDepth);
+        }
+    }
+    return shadow / 9.0f;
 }
 
 float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
@@ -209,6 +266,14 @@ PS_OUTPUT PS(PS_INPUT input)
 
     float3 Lo = float3(0.0f, 0.0f, 0.0f); // 直接光の合計（Outgoing radiance）
 
+    // CSM：このピクセルがカメラからどれだけ奥にあるか（ビュー空間のz）で段を選ぶ
+    int cascade = -1;
+    if (cascadeEnabled != 0)
+    {
+        float viewDepth = mul(float4(worldPos, 1.0f), mView).z;
+        cascade = SelectCascade(viewDepth);
+    }
+
     for (int i = 0; i < lightCount; i++)
     {
         float3 L;
@@ -232,8 +297,15 @@ PS_OUTPUT PS(PS_INPUT input)
         float shadow = 1.0f;
         if (lights[i].type == 0)
         {
-            float4 lightSpacePos = mul(float4(worldPos, 1.0f), lights[i].lightSpaceMatrix);
-            shadow = ShadowCalculation_Directional(lightSpacePos);
+            if (cascadeEnabled != 0)
+            {
+                shadow = ShadowCalculation_Cascaded(worldPos, cascade);
+            }
+            else
+            {
+                float4 lightSpacePos = mul(float4(worldPos, 1.0f), lights[i].lightSpaceMatrix);
+                shadow = ShadowCalculation_Directional(lightSpacePos);
+            }
         }
         else
         {
@@ -283,6 +355,17 @@ PS_OUTPUT PS(PS_INPUT input)
     float3 ambient = (kD_ambient * diffuseIBL + specularIBL) * ssao;
 
     float3 finalColor = ambient + Lo;
+
+    // CSMデバッグ表示：段ごとに赤・緑・青で色を付け、境界がどこにあるかを見えるようにする
+    if (cascadeEnabled != 0 && cascadeDebug != 0 && cascade >= 0)
+    {
+        float3 tint = float3(1.0f, 0.35f, 0.35f); // 1段目：赤
+        if (cascade == 1)
+            tint = float3(0.35f, 1.0f, 0.35f); // 2段目：緑
+        if (cascade == 2)
+            tint = float3(0.35f, 0.35f, 1.0f); // 3段目：青
+        finalColor *= tint;
+    }
 
     // --- ブルーム用のマルチレンダーターゲット出力 ---
     PS_OUTPUT output;
