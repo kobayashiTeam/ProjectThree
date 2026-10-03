@@ -1,14 +1,16 @@
-// ƒIƒtƒXƒNƒŠ[ƒ“Texture‚ğƒg[ƒ“ƒ}ƒbƒsƒ“ƒOEƒKƒ“ƒ}•â³‚µ‚½ã‚ÅƒoƒbƒNƒoƒbƒtƒ@‚Öo—Í‚·‚é
+// LDRã®ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ã¾ã§çµ‚ã‚ã£ãŸçµµã«ã€æœ€å¾Œã«ã‚¬ãƒ³ãƒè£œæ­£ã ã‘ã‚’æ›ã‘ã¦ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡ã¸å‡ºåŠ›ã™ã‚‹
+// ï¼ˆãƒˆãƒ¼ãƒ³ãƒãƒƒãƒ”ãƒ³ã‚°ã¯ Tonemap.hlsl ã¸ç§»å‹•ã€‚HDRâ†’LDRã®å¤‰æ›ã¯ãã¡ã‚‰ã§æ¸ˆã‚“ã§ã„ã‚‹ï¼‰
 cbuffer PostProcessConfig : register(b5)
 {
-    float g_Exposure; // ˜Io’liŠî–{‚Í 1.0B‘å‚«‚­‚·‚é‚Æ‰æ–Ê‚ª–¾‚é‚­‚È‚èA¬‚³‚­‚·‚é‚ÆˆÃ‚­‚È‚éj
-    float g_GammaCorrection; // Scene2—pF1.0=ONiƒKƒ“ƒ}•â³‚ ‚èjA0.0=OFFi•â³‚È‚µEƒŠƒjƒA‚Ì‚Ü‚Üo—Íj
-    float2 g_Padding; // 16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg‚Ì‚½‚ß‚ÌƒpƒfƒBƒ“ƒO
+    float g_Exposure; // Tonemapç”¨ï¼ˆã“ã“ã§ã¯æœªä½¿ç”¨ï¼‰
+    float g_GammaCorrection; // Scene2ç”¨ï¼š1.0=ONï¼ˆã‚¬ãƒ³ãƒè£œæ­£ã‚ã‚Šï¼‰ã€0.0=OFFï¼ˆè£œæ­£ãªã—ãƒ»ãƒªãƒ‹ã‚¢ã®ã¾ã¾å‡ºåŠ›ï¼‰
+    float g_Tonemapper; // Tonemapç”¨ï¼ˆã“ã“ã§ã¯æœªä½¿ç”¨ï¼‰
+    float g_BloomIntensity; // Tonemapç”¨ï¼ˆã“ã“ã§ã¯æœªä½¿ç”¨ï¼‰
 };
 
 struct VS_INPUT
 {
-    float3 Position : POSITION; // NDCÀ•W (-1.0 ~ 1.0)
+    float3 Position : POSITION; // NDCåº§æ¨™ (-1.0 ~ 1.0)
     float2 TexCoord : TEXCOORD0;
 };
 
@@ -26,32 +28,21 @@ VS_OUTPUT VS(VS_INPUT input)
     return output;
 }
 
-Texture2D sceneTexture : register(t0); // ƒIƒtƒXƒNƒŠ[ƒ“‚©‚ç—ˆ‚½Texture
+Texture2D sceneTexture : register(t0); // LDRï¼ˆ0ã€œ1ã€ãƒªãƒ‹ã‚¢ï¼‰ã®æœ€çµ‚çµæœ
 SamplerState linearSampler : register(s0);
 
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-    // 1. HDRƒeƒNƒXƒ`ƒƒ‚©‚çŒ³‚ÌFi1.0’´‚¦‚Ì‰Â”\«‚ ‚èj‚ğƒTƒ“ƒvƒŠƒ“ƒO
     float4 color = sceneTexture.Sample(linearSampler, input.TexCoord);
-    float3 hdrColor = color.rgb;
+    float3 rgb = color.rgb;
 
-    // 2. ƒg[ƒ“ƒ}ƒbƒsƒ“ƒOi˜Io’²®Œ^FExposure Tone Mappingj
-    // 1.0‚ğ’´‚¦‚½–³ŒÀ‚Ì–¾‚é‚³‚ğA‚È‚ß‚ç‚©‚É 0.0 ` 1.0 ‚Ì”ÍˆÍ‚Éû‘©‚³‚¹‚Ü‚·B
-    // ¦‚à‚µC++‘¤‚©‚ç‚Ì’è”ƒoƒbƒtƒ@‚ª–¢À‘•‚È‚çAg_Exposure ‚Ì‘ã‚í‚è‚É 1.0f ‚È‚Ç‚ğ’¼‘‚«‚µ‚Ä‚­‚¾‚³‚¢B
-    float3 sdrColor = float3(1.0, 1.0, 1.0) - exp(-hdrColor * g_Exposure); 
-
-    // yQlz•Ê‚Ìƒg[ƒ“ƒ}ƒbƒsƒ“ƒOè–@‚Æ‚µ‚ÄuReinhard–@v‚à‚ ‚éi‰º‹LƒRƒƒ“ƒgƒAƒEƒgsj
-    // float3 sdrColor = hdrColor / (hdrColor + float3(1.0, 1.0, 1.0));
-
-    // 3. ƒKƒ“ƒ}•â³iƒ‚ƒjƒ^[•\¦—p‚Ì“KØ‚ÈF‹óŠÔ‚Ö•ÏŠ·j
-    // Scene2—pFg_GammaCorrection‚ªOFF‚Ì‚Æ‚«‚Í‚ ‚¦‚Ä•â³‚ğ‚©‚¯‚¸AƒŠƒjƒA‚Ì‚Ü‚Üo—Í‚·‚é
+    // ã‚¬ãƒ³ãƒè£œæ­£ï¼ˆãƒ¢ãƒ‹ã‚¿ãƒ¼è¡¨ç¤ºç”¨ã®è‰²ç©ºé–“ã¸å¤‰æ›ï¼‰
+    // Scene2ç”¨ï¼šg_GammaCorrectionãŒOFFã®ã¨ãã¯ã‚ãˆã¦è£œæ­£ã‚’ã‹ã‘ãšã€ãƒªãƒ‹ã‚¢ã®ã¾ã¾å‡ºåŠ›ã™ã‚‹
     if (g_GammaCorrection > 0.5)
     {
-        sdrColor = pow(sdrColor, float3(1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2));
+        rgb = pow(saturate(rgb), 1.0 / 2.2);
     }
-    
-    // ƒAƒ‹ƒtƒ@’l‚Í‚»‚Ì‚Ü‚Ü’Ê‚·i’Êí‚Í 1.0j
-    return float4(sdrColor, color.a);
-}
 
+    return float4(rgb, color.a);
+}

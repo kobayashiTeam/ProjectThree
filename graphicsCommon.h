@@ -63,9 +63,10 @@ enum class ShaderID {
     SimpleBoxBlur,
     Sharpen,
     Vignette,
-    HoriBlur,
-    VerBlur,
-    BloomCombine,
+    // Bloom（縮小／拡大の連鎖）とトーンマッピング
+    BloomDownsample,
+    BloomUpsample,
+    Tonemap,
     //skybox
     SkyBox,
     //IBL
@@ -157,11 +158,28 @@ struct CascadeShadowCB
     float padding;
 };
 
-//ポストプロセス用のcb
+// トーンマッピングの方式（Scene6で切り替えて比較する）
+enum class Tonemapper {
+    Exposure, // 1 - exp(-x * exposure)。従来の方式
+    ACES      // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ
+};
+
+//ポストプロセス用のcb（b5）。Tonemap.hlsl と ScreenBlit.hlsl の両方が読む
 struct PostProcessConstantBuffer {
     float exposure = 1.0f;
     float gammaCorrection = 1.0f; // Scene2用：1.0=ON（補正あり）、0.0=OFF（補正なし）
-    float padding[2] = { 0.0f, 0.0f }; // 16バイトアライメント
+    float tonemapper = 0.0f;      // 0.0=Exposure、1.0=ACES（HLSL側で0.5を境に分岐）
+    float bloomIntensity = 0.0f;  // Bloomを足す強さ。Bloom OFFのときは0を送る
+};
+
+// Bloomの縮小／拡大パス用のcb（b9）
+struct BloomParamsCB {
+    DirectX::XMFLOAT2 srcTexelSize; // 読み込み元テクスチャの1テクセルのUV幅
+    float threshold;                // 輝度のしきい値（これを超えた分がにじむ）
+    float knee;                     // しきい値の手前から効き始める幅（ソフトニー）
+    float isFirstPass;              // 1.0なら最初の縮小（しきい値処理＋Karis平均を行う）
+    float filterRadius;             // 拡大時のテントフィルタの広がり（テクセル単位の倍率）
+    float padding[2];
 };
 
 // SSAOパラメータ用構造体 (16バイトアライメントを保証)

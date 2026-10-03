@@ -64,8 +64,8 @@ struct PS_INPUT
 // --- 1. 出力用の構造体を定義する ---
 struct PS_OUTPUT
 {
-    float4 Color : SV_Target0; // 1つ目のRT（通常描画用）
-    float4 Bright : SV_Target1; // 2つ目のRT（Bloom高輝度抽出用）
+    float4 Color : SV_Target0; // シーンのRT
+    // ※Bloom用の高輝度出力（旧SV_Target1）は廃止。輝度抽出はBloomPassの最初の縮小で行う
 };
 
 Texture2D txDiffuse : register(t0);
@@ -165,7 +165,7 @@ PS_OUTPUT PS(PS_INPUT input)
         if (lights[i].type == 1)
         {
             float distance = length(lights[i].position.xyz - input.WorldPos);
-            attenuation = 1.0f / 
+            attenuation = 1.0f /
             (vAttenuation.x + vAttenuation.y * distance + vAttenuation.z * distance * distance);
         }
 
@@ -205,24 +205,7 @@ PS_OUTPUT PS(PS_INPUT input)
     // 構造体のインスタンスを作る
     PS_OUTPUT output;
 
-    // ① 通常カラーを RT[0] 用の変数に代入
     output.Color = float4(finalColor, objectColor.a);
 
-    // ② 高輝度（Bloom用）の抽出処理をして RT[1] 用の変数に代入
-    // 輝度（明るさ）を計算
-    float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
-    
-    // 1.0 を超えた眩しいピクセルだけを抽出（HDRを想定）
-    if (brightness > 1.0f)
-    {
-        output.Bright = float4(finalColor, 1.0f);
-    }
-    else
-    {
-        // 眩しくない場所は真っ黒にしてボケないようにする
-        output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
-
-    // 2つの結果が入った構造体をまとめて返す
     return output;
 }

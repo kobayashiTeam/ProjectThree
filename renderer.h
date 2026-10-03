@@ -29,14 +29,12 @@ class SepiaPostProcess;
 class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
 class VignettePostProcess;
-class HorizontalBlurPostProcess;
-class VerticalBlurPostProcess;
 class SkyBox;
 class PointSpriteGSEffect;
 class InstancedModel;
-class BloomCombinePostProcess;
+class TonemapPostProcess;
 class PostProcessChain;
-class BloomBlurPass;
+class BloomPass;
 class GBufferPass;
 class GBufferDebugBlit;
 class SSAOPass;
@@ -71,9 +69,13 @@ public:
     void UpdatePostProcessConstantBuffer();
     void SetExposure(float exposure) { m_postProcessData.exposure = exposure; }
     float GetExposure() const { return m_postProcessData.exposure; }
-    // Bloom（BloomCombinePostProcess）のON/OFF切り替え
-    void SetBloomActive(bool isOn);
-    bool IsBloomActive() const;
+    // Bloom・トーンマッピング・ビネットの制御
+    // 露出以外はBeginFrameで毎フレーム既定値に戻るので、変えたいシーンはSubmit()内で毎フレーム呼ぶ
+    void SetBloomActive(bool isOn) { m_bloomActive = isOn; }
+    bool IsBloomActive() const { return m_bloomActive; }
+    void SetBloomIntensity(float intensity) { m_bloomIntensity = intensity; }
+    void SetTonemapper(Tonemapper type) { m_tonemapper = type; }
+    void SetVignetteActive(bool isOn);
     // ガンマ補正のON/OFF切り替え（ScreenBlitパスのpow(1/2.2)を分岐）
     void SetGammaCorrection(bool isOn) { m_postProcessData.gammaCorrection = isOn ? 1.0f : 0.0f; }
 
@@ -83,6 +85,8 @@ public:
     void SetDirectionalLightDirection(DirectX::XMFLOAT3 dir);
     // PointLightの位置を変更（ShadowSystemへ委譲）
     void SetPointLightPosition(DirectX::XMFLOAT3 pos);
+    // PointLightの強さを変更（ShadowSystemへ委譲）。BeginFrameで毎フレーム1.0に戻る
+    void SetPointLightIntensity(float intensity);
     // Directional/Point/Bothの表示切り替え（ShadowSystemへ委譲）
     void SetLightVisibilityMode(LightVisibilityMode mode);
     // GPUインスタンシングの表示個数を変更（InstancedModelへ委譲）
@@ -118,9 +122,7 @@ private:
     RenderTarget* m_offscreenRT = nullptr;
     RenderTarget* m_offscreenRTwithMSAA = nullptr;// MSAA用オフスクリーンRT
     RenderTarget* m_tmpRT = nullptr;//ピンポン設計にするためにもう一枚
-    // bloom対応のrt
-    RenderTarget* m_brightRTwithMSAA = nullptr;
-    RenderTarget* m_brightRT = nullptr;
+    // ※旧brightRT（輝度抽出用のMRT 2枚目）は廃止。Bloomはシーンの絵から直接しきい値処理する
 
 
     //ポストプロセス後に描画するQuadのmodel
@@ -130,12 +132,16 @@ private:
     // 最終描画用ポストプロセス
     ScreenBlitPostProcess* m_finalRenderScreenBlitPostProcess = nullptr;
 
-    // Bloom合成用ポストプロセス
-    BloomCombinePostProcess* m_finalRenderBloomCombinePostProcess = nullptr;
-    // postprocessを担当するクラス
+    // HDR→LDRの境目（Bloom合成＋トーンマッピング）。チェーンには入れず直接呼ぶ
+    TonemapPostProcess* m_tonemapPostProcess = nullptr;
+    // LDRの段のポストプロセス（モノクロ・セピア・ビネットなど）を担当するクラス
     PostProcessChain* m_postProcessChain = nullptr;
-    //例外的なbloomBlurは専門パスとして別クラスに
-    BloomBlurPass* m_bloomBlurPass = nullptr;
+    VignettePostProcess* m_vignette = nullptr; // チェーン内の要素への参照（所有はチェーン）
+    // HDRの段：Bloom（縮小／拡大の連鎖）
+    BloomPass* m_bloomPass = nullptr;
+    bool m_bloomActive = true;
+    float m_bloomIntensity = 0.3f;
+    Tonemapper m_tonemapper = Tonemapper::Exposure;
 
     //スカイボックスオブジェクト
     SkyBox* m_pSkyBox = nullptr;

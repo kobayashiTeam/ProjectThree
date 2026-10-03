@@ -26,12 +26,10 @@
 #include"litMaterial.h"
 #include"light.h"
 #include"graphicsCommon.h"
-#include"HorizontalBlurPostProcess.h"
-#include"VerticalBlurPostProcess.h"
-#include"bloomCombinePostProcess.h"
+#include"tonemapPostProcess.h"
 #include<random>
 #include"postProcessChain.h"
-#include"bloomBlurPass.h"
+#include"bloomPass.h"
 #include"gBufferPass.h"
 #include"ssaoPass.h"
 #include"shadowSystem.h"
@@ -92,15 +90,6 @@ bool Renderer::Initialize(Graphics* graphics)
         return false;
     }
 
-    m_brightRT = new RenderTarget();
-    if (!m_brightRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
-    m_brightRTwithMSAA = new RenderTarget();
-    if (!m_brightRTwithMSAA->InitializeWithMSAA(
-        pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
-        return false;
-    }
 
 
     //simpleBlit
@@ -119,19 +108,24 @@ bool Renderer::Initialize(Graphics* graphics)
         ShaderManager::GetInstance().GetShader(ShaderID::GBufferDebugAlpha));
 
 
-    // PostProcessChain の生成・初期化
+    // HDR→LDRの境目（Bloom合成＋トーンマッピング）
+    m_tonemapPostProcess = new TonemapPostProcess();
+    m_tonemapPostProcess->Initialize(pDevice,
+        ShaderManager::GetInstance().GetShader(ShaderID::Tonemap));
+
+    // PostProcessChain の生成・初期化（すべてLDRの段＝トーンマッピングの後で実行される）
+    // 並び順＝適用順：色を変える系 → ぼかし・シャープ → ビネット（画面の枠に関わるものは最後）
     m_postProcessChain = new PostProcessChain();
     m_postProcessChain->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
     m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
     m_postProcessChain->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
     m_postProcessChain->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
     m_postProcessChain->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
-    m_postProcessChain->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
-    m_finalRenderBloomCombinePostProcess = m_postProcessChain->AddEffect<BloomCombinePostProcess>(pDevice, ShaderID::BloomCombine, true);
+    m_vignette = m_postProcessChain->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
 
-    // BloomBlur は別パスとして独立クラスで管理
-    m_bloomBlurPass = new BloomBlurPass();
-    m_bloomBlurPass->Initialize(pDevice, 1280, 720);
+    // Bloom（HDRの段）は縮小／拡大の連鎖を持つ専用パスとして独立クラスで管理
+    m_bloomPass = new BloomPass();
+    if (!m_bloomPass->Initialize(pDevice, 1280, 720)) return false;
 
     //最終描画用のquadをここで生成
     if (!this->createFinalRenderQuad())return false;
@@ -224,15 +218,22 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
 
     // フレームごとの定数バッファ更新(b0)
     UpdatePerFrameConstantBuffer();
-    //DirectionalLightも共通なので送る(b3)
-    m_shadowSystem->UpdateLightDataConstantBuffer(pContext);
-    //PointLightも送る(b4)
-    m_shadowSystem->UpdatePointLightConstantBuffer(pContext);
+    // ※ライトの定数バッファ(b3/b4)の転送は Execute() の先頭へ移動した
+    //   （BeginFrame → Submit → Execute の順なので、ここで送るとSubmitでの変更が1フレーム遅れて反映されるうえ、
+    //     下の「毎フレーム既定値に戻す」設定は、Submitで変えた値が一度も送られなくなるため）
 
     // CSMは毎フレーム「無効」に戻し、使いたいシーンだけがSubmit()内で有効化する
     // （Rendererの状態がシーン遷移後に残り、他のシーンの見た目を変えてしまうのを防ぐ）
     m_shadowSystem->SetCascadeEnabled(false);
     m_shadowSystem->SetCascadeDebug(false);
+
+    // ポストプロセスもCSMと同じく毎フレーム既定値に戻す（Scene6で変えた設定が他のシーンに残らないように）
+    m_postProcessData.exposure = 0.5f;
+    m_shadowSystem->SetPointLightIntensity(1.0f);
+    m_bloomActive = true;
+    m_bloomIntensity = 0.3f;
+    m_tonemapper = Tonemapper::Exposure;
+    SetVignetteActive(false);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -283,6 +284,12 @@ void Renderer::Execute()
 {
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
+    // ライトの定数バッファを送る（各シーンのSubmitでの変更がすべて終わった後）
+    //DirectionalLightも共通なので送る(b3)
+    m_shadowSystem->UpdateLightDataConstantBuffer(pContext);
+    //PointLightも送る(b4)
+    m_shadowSystem->UpdatePointLightConstantBuffer(pContext);
+
     int opaqueIdx = static_cast<int>(RenderPass::Opaque);
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
@@ -320,17 +327,11 @@ void Renderer::Execute()
     // 1. オフスクリーンRTに描画先を切り替え
     // ==========================================
     m_offscreenRTwithMSAA->Clear(pContext);
-    m_brightRTwithMSAA->Clear(pContext);
 
-    // 配列にして準備
-    RenderTarget* targets[2] = {
-        m_offscreenRTwithMSAA,
-        m_brightRTwithMSAA
-    };
-    // 深度バッファは代表して1つ目のものから取得して渡す
-    ID3D11DepthStencilView* dsv = m_offscreenRTwithMSAA->GetDSV();
-    //複数RTを一括バインド
-    RenderTarget::BindMultiple(pContext, 2, targets, dsv);
+    // ※以前はここで brightRT と2枚のMRTとしてバインドしていたが、Bloomの輝度抽出は
+    //   BloomPassの最初の縮小で行うようになったので、書き込み先はシーンの1枚だけになった。
+    //   （LitShader / DeferredLightingShader の SV_Target1 出力も削除済み）
+    m_offscreenRTwithMSAA->Bind(pContext);
 
 
     //-----Lighting Pass-----
@@ -399,11 +400,8 @@ void Renderer::Execute()
         m_gBufferPass->GetPositionSRV(),
         m_finalRenderMesh);
 
-    // オフスクリーンMRTに再バインド
-    targets[0] = m_offscreenRTwithMSAA;
-    targets[1] = m_brightRTwithMSAA;
-    dsv = m_offscreenRTwithMSAA->GetDSV();
-    RenderTarget::BindMultiple(pContext, 2, targets, dsv);
+    // オフスクリーンRTに再バインド（SSAOパスで描き込み先が変わっているため）
+    m_offscreenRTwithMSAA->Bind(pContext);
 
     // ===== Lighting Pass =====
     m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh,
@@ -442,64 +440,55 @@ void Renderer::Execute()
 
 
     // ==========================================
-    // 3. ポストプロセス・ピンポン・パイプライン
+    // 3. MSAAの解除（Resolve）
     // ==========================================
-    // ピンポン用の入力・出力RTポインタ
-    RenderTarget* pCurrentInput = m_offscreenRT;
-    RenderTarget* pCurrentOutput = m_tmpRT;
-
-    //これ以前でMSAAレンダリングした内容をm_offscreenRTにダウンサンプリング描画
-    ID3D11Texture2D* offScreenRTTex = m_offscreenRT->GetTexture(); // 描画先
-    ID3D11Texture2D* msaaTex = m_offscreenRTwithMSAA->GetTexture(); //描画元
-    //Resolve（解像）を実行して画面に直接転写する
     pContext->ResolveSubresource(
-        offScreenRTTex, 0,           // 転送先: 非MSAA RT
-        msaaTex, 0,                 // 転送元: MSAA RT
-        DXGI_FORMAT_R16G16B16A16_FLOAT
-    );
-    offScreenRTTex = m_brightRT->GetTexture(); // 描画先
-    msaaTex = m_brightRTwithMSAA->GetTexture(); //描画元
-    pContext->ResolveSubresource(
-        offScreenRTTex, 0,
-        msaaTex, 0,
+        m_offscreenRT->GetTexture(), 0,          // 転送先: 非MSAA RT
+        m_offscreenRTwithMSAA->GetTexture(), 0,  // 転送元: MSAA RT
         DXGI_FORMAT_R16G16B16A16_FLOAT
     );
 
-    // ========================================================
-    // 輝度抽出RTに対して独立してBlurを実行
-    // ========================================================
+    // b5（露出・トーンマッピング方式・Bloomの強さ・ガンマ）を更新してバインド
+    UpdatePostProcessConstantBuffer();
 
-    // Bloom用Blurの入力・出力RT（シーンRTとは分離）
-    RenderTarget* pBlurInput = m_brightRT;     // 最初の入力：輝度抽出テクスチャ
-    RenderTarget* pBlurOutput = m_tmpRT;        // 作業バッファ1
+    // ==========================================
+    // 4. HDRの段：Bloom（縮小／拡大の連鎖）
+    // ==========================================
+    ID3D11ShaderResourceView* bloomSRV = nullptr;
+    if (m_bloomActive) {
+        bloomSRV = m_bloomPass->Execute(pContext, m_offscreenRT->GetSRV(), m_finalRenderMesh, m_blendStates);
+    }
 
-    // Bloom合成用にブラー結果を設定
-    ID3D11ShaderResourceView* bloomSRV =
-        m_bloomBlurPass->Execute(pContext, m_brightRT, m_finalRenderMesh);
-    m_finalRenderBloomCombinePostProcess->SetBrightBlurTexture(bloomSRV);
+    // ==========================================
+    // 5. HDR → LDR：Bloom合成＋トーンマッピング（offscreenRT → tmpRT）
+    // ==========================================
+    m_blendStates->Bind(pContext, BlendMode::Opaque);
+    m_tmpRT->Clear(pContext);
+    m_tmpRT->Bind(pContext); // ビューポートも1280x720に戻る
+    m_tonemapPostProcess->SetBloomTexture(bloomSRV);
+    m_tonemapPostProcess->Render(pContext, m_offscreenRT);
+    m_finalRenderMesh->Render(pContext);
+    m_tonemapPostProcess->Unbind(pContext);
 
-
-    pCurrentInput = m_offscreenRT; // 通常の3Dシーンの絵（Resolve直後の状態）に戻す
-    pCurrentOutput = m_tmpRT;      // 出力先をリセット
-
-
-    // ========================================================
-    // 4. ポストプロセス・ピンポン・チェーン
-    // ========================================================
-    // ポストプロセスチェーン実行（戻り値が最終結果RT）
+    // ==========================================
+    // 6. LDRの段：ポストプロセス・ピンポン・チェーン
+    //    HDRの役目を終えた offscreenRT を、2枚目のピンポンバッファとして再利用する
+    // ==========================================
     RenderTarget* finalResult = m_postProcessChain->Render(
-        pContext, m_offscreenRT, m_tmpRT, m_finalRenderMesh);
+        pContext, m_tmpRT, m_offscreenRT, m_finalRenderMesh);
 
     // ==========================================
-    // 4. 出力先を「デフォルト（画面）」に戻して最終転写
+    // 7. 出力先を「デフォルト（画面）」に戻して最終転写（ガンマ補正のみ）
     // ==========================================
     m_graphics->bindDefaultRenderTarget(); // バックバッファに切り替え
     m_blendStates->Bind(pContext, BlendMode::Opaque);
-    UpdatePostProcessConstantBuffer();//ポストプロセス用の定数バッファを更新
 
-    m_finalRenderScreenBlitPostProcess->Render(pContext, finalResult);//pCurrentInput
+    m_finalRenderScreenBlitPostProcess->Render(pContext, finalResult);
     m_finalRenderMesh->Render(pContext);
 
+    // t0 を外す（次フレームで offscreenRT / tmpRT をRTとして使うため）
+    ID3D11ShaderResourceView* nullSRV = nullptr;
+    pContext->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 void Renderer::EndFrame()
@@ -537,8 +526,8 @@ void Renderer::UpdatePostProcessConstantBuffer()
     PostProcessConstantBuffer postParams;
     postParams.exposure = m_postProcessData.exposure;
     postParams.gammaCorrection = m_postProcessData.gammaCorrection;
-    postParams.padding[0] = 0.0f;
-    postParams.padding[1] = 0.0f;
+    postParams.tonemapper = (m_tonemapper == Tonemapper::ACES) ? 1.0f : 0.0f;
+    postParams.bloomIntensity = m_bloomActive ? m_bloomIntensity : 0.0f;
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};
     HRESULT hr = pContext->Map(m_pPostProcessCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
@@ -568,6 +557,13 @@ void Renderer::SetPointLightPosition(DirectX::XMFLOAT3 pos)
     }
 }
 
+void Renderer::SetPointLightIntensity(float intensity)
+{
+    if (m_shadowSystem) {
+        m_shadowSystem->SetPointLightIntensity(intensity);
+    }
+}
+
 void Renderer::SetLightVisibilityMode(LightVisibilityMode mode)
 {
     if (m_shadowSystem) {
@@ -582,16 +578,9 @@ void Renderer::SetInstanceCount(UINT count)
     }
 }
 
-void Renderer::SetBloomActive(bool isOn)
+void Renderer::SetVignetteActive(bool isOn)
 {
-    if (m_finalRenderBloomCombinePostProcess) {
-        m_finalRenderBloomCombinePostProcess->SetActive(isOn);
-    }
-}
-
-bool Renderer::IsBloomActive() const
-{
-    return m_finalRenderBloomCombinePostProcess ? m_finalRenderBloomCombinePostProcess->IsActive() : false;
+    if (m_vignette) m_vignette->SetActive(isOn);
 }
 
 void Renderer::SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset)

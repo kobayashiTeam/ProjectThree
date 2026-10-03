@@ -79,6 +79,12 @@ public:
             m_pointLights[0].position = pos;
         }
     }
+    // PointLightの強さを更新する
+    void SetPointLightIntensity(float intensity) {
+        if (!m_pointLights.empty()) {
+            m_pointLights[0].intensity = intensity;
+        }
+    }
 
     // 有効化するライト種別を設定する
     void SetLightVisibilityMode(LightVisibilityMode mode) {

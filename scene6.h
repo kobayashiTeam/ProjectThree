@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "IScene.h"
 #include "gameObject.h"
 #include <vector>
@@ -20,8 +20,10 @@ public:
     void Update(float dt) override {
         for (auto& obj : m_objects) obj->Update(dt);
 
-        // ===== PointLight‘€ìiIJKL‚Åposition.x/z‚ğƒ[ƒ‹ƒh‹óŠÔ‚Åâ‘ÎˆÚ“®BScene5‚Æ“¯‚¶ƒƒWƒbƒNj=====
-        // ’†Si0,0j‚É‹ß‚Ã‚¯‚é‚Ù‚ÇŒ¸Š(attenuation)‚ª¬‚³‚­‚È‚èA‹P“x‚ª1.0‚ğ’´‚¦‚ÄBloom‚ª”­‰Î‚µ‚â‚·‚­‚È‚é
+        // ===== PointLightæ“ä½œï¼ˆIJKLã§position.x/zã‚’ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã§çµ¶å¯¾ç§»å‹•ã€‚Scene5ã¨åŒã˜ãƒ­ã‚¸ãƒƒã‚¯ï¼‰=====
+        // ä¸­å¿ƒï¼ˆ0,0ï¼‰ã«è¿‘ã¥ã‘ã‚‹ã»ã©æ¸›è¡°(attenuation)ãŒå°ã•ããªã‚Šã€è¼åº¦ãŒ1.0ã‚’è¶…ãˆã¦BloomãŒç™ºç«ã—ã‚„ã™ããªã‚‹
+        // â€»PBRåŒ–ï¼ˆæ‹¡æ•£åå°„ãŒ albedo/Ï€ï¼‰ä»¥é™ã€å¼·ã•1.0ã®ç‚¹å…‰æºã§ã¯ç™½ã„é¢ã§ã‚‚ç´„0.3æ­¢ã¾ã‚Šã§ã€
+        //   ã—ãã„å€¤1.0ã‚’è¶…ãˆãªã„ã€‚ãã®ãŸã‚ã€ã“ã®ã‚·ãƒ¼ãƒ³ã ã‘ç‚¹å…‰æºã‚’å¼·ãã—ã¦ã„ã‚‹ï¼ˆO/Uã§èª¿æ•´ï¼‰
         const float pointSpeed = 4.0f;
         if (Input::IsKeyDown('J')) m_pointX -= pointSpeed * dt;
         if (Input::IsKeyDown('L')) m_pointX += pointSpeed * dt;
@@ -32,54 +34,92 @@ public:
         if (m_pointZ > 4.0f) m_pointZ = 4.0f;
         if (m_pointZ < -4.0f) m_pointZ = -4.0f;
 
-        // ===== ˜IoiExposurej’²®FP=+AM=- =====
+        // ===== ç‚¹å…‰æºã®å¼·ã•ï¼šO=+ã€U=- =====
+        const float intensitySpeed = 6.0f;
+        if (Input::IsKeyDown('O')) m_pointIntensity += intensitySpeed * dt;
+        if (Input::IsKeyDown('U')) m_pointIntensity -= intensitySpeed * dt;
+        if (m_pointIntensity > 30.0f) m_pointIntensity = 30.0f;
+        if (m_pointIntensity < 0.0f) m_pointIntensity = 0.0f;
+
+        // ===== éœ²å‡ºï¼ˆExposureï¼‰èª¿æ•´ï¼šP=+ã€M=- =====
         const float exposureSpeed = 0.6f;
         if (Input::IsKeyDown('P')) m_exposure += exposureSpeed * dt;
         if (Input::IsKeyDown('M')) m_exposure -= exposureSpeed * dt;
         if (m_exposure > 3.0f) m_exposure = 3.0f;
         if (m_exposure < 0.1f) m_exposure = 0.1f;
 
-        // ===== Bloom ON/OFFØ‚è‘Ö‚¦iTabj =====
+        // ===== Bloom ON/OFFåˆ‡ã‚Šæ›¿ãˆï¼ˆTabï¼‰ =====
         if (Input::IsKeyPressed(VK_TAB)) {
             m_bloomActive = !m_bloomActive;
         }
 
-        // ‘SƒV[ƒ“‹¤’Ê‚ÌƒV[ƒ“”Ô†ƒL[”»’è
+        // ===== Bloomã®å¼·ã•ï¼šX=+ã€Z=- =====
+        const float bloomSpeed = 0.4f;
+        if (Input::IsKeyDown('X')) m_bloomIntensity += bloomSpeed * dt;
+        if (Input::IsKeyDown('Z')) m_bloomIntensity -= bloomSpeed * dt;
+        if (m_bloomIntensity > 1.5f) m_bloomIntensity = 1.5f;
+        if (m_bloomIntensity < 0.0f) m_bloomIntensity = 0.0f;
+
+        // ===== ãƒˆãƒ¼ãƒ³ãƒãƒƒãƒ”ãƒ³ã‚°æ–¹å¼ã®åˆ‡ã‚Šæ›¿ãˆï¼ˆTï¼‰ï¼šExposure â‡” ACES =====
+        if (Input::IsKeyPressed('T')) {
+            m_tonemapper = (m_tonemapper == Tonemapper::Exposure) ? Tonemapper::ACES : Tonemapper::Exposure;
+        }
+
+        // ===== ãƒ“ãƒãƒƒãƒˆ ON/OFFï¼ˆVï¼‰ï¼šLDRã®æ®µã§ã€Bloomã‚’è¶³ã—ãŸå¾Œã®çµµã«æ›ã‹ã‚‹ã“ã¨ã‚’ç¢ºèªã™ã‚‹ =====
+        if (Input::IsKeyPressed('V')) {
+            m_vignetteActive = !m_vignetteActive;
+        }
+
+        // å…¨ã‚·ãƒ¼ãƒ³å…±é€šã®ã‚·ãƒ¼ãƒ³ç•ªå·ã‚­ãƒ¼åˆ¤å®š
         CheckSceneNumberKeys();
     }
 
     void Submit(Renderer* renderer) override {
-        // PointLightF‚‚³ŒÅ’è‚ÅX/Z‚Ì‚İ‘€ì
+        // PointLightï¼šé«˜ã•å›ºå®šã§X/Zã®ã¿æ“ä½œ
         DirectX::XMFLOAT3 pointPos(m_pointX, m_pointHeight, m_pointZ);
         renderer->SetPointLightPosition(pointPos);
+        renderer->SetPointLightIntensity(m_pointIntensity);
 
         renderer->SetExposure(m_exposure);
         renderer->SetBloomActive(m_bloomActive);
+        renderer->SetBloomIntensity(m_bloomIntensity);
+        renderer->SetTonemapper(m_tonemapper);
+        renderer->SetVignetteActive(m_vignetteActive);
 
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
 
     void SubmitUI(TextRenderer* textRenderer, float dt) override {
         textRenderer->DrawString(L"Scene6 - HDR and Bloom", 20.0f, 20.0f);
-        textRenderer->DrawString(L"IJKL : Move Point Light closer / away (X/Z)", 20.0f, 80.0f);
-        textRenderer->DrawString(L"P / M : Exposure Up / Down", 20.0f, 140.0f);
-        textRenderer->DrawString(L"Tab  : Bloom ON / OFF", 20.0f, 200.0f);
+        textRenderer->DrawString(L"IJKL : Move Point Light closer / away (X/Z)", 20.0f, 70.0f);
+        textRenderer->DrawString(L"P / M : Exposure Up / Down", 20.0f, 110.0f);
+        textRenderer->DrawString(L"Tab  : Bloom ON / OFF", 20.0f, 150.0f);
+        textRenderer->DrawString(L"X / Z : Bloom Intensity Up / Down", 20.0f, 190.0f);
+        textRenderer->DrawString(L"T    : Tonemapper (Exposure / ACES)", 20.0f, 230.0f);
+        textRenderer->DrawString(L"V    : Vignette ON / OFF", 20.0f, 270.0f);
+        textRenderer->DrawString(L"O / U : Point Light Intensity Up / Down", 20.0f, 310.0f);
 
         wchar_t buf[128];
-        swprintf_s(buf, L"Point Light : (%.2f, %.2f)", m_pointX, m_pointZ);
-        textRenderer->DrawString(buf, 20.0f, 260.0f);
+        swprintf_s(buf, L"Point Light : (%.2f, %.2f)  Intensity %.1f", m_pointX, m_pointZ, m_pointIntensity);
+        textRenderer->DrawString(buf, 20.0f, 370.0f);
 
         swprintf_s(buf, L"Exposure : %.2f", m_exposure);
-        textRenderer->DrawString(buf, 20.0f, 320.0f);
+        textRenderer->DrawString(buf, 20.0f, 410.0f);
 
-        swprintf_s(buf, L"Bloom : %ls", m_bloomActive ? L"ON" : L"OFF");
-        textRenderer->DrawString(buf, 20.0f, 380.0f);
+        swprintf_s(buf, L"Bloom : %ls  (Intensity %.2f)", m_bloomActive ? L"ON" : L"OFF", m_bloomIntensity);
+        textRenderer->DrawString(buf, 20.0f, 450.0f);
 
-        // ƒg[ƒ^ƒ‹ŠÔ‚ÌXV
+        swprintf_s(buf, L"Tonemapper : %ls", m_tonemapper == Tonemapper::ACES ? L"ACES" : L"Exposure");
+        textRenderer->DrawString(buf, 20.0f, 490.0f);
+
+        swprintf_s(buf, L"Vignette : %ls", m_vignetteActive ? L"ON" : L"OFF");
+        textRenderer->DrawString(buf, 20.0f, 530.0f);
+
+        // ãƒˆãƒ¼ã‚¿ãƒ«æ™‚é–“ã®æ›´æ–°
         m_uiTime += dt;
-        // Œ»İ‚Ìscene‚ğ•\¦‚·‚é
+        // ç¾åœ¨ã®sceneã‚’è¡¨ç¤ºã™ã‚‹
         displayCurrentScene(textRenderer, 6);
-        // Œ»İscene‚Å‚Ì‘€ìà–¾‚ğ•\¦‚·‚é
+        // ç¾åœ¨sceneã§ã®æ“ä½œèª¬æ˜ã‚’è¡¨ç¤ºã™ã‚‹
         displayHowToUse(textRenderer, dt);
         DrawSceneNavigationHint(textRenderer);
     }
@@ -90,14 +130,19 @@ private:
     }
     std::vector<std::unique_ptr<GameObject>> m_objects;
 
-    // PointLightFposition.x / position.zi‚‚³‚ÍŒÅ’èE•‚—Vcube‚Ì‚·‚®ã‚Éİ’èj
+    // PointLightï¼šposition.x / position.zï¼ˆé«˜ã•ã¯å›ºå®šãƒ»æµ®éŠcubeã®ã™ãä¸Šã«è¨­å®šï¼‰
     float m_pointX = 3.0f;
     float m_pointZ = 3.0f;
     const float m_pointHeight = 2.0f;
+    // ç‚¹å…‰æºã®å¼·ã•ï¼ˆRendererã®æ—¢å®šå€¤ã¯1.0ã€‚BeginFrameã§æ¯ãƒ•ãƒ¬ãƒ¼ãƒ 1.0ã«æˆ»ã‚‹ï¼‰
+    float m_pointIntensity = 8.0f;
 
-    // ˜IoiExposurejFRenderer‚Ì‰Šú’l(0.5f)‚É‡‚í‚¹‚é
+    // éœ²å‡ºï¼ˆExposureï¼‰ï¼šRendererã®åˆæœŸå€¤(0.5f)ã«åˆã‚ã›ã‚‹
     float m_exposure = 0.5f;
 
-    // Bloom ON/OFFiBloomCombinePostProcess‚Ì‰Šú’l(true)‚É‡‚í‚¹‚éj
+    // Bloomãƒ»ãƒˆãƒ¼ãƒ³ãƒãƒƒãƒ”ãƒ³ã‚°ãƒ»ãƒ“ãƒãƒƒãƒˆï¼ˆRendererãŒBeginFrameã§æˆ»ã™æ—¢å®šå€¤ã«åˆã‚ã›ã‚‹ï¼‰
     bool m_bloomActive = true;
+    float m_bloomIntensity = 0.3f;
+    Tonemapper m_tonemapper = Tonemapper::Exposure;
+    bool m_vignetteActive = false;
 };

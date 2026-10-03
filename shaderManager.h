@@ -43,10 +43,10 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::SimpleBoxBlur, L"Shaders/SimpleBoxBlurShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Sharpen, L"Shaders/SharpenShader.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Vignette, L"Shaders/VignetteShader.hlsl")) return false;
-        // Bloom用ポストプロセス
-        if (!GetOrCreate(pDevice, ShaderID::HoriBlur, L"Shaders/HorizontalBlurShader.hlsl")) return false;
-        if (!GetOrCreate(pDevice, ShaderID::VerBlur, L"Shaders/VerticalBlurShader.hlsl")) return false;
-        if (!GetOrCreate(pDevice, ShaderID::BloomCombine, L"Shaders/BloomCombineShader.hlsl")) return false;
+        // Bloom（縮小／拡大の連鎖）とトーンマッピング
+        if (!GetOrCreate(pDevice, ShaderID::BloomDownsample, L"Shaders/BloomDownsample.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::BloomUpsample, L"Shaders/BloomUpsample.hlsl")) return false;
+        if (!GetOrCreate(pDevice, ShaderID::Tonemap, L"Shaders/Tonemap.hlsl")) return false;
         // skybox
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
         //IBL
@@ -178,17 +178,11 @@ private:
             layout = normalMappingLayout;
             layoutCount = 5;
             break;
-        case ShaderID::HoriBlur:
-            layout = standardLayout;
-            layoutCount = 4;
-            break;
-        case ShaderID::VerBlur:
-            layout = standardLayout;
-            layoutCount = 4;
-            break;
-        case ShaderID::BloomCombine:
-            layout = standardLayout;
-            layoutCount = 4;
+        case ShaderID::BloomDownsample:
+        case ShaderID::BloomUpsample:
+        case ShaderID::Tonemap:
+            layout = screenBlitLayout;
+            layoutCount = 2;
             break;
         case ShaderID::DeferredGB:
             layout = standardLayout;

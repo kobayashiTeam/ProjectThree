@@ -49,7 +49,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;
-    float4 Bright : SV_Target1;
+    // ※Bloom用の高輝度出力（旧SV_Target1）は廃止。輝度抽出はBloomPassの最初の縮小で行う
     float Depth : SV_Depth;
 };
 
@@ -367,19 +367,8 @@ PS_OUTPUT PS(PS_INPUT input)
         finalColor *= tint;
     }
 
-    // --- ブルーム用のマルチレンダーターゲット出力 ---
     PS_OUTPUT output;
     output.Color = float4(finalColor, 1.0f);
-
-    float brightness = dot(finalColor, float3(0.2126, 0.7152, 0.0722));
-    if (brightness > 1.0f)
-    {
-        output.Bright = float4(finalColor, 1.0f);
-    }
-    else
-    {
-        output.Bright = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
 
     // --- 深度の転写（値の変更なし） ---
     output.Depth = gBufferDepth.Sample(samPoint, input.Tex).r;

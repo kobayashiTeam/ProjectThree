@@ -132,9 +132,6 @@
     <ClCompile Include="renderTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\ScreenBlit.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="skyBox.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -210,9 +207,6 @@
     <ClCompile Include="Shaders\ShadowCubeShader.hlsl">
       <Filter>リソース ファイル\shadow</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\LitShader.hlsl">
-      <Filter>リソース ファイル\shader_mat</Filter>
-    </ClCompile>
     <ClCompile Include="Shaders\NormalMappingShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </ClCompile>
@@ -224,15 +218,6 @@
     </ClCompile>
     <ClCompile Include="Shaders\ParallaxMappingShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\HorizontalBlurShader.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\VerticalBlurShader.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </ClCompile>
-    <ClCompile Include="Shaders\BloomCombineShader.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
     </ClCompile>
     <ClCompile Include="deferredCBMaterial.cpp">
       <Filter>ソース ファイル\material</Filter>
@@ -314,6 +299,9 @@
     </ClCompile>
     <ClCompile Include="textRenderer.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="bloomPass.cpp">
+      <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -431,23 +419,11 @@
     <ClInclude Include="parallaxMappingMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
-    <ClInclude Include="HorizontalBlurPostProcess.h">
-      <Filter>ヘッダー ファイル\postProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="VerticalBlurPostProcess.h">
-      <Filter>ヘッダー ファイル\postProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="bloomCombinePostProcess.h">
-      <Filter>ヘッダー ファイル\postProcess</Filter>
-    </ClInclude>
     <ClInclude Include="deferredCBMaterial.h">
       <Filter>ヘッダー ファイル\material</Filter>
     </ClInclude>
     <ClInclude Include="postProcessChain.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="bloomBlurPass.h">
-      <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
     <ClInclude Include="gBufferPass.h">
       <Filter>ヘッダー ファイル\pass</Filter>
@@ -536,6 +512,12 @@
     <ClInclude Include="scene11.h">
       <Filter>ヘッダー ファイル\scene</Filter>
     </ClInclude>
+    <ClInclude Include="bloomPass.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
+    <ClInclude Include="tonemapPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
@@ -552,6 +534,21 @@
     </FxCompile>
     <FxCompile Include="Shaders\ShadowShader.hlsl">
       <Filter>リソース ファイル\shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\LitShader.hlsl">
+      <Filter>リソース ファイル\shader_mat</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ScreenBlit.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\BloomDownsample.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\BloomUpsample.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Tonemap.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>

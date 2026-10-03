@@ -1,10 +1,15 @@
+ï»¿#pragma once
 #include"postProcess.h"
 
 class VignettePostProcess : public PostProcess {
 public:
+    // VignetteShader.hlsl ã® PerEffectCB(b2) ã¨åŒã˜ä¸¦ã³ã«ã™ã‚‹
+    // ï¼ˆä»¥å‰ã¯ radius / softness ãŒdummyã®ã¾ã¾æœªåˆæœŸåŒ–ã§ã€ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼å´ã«ä¸å®šå€¤ãŒæ¸¡ã£ã¦ã„ãŸï¼‰
     struct PerEffectCB {
-        float intensity; // ƒrƒlƒbƒg‚Ì‹­‚³ (0.0 = ’Êí, 1.0 = Š®‘S‚Èƒrƒlƒbƒg)
-        float dummy[3];  // 16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg—p‚ÌƒpƒfƒBƒ“ƒO
+        float intensity = 0.6f; // ãƒ“ãƒãƒƒãƒˆã®å¼·ã• (0.0 = é€šå¸¸, 1.0 = å®Œå…¨ãªãƒ“ãƒãƒƒãƒˆ)
+        float radius = 0.75f;   // ä¸­å¿ƒã‹ã‚‰ã“ã®è·é›¢ã¾ã§ã¯æš—ããªã‚‰ãªã„ï¼ˆUVå˜ä½ï¼‰
+        float softness = 0.45f; // radiusã‹ã‚‰å†…å´ã¸ã€ã©ã‚Œã ã‘ã®å¹…ã§ãªã‚ã‚‰ã‹ã«æš—ãã™ã‚‹ã‹
+        float dummy = 0.0f;     // 16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆç”¨ã®ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°
     };
 
 private:
@@ -12,13 +17,13 @@ private:
     PerEffectCB   m_cbData;
 
 public:
-    VignettePostProcess() { m_cbData.intensity = 1.0f; }
+    VignettePostProcess() = default;
     ~VignettePostProcess() override { if (m_pConstantBuffer) m_pConstantBuffer->Release(); }
 
     bool Initialize(ID3D11Device* pDevice, Shader* pShader) override {
         if (!PostProcess::Initialize(pDevice, pShader)) return false;
 
-        // ƒGƒtƒFƒNƒgê—p‚Ì’è”ƒoƒbƒtƒ@iƒXƒƒbƒg2—pj‚ðì¬
+        // ã‚¨ãƒ•ã‚§ã‚¯ãƒˆå°‚ç”¨ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¹ãƒ­ãƒƒãƒˆ2ç”¨ï¼‰ã‚’ä½œæˆ
         D3D11_BUFFER_DESC cbd = {};
         cbd.Usage = D3D11_USAGE_DEFAULT;
         cbd.ByteWidth = sizeof(PerEffectCB);
@@ -28,14 +33,14 @@ public:
         return SUCCEEDED(hr);
     }
 
-    // ŠO•”‚©‚çƒrƒlƒbƒg‚Ì‹­‚³‚ð•Ï‚¦‚éƒAƒNƒZƒT
+    // å¤–éƒ¨ã‹ã‚‰ãƒ“ãƒãƒƒãƒˆã®å¼·ã•ã‚’å¤‰ãˆã‚‹ã‚¢ã‚¯ã‚»ã‚µ
     void SetIntensity(float intensity) { m_cbData.intensity = intensity; }
 
     void Render(ID3D11DeviceContext* pContext, RenderTarget* sourceRT) override {
-        // 1. eƒNƒ‰ƒX‚ÌŠî–{ƒoƒCƒ“ƒhiƒVƒF[ƒ_[AƒeƒNƒXƒ`ƒƒAƒTƒ“ƒvƒ‰[j‚ðŒÄ‚Ô
+        // 1. è¦ªã‚¯ãƒ©ã‚¹ã®åŸºæœ¬ãƒã‚¤ãƒ³ãƒ‰ï¼ˆã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£ã€ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ï¼‰ã‚’å‘¼ã¶
         PostProcess::Render(pContext, sourceRT);
 
-        // 2. Ž©•ªê—p‚Ì’è”ƒoƒbƒtƒ@‚ðXV‚µ‚ÄƒXƒƒbƒg2‚ÉƒoƒCƒ“ƒh
+        // 2. è‡ªåˆ†å°‚ç”¨ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚’æ›´æ–°ã—ã¦ã‚¹ãƒ­ãƒƒãƒˆ2ã«ãƒã‚¤ãƒ³ãƒ‰
         if (m_pConstantBuffer) {
             pContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &m_cbData, 0, 0);
             pContext->PSSetConstantBuffers(2, 1, &m_pConstantBuffer);
