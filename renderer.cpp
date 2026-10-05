@@ -36,6 +36,7 @@
 #include"deferredLightingPass.h"
 #include"irradianceConvolutionPass.h"
 #include"prefilterSpecularPass.h"
+#include"gpuProfiler.h"
 
 Renderer::~Renderer()
 {
@@ -43,6 +44,7 @@ Renderer::~Renderer()
     delete m_rasterStates;
     delete m_dsStates;
     delete m_blendStates;
+    delete m_gpuProfiler;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -202,6 +204,10 @@ bool Renderer::Initialize(Graphics* graphics)
     m_ssaoPass = new SSAOPass();
     m_ssaoPass->Initialize(pDevice, 1280, 720);
 
+    // GPUプロファイラ（タイムスタンプクエリ）
+    m_gpuProfiler = new GpuProfiler();
+    if (!m_gpuProfiler->Initialize(pDevice)) return false;
+
     return true;
 
 }
@@ -211,6 +217,10 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
     m_currentCamera = camera;
+
+    // GPU計測の開始（フレーム先頭の時刻）。画面クリアもTotalに含めたいので BeginScene より前
+    m_gpuProfiler->BeginFrame(pContext);
+
     m_graphics->BeginScene(r, g, b, a);
 
     // 共通のトポロジー設定
@@ -296,16 +306,19 @@ void Renderer::Execute()
 
     // ===== 1パス目：シャドウマップ生成 =====
     // ===== DirectionalLight のシャドウパス =====
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowDir);
     m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
     m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowSystem->EndDirectionalPass(pContext);
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowDir);
 
     // ===== DirectionalLight のCSMパス（Deferred専用の新経路） =====
     // 行列の計算とb7への転送は毎フレーム行う（無効時も「無効」フラグを伝えるため）
     m_shadowSystem->UpdateCascades(pContext, m_currentCamera);
     if (m_shadowSystem->IsCascadeEnabled())
     {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowCSM);
         // 段ごとに「描き込み先のスライス」と「b8の行列」だけを差し替えて、同じ物体を3回描く
         for (int c = 0; c < NUM_CASCADES; c++)
         {
@@ -314,18 +327,22 @@ void Renderer::Execute()
             m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
             m_shadowSystem->EndCascadePass(pContext);
         }
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowCSM);
     }
 
 
     // ===== PointLight のシャドウパス =====
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowPoint);
     m_shadowSystem->BeginPointPass(pContext);
     m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
     m_shadowSystem->EndPointPass(pContext);
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowPoint);
 
     // ==========================================
     // 1. オフスクリーンRTに描画先を切り替え
     // ==========================================
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::GBuffer); // オフスクリーンのクリアもここに含める
     m_offscreenRTwithMSAA->Clear(pContext);
 
     // ※以前はここで brightRT と2枚のMRTとしてバインドしていたが、Bloomの輝度抽出は
@@ -344,6 +361,8 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
 
     m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    // デバッグ表示の早期returnより前に閉じる（閉じ忘れると区間が記録されない）
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::GBuffer);
 
     // ==========================================
     // Scene3：Gバッファのデバッグ表示
@@ -394,22 +413,27 @@ void Renderer::Execute()
     // SSAO 生成 ＆ SSAOブラー パス
     // ==========================================
 
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::SSAO);
     ID3D11ShaderResourceView* ssaoSRV = m_ssaoPass->Execute(
         pContext,
         m_gBufferPass->GetNormalSRV(),
         m_gBufferPass->GetPositionSRV(),
         m_finalRenderMesh);
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::SSAO);
 
     // オフスクリーンRTに再バインド（SSAOパスで描き込み先が変わっているため）
     m_offscreenRTwithMSAA->Bind(pContext);
 
     // ===== Lighting Pass =====
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Lighting);
     m_deferredLightingPass->Execute(pContext, m_gBufferPass, ssaoSRV, m_dsStates, m_finalRenderMesh,
         m_irradianceConvolutionPass->GetIrradianceSRV(),
         m_prefilterSpecularPass->GetPrefilterSRV());
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::Lighting);
 
 
     // ─── 工程1: 不透明パス ───
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Forward);
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
     m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
@@ -440,13 +464,14 @@ void Renderer::Execute()
 
 
     // ==========================================
-    // 3. MSAAの解除（Resolve）
+    // 3. MSAAの解除（Resolve）※計測上はForward区間に含める（Bloom区間と重ならないように）
     // ==========================================
     pContext->ResolveSubresource(
         m_offscreenRT->GetTexture(), 0,          // 転送先: 非MSAA RT
         m_offscreenRTwithMSAA->GetTexture(), 0,  // 転送元: MSAA RT
         DXGI_FORMAT_R16G16B16A16_FLOAT
     );
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::Forward);
 
     // b5（露出・トーンマッピング方式・Bloomの強さ・ガンマ）を更新してバインド
     UpdatePostProcessConstantBuffer();
@@ -456,12 +481,15 @@ void Renderer::Execute()
     // ==========================================
     ID3D11ShaderResourceView* bloomSRV = nullptr;
     if (m_bloomActive) {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Bloom);
         bloomSRV = m_bloomPass->Execute(pContext, m_offscreenRT->GetSRV(), m_finalRenderMesh, m_blendStates);
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::Bloom);
     }
 
     // ==========================================
     // 5. HDR → LDR：Bloom合成＋トーンマッピング（offscreenRT → tmpRT）
     // ==========================================
+    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Post);
     m_blendStates->Bind(pContext, BlendMode::Opaque);
     m_tmpRT->Clear(pContext);
     m_tmpRT->Bind(pContext); // ビューポートも1280x720に戻る
@@ -485,6 +513,7 @@ void Renderer::Execute()
 
     m_finalRenderScreenBlitPostProcess->Render(pContext, finalResult);
     m_finalRenderMesh->Render(pContext);
+    m_gpuProfiler->End(pContext, GpuProfiler::Section::Post);
 
     // t0 を外す（次フレームで offscreenRT / tmpRT をRTとして使うため）
     ID3D11ShaderResourceView* nullSRV = nullptr;
@@ -497,6 +526,9 @@ void Renderer::EndFrame()
 
     // 後処理：デフォルトのステンシルステートなどに戻す
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
+
+    // GPU計測の終了（フレーム末尾の時刻）。UIテキストまで含めたいので Present（EndScene）の直前
+    m_gpuProfiler->EndFrame(pContext);
 
     m_graphics->EndScene();
     m_currentCamera = nullptr;

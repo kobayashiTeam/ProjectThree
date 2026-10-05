@@ -42,6 +42,7 @@ class ShadowSystem;
 class DeferredLightingPass;
 class IrradianceConvolutionPass;
 class PrefilterSpecularPass;
+class GpuProfiler;
 
 class Renderer
 {
@@ -100,6 +101,9 @@ public:
     void SetCascadeDebug(bool isOn);
     void SetCascadeLambda(float lambda);
     float GetCascadeSplit(int index) const;
+
+    // GPU計測（パスごとのms）。表示はGame側でTextRendererに描かせる
+    GpuProfiler* GetGpuProfiler() const { return m_gpuProfiler; }
 
 
 private:
@@ -182,5 +186,8 @@ private:
     IrradianceConvolutionPass* m_irradianceConvolutionPass = nullptr;
     // IBL：スカイボックスから焼き込んだSpecular Prefilterキューブマップ（roughnessごとにミップが分かれる）
     PrefilterSpecularPass* m_prefilterSpecularPass = nullptr;
+
+    // ⑤最適化：タイムスタンプクエリでパスごとのGPU時間を測る
+    GpuProfiler* m_gpuProfiler = nullptr;
 
 };

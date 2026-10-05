@@ -1,4 +1,4 @@
-// game.cpp
+ï»¿// game.cpp
 #include "game.h"
 #include "graphics.h"
 #include "ShaderManager.h"
@@ -9,8 +9,9 @@
 #include"scene0.h"
 #include"textRenderer.h"
 #include"input.h"
+#include"gpuProfiler.h"
 
-// main.cpp‚ÌWndProc‚ªXV‚·‚éƒOƒ[ƒoƒ‹“ü—Íó‘Ô‚ðA¡‚Í‚»‚Ì‚Ü‚ÜŽQÆ‚·‚é
+// main.cppã®WndProcãŒæ›´æ–°ã™ã‚‹ã‚°ãƒ­ãƒ¼ãƒãƒ«å…¥åŠ›çŠ¶æ…‹ã‚’ã€ä»Šã¯ãã®ã¾ã¾å‚ç…§ã™ã‚‹
 extern bool g_keyLeft;
 extern bool g_keyRight;
 extern bool g_keyUp;
@@ -71,6 +72,11 @@ void Game::Update(float dt)
 
     m_currentScene->Update(dt);
 
+    // F3ï¼šGPUè¨ˆæ¸¬ã®è¡¨ç¤ºON/OFFï¼ˆå…¨ã‚·ãƒ¼ãƒ³å…±é€šï¼‰
+    if (Input::IsKeyPressed(VK_F3)) {
+        if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) profiler->ToggleVisible();
+    }
+
     Input::Update();
 
     if (IScene* next = m_currentScene->CheckTransition())
@@ -88,9 +94,11 @@ void Game::Render(float dt)
     m_currentScene->Submit(m_renderer);
     m_renderer->Execute();
 
-    // UIƒeƒLƒXƒg‚Í3D•`‰æ‚ª‚·‚×‚ÄI‚í‚Á‚½ŒãAƒoƒbƒNƒoƒbƒtƒ@‚É’¼Úd‚Ë•`‚«‚·‚é
+    // UIãƒ†ã‚­ã‚¹ãƒˆã¯3Dæç”»ãŒã™ã¹ã¦çµ‚ã‚ã£ãŸå¾Œã€ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡ã«ç›´æŽ¥é‡ã­æãã™ã‚‹
     m_textRenderer->Begin();
-    m_currentScene->SubmitUI(m_textRenderer,dt);
+    m_currentScene->SubmitUI(m_textRenderer, dt);
+    // GPUè¨ˆæ¸¬ã®çµæžœï¼ˆç”»é¢å³ä¸Šï¼‰ã€‚ã‚·ãƒ¼ãƒ³ã®UIã®ä¸Šã«é‡ã­ã‚‹
+    if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) profiler->DrawOverlay(m_textRenderer);
     m_textRenderer->End();
 
     m_renderer->EndFrame();
