@@ -7,8 +7,8 @@ public:
     // （以前は radius / softness がdummyのまま未初期化で、シェーダー側に不定値が渡っていた）
     struct PerEffectCB {
         float intensity = 0.6f; // ビネットの強さ (0.0 = 通常, 1.0 = 完全なビネット)
-        float radius = 0.75f;   // 中心からこの距離までは暗くならない（UV単位）
-        float softness = 0.45f; // radiusから内側へ、どれだけの幅でなめらかに暗くするか
+        float radius = 0.75f;   // 中心からこの距離で暗さが最大になる（UV単位）
+        float softness = 0.45f; // radiusから内側へこの幅でなめらかに暗くする（radius - softness までは暗くならない）
         float dummy = 0.0f;     // 16バイトアライメント用のパディング
     };
 
