@@ -91,6 +91,31 @@ public:
         m_lightVisibilityMode = mode;
     }
 
+    // ===== このフレームでシャドウマップを描く必要があるか =====
+    // シェーダーがマップを読むかどうかは「b3のlights[]に詰めたライトの種類」で決まり、
+    // lights[]はモードを見て詰めている（UpdateLightDataConstantBuffer）。
+    // なので「描くかどうか」も同じモードから決め、「読むときは必ず描いてある」を保つ。
+    // （描かなかったマップには古い深度が残るが、読まれないので見た目には出ない）
+    bool IsDirectionalLit() const {
+        return m_lightVisibilityMode == LightVisibilityMode::DirectionalOnly ||
+            m_lightVisibilityMode == LightVisibilityMode::Both;
+    }
+    bool IsPointLit() const {
+        return m_lightVisibilityMode == LightVisibilityMode::PointOnly ||
+            m_lightVisibilityMode == LightVisibilityMode::Both;
+    }
+    // 旧方向光マップ(t3)：Deferredでも CSM無効なら読む。
+    // フォワード系(LitShaderなど)は CSMを知らずに常にt3を読むので、フォワードの物体がいれば必要
+    bool NeedsDirectionalShadow(bool hasForwardObjects) const {
+        return IsDirectionalLit() && (!m_cascadeEnabled || hasForwardObjects);
+    }
+    bool NeedsCascadeShadow() const {
+        return IsDirectionalLit() && m_cascadeEnabled;
+    }
+    bool NeedsPointShadow() const {
+        return IsPointLit();
+    }
+
     // ===== CSMの設定 =====
     void SetCascadeEnabled(bool isOn) { m_cascadeEnabled = isOn; }
     bool IsCascadeEnabled() const { return m_cascadeEnabled; }

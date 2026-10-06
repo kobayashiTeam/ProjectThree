@@ -236,6 +236,10 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // （Rendererの状態がシーン遷移後に残り、他のシーンの見た目を変えてしまうのを防ぐ）
     m_shadowSystem->SetCascadeEnabled(false);
     m_shadowSystem->SetCascadeDebug(false);
+    // ライトのモードも毎フレーム既定値（Both）に戻す。使いたいシーンだけがSubmit()内で変える
+    // （戻さないと、Scene0〜4・6・7が直前のシーンのモードを引き継ぎ、
+    //   見た目だけでなく「どのシャドウマップを描くか」まで前のシーンに左右されてしまう）
+    m_shadowSystem->SetLightVisibilityMode(LightVisibilityMode::Both);
 
     // ポストプロセスもCSMと同じく毎フレーム既定値に戻す（Scene6で変えた設定が他のシーンに残らないように）
     m_postProcessData.exposure = 0.5f;
@@ -305,18 +309,27 @@ void Renderer::Execute()
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
 
     // ===== 1パス目：シャドウマップ生成 =====
+    // 各マップは「このフレームで読まれるときだけ」描く（判定はShadowSystem::Needs〜）
+    // フォワードの物体（Opaque/Transparent）は、CSMの有無に関係なく旧方向光マップ(t3)を読む
+    // ※キューはこの後の Execute(..., true) でクリアされるので、ここで聞く
+    const bool hasForwardObjects =
+        !m_renderQueues[opaqueIdx].IsEmpty() || !m_renderQueues[transparentIdx].IsEmpty();
+
     // ===== DirectionalLight のシャドウパス =====
-    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowDir);
-    m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
-    m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_shadowSystem->EndDirectionalPass(pContext);
-    m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowDir);
+    if (m_shadowSystem->NeedsDirectionalShadow(hasForwardObjects))
+    {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowDir);
+        m_shadowSystem->BeginDirectionalPass(pContext);  // 内部でm_shadowShader->Bind()済み
+        m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+        m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+        m_shadowSystem->EndDirectionalPass(pContext);
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowDir);
+    }
 
     // ===== DirectionalLight のCSMパス（Deferred専用の新経路） =====
     // 行列の計算とb7への転送は毎フレーム行う（無効時も「無効」フラグを伝えるため）
     m_shadowSystem->UpdateCascades(pContext, m_currentCamera);
-    if (m_shadowSystem->IsCascadeEnabled())
+    if (m_shadowSystem->NeedsCascadeShadow())
     {
         m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowCSM);
         // 段ごとに「描き込み先のスライス」と「b8の行列」だけを差し替えて、同じ物体を3回描く
@@ -332,12 +345,15 @@ void Renderer::Execute()
 
 
     // ===== PointLight のシャドウパス =====
-    m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowPoint);
-    m_shadowSystem->BeginPointPass(pContext);
-    m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
-    m_shadowSystem->EndPointPass(pContext);
-    m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowPoint);
+    if (m_shadowSystem->NeedsPointShadow())
+    {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowPoint);
+        m_shadowSystem->BeginPointPass(pContext);
+        m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+        m_renderQueues[deferredOpaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
+        m_shadowSystem->EndPointPass(pContext);
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowPoint);
+    }
 
     // ==========================================
     // 1. オフスクリーンRTに描画先を切り替え

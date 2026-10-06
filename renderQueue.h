@@ -1,34 +1,34 @@
-#pragma once
+ï»¿#pragma once
 
 #include"model.h"
 #include<algorithm>
 #include"blendStates.h"
 #include"graphicsCommon.h"
 
-// •`‰æƒRƒ}ƒ“ƒh‚ğŠÇ—‚µA•`‰æ‡‚ğ§Œä‚·‚éƒNƒ‰ƒX
+// æç”»ã‚³ãƒãƒ³ãƒ‰ã‚’ç®¡ç†ã—ã€æç”»é †ã‚’åˆ¶å¾¡ã™ã‚‹ã‚¯ãƒ©ã‚¹
 class RenderQueue {
 public:
     struct RenderCommand {
         Model* pModel;
-        float depth; // ƒJƒƒ‰‚©‚ç‚Ì‹——£
+        float depth; // ã‚«ãƒ¡ãƒ©ã‹ã‚‰ã®è·é›¢
         Shader* pOverrideShader = nullptr;
     };
 
 private:
-    // BlendMode‚²‚Æ‚É•`‰æƒRƒ}ƒ“ƒh‚ğŠÇ—‚·‚éƒLƒ…[
+    // BlendModeã”ã¨ã«æç”»ã‚³ãƒãƒ³ãƒ‰ã‚’ç®¡ç†ã™ã‚‹ã‚­ãƒ¥ãƒ¼
     std::vector<RenderCommand> m_queues[static_cast<int>(BlendMode::Count)];
 
 
 public:
-	RenderQueue() = default;
+    RenderQueue() = default;
 
-    // “o˜^‚ÍA‚Ç‚ÌƒuƒŒƒ“ƒhƒ^ƒCƒv‚Å•`‰æ‚µ‚½‚¢‚©‚ğw’è‚µ‚ÄƒLƒ…[‚É“ü‚ê‚é
+    // ç™»éŒ²æ™‚ã¯ã€ã©ã®ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚¿ã‚¤ãƒ—ã§æç”»ã—ãŸã„ã‹ã‚’æŒ‡å®šã—ã¦ã‚­ãƒ¥ãƒ¼ã«å…¥ã‚Œã‚‹
     void Submit(Model* pModel, float depth, BlendMode mode) {
         m_queues[static_cast<int>(mode)].push_back({ pModel, depth });
     }
 
-    // Àsi•`‰æj
-    void Execute(ID3D11DeviceContext* pContext, 
+    // å®Ÿè¡Œï¼ˆæç”»ï¼‰
+    void Execute(ID3D11DeviceContext* pContext,
         ID3D11Buffer* pPerFrameCB,
         BlendStates* pBlendStates,
         bool isAfterClear) {
@@ -36,38 +36,38 @@ public:
         int alphaIdx = static_cast<int>(BlendMode::AlphaBlend);
         int addIdx = static_cast<int>(BlendMode::Additive);
 
-        // 1. ƒ\[ƒgˆ—
-        // •s“§–¾‚Íè‘O‚©‚ç‰œi¸‡j
+        // 1. ã‚½ãƒ¼ãƒˆå‡¦ç†
+        // ä¸é€æ˜ã¯æ‰‹å‰ã‹ã‚‰å¥¥ï¼ˆæ˜‡é †ï¼‰
         std::sort(m_queues[opaqueIdx].begin(), m_queues[opaqueIdx].end(),
             [](const RenderCommand& a, const RenderCommand& b) { return a.depth < b.depth; });
 
-        // ”¼“§–¾‚Æ‰ÁZ‚Í‰œ‚©‚çè‘Oi~‡j
+        // åŠé€æ˜ã¨åŠ ç®—ã¯å¥¥ã‹ã‚‰æ‰‹å‰ï¼ˆé™é †ï¼‰
         auto backToFront = [](const RenderCommand& a, const RenderCommand& b) { return a.depth > b.depth; };
         std::sort(m_queues[alphaIdx].begin(), m_queues[alphaIdx].end(), backToFront);
         std::sort(m_queues[addIdx].begin(), m_queues[addIdx].end(), backToFront);
 
-        // 2. ‡Ÿ•`‰æi“o˜^‚³‚ê‚½ƒXƒe[ƒg‚ğ©“®‚ÅƒoƒCƒ“ƒh‚µ‚È‚ª‚çƒ‹[ƒvj
+        // 2. é †æ¬¡æç”»ï¼ˆç™»éŒ²ã•ã‚ŒãŸã‚¹ãƒ†ãƒ¼ãƒˆã‚’è‡ªå‹•ã§ãƒã‚¤ãƒ³ãƒ‰ã—ãªãŒã‚‰ãƒ«ãƒ¼ãƒ—ï¼‰
         for (int i = 0; i < static_cast<int>(BlendMode::Count); ++i) {
             if (m_queues[i].empty()) continue;
 
-            // ƒuƒŒƒ“ƒhƒ‚[ƒh‚É‘Î‰‚·‚éƒXƒe[ƒg‚ğİ’è
+            // ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ¢ãƒ¼ãƒ‰ã«å¯¾å¿œã™ã‚‹ã‚¹ãƒ†ãƒ¼ãƒˆã‚’è¨­å®š
             if (pBlendStates) {
-                pBlendStates->Bind(pContext,static_cast<BlendMode>(i));
+                pBlendStates->Bind(pContext, static_cast<BlendMode>(i));
             }
 
-            // ‚»‚ÌƒuƒŒƒ“ƒhƒ^ƒCƒv‚É—­‚Ü‚Á‚Ä‚¢‚éƒ‚ƒfƒ‹‚ğ‘S•`‰æ
+            // ãã®ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚¿ã‚¤ãƒ—ã«æºœã¾ã£ã¦ã„ã‚‹ãƒ¢ãƒ‡ãƒ«ã‚’å…¨æç”»
             for (const auto& cmd : m_queues[i]) {
                 if (!cmd.pOverrideShader) { cmd.pModel->Draw(pContext, pPerFrameCB); }
-                else{ cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB); }
+                else { cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB); }
             }
 
-            // •`‰æ‚ªI‚í‚Á‚½‚ç‚»‚ÌƒLƒ…[‚ğƒNƒŠƒA
-            if(isAfterClear)
-            m_queues[i].clear();
+            // æç”»ãŒçµ‚ã‚ã£ãŸã‚‰ãã®ã‚­ãƒ¥ãƒ¼ã‚’ã‚¯ãƒªã‚¢
+            if (isAfterClear)
+                m_queues[i].clear();
         }
     }
 
-    // Šemodel‚ÉƒVƒF[ƒ_‚ğbind‚³‚¹‚¸vertex,index•`‰æ‚¾‚¯‚³‚¹‚é
+    // å„modelã«ã‚·ã‚§ãƒ¼ãƒ€ã‚’bindã•ã›ãšvertex,indexæç”»ã ã‘ã•ã›ã‚‹
     void ExecuteGeometryOnly(ID3D11DeviceContext* pContext,
         ID3D11Buffer* pPerFrameCB,
         BlendStates* pBlendStates,
@@ -76,34 +76,43 @@ public:
         int alphaIdx = static_cast<int>(BlendMode::AlphaBlend);
         int addIdx = static_cast<int>(BlendMode::Additive);
 
-        // 1. ƒ\[ƒgˆ—
-        // •s“§–¾‚Íè‘O‚©‚ç‰œi¸‡j
+        // 1. ã‚½ãƒ¼ãƒˆå‡¦ç†
+        // ä¸é€æ˜ã¯æ‰‹å‰ã‹ã‚‰å¥¥ï¼ˆæ˜‡é †ï¼‰
         std::sort(m_queues[opaqueIdx].begin(), m_queues[opaqueIdx].end(),
             [](const RenderCommand& a, const RenderCommand& b) { return a.depth < b.depth; });
 
-        // ”¼“§–¾‚Æ‰ÁZ‚Í‰œ‚©‚çè‘Oi~‡j
+        // åŠé€æ˜ã¨åŠ ç®—ã¯å¥¥ã‹ã‚‰æ‰‹å‰ï¼ˆé™é †ï¼‰
         auto backToFront = [](const RenderCommand& a, const RenderCommand& b) { return a.depth > b.depth; };
         std::sort(m_queues[alphaIdx].begin(), m_queues[alphaIdx].end(), backToFront);
         std::sort(m_queues[addIdx].begin(), m_queues[addIdx].end(), backToFront);
 
-        // 2. ‡Ÿ•`‰æi“o˜^‚³‚ê‚½ƒXƒe[ƒg‚ğ©“®‚ÅƒoƒCƒ“ƒh‚µ‚È‚ª‚çƒ‹[ƒvj
+        // 2. é †æ¬¡æç”»ï¼ˆç™»éŒ²ã•ã‚ŒãŸã‚¹ãƒ†ãƒ¼ãƒˆã‚’è‡ªå‹•ã§ãƒã‚¤ãƒ³ãƒ‰ã—ãªãŒã‚‰ãƒ«ãƒ¼ãƒ—ï¼‰
         for (int i = 0; i < static_cast<int>(BlendMode::Count); ++i) {
             if (m_queues[i].empty()) continue;
 
-            // –‘O‚É“o˜^‚µ‚Ä‚¨‚¢‚½‘Î‰‚·‚éƒuƒŒƒ“ƒhƒXƒe[ƒg‚ğƒoƒCƒ“ƒhiQÆ‚µ‚ÄBindj
+            // äº‹å‰ã«ç™»éŒ²ã—ã¦ãŠã„ãŸå¯¾å¿œã™ã‚‹ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚¹ãƒ†ãƒ¼ãƒˆã‚’ãƒã‚¤ãƒ³ãƒ‰ï¼ˆå‚ç…§ã—ã¦Bindï¼‰
             if (pBlendStates) {
                 pBlendStates->Bind(pContext, static_cast<BlendMode>(i));
             }
 
-            // ‚»‚ÌƒuƒŒƒ“ƒhƒ^ƒCƒv‚É—­‚Ü‚Á‚Ä‚¢‚éƒ‚ƒfƒ‹‚ğ‘S•`‰æ
+            // ãã®ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚¿ã‚¤ãƒ—ã«æºœã¾ã£ã¦ã„ã‚‹ãƒ¢ãƒ‡ãƒ«ã‚’å…¨æç”»
             for (const auto& cmd : m_queues[i]) {
-                cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB); 
+                cmd.pModel->DrawGeometryOnly(pContext, pPerFrameCB);
             }
 
-            // •`‰æ‚ªI‚í‚Á‚½‚ç‚»‚ÌƒLƒ…[‚ğƒNƒŠƒA
+            // æç”»ãŒçµ‚ã‚ã£ãŸã‚‰ãã®ã‚­ãƒ¥ãƒ¼ã‚’ã‚¯ãƒªã‚¢
             if (isAfterClear)
                 m_queues[i].clear();
         }
+    }
+
+    // ã“ã®ãƒ‘ã‚¹ï¼ˆOpaque/Transparentãªã©ï¼‰ã«ã€ä»Šãƒ•ãƒ¬ãƒ¼ãƒ 1ã¤ã§ã‚‚ç™»éŒ²ãŒã‚ã‚‹ã‹
+    // ï¼ˆExecute(..., true)ã§ã‚¯ãƒªã‚¢ã•ã‚Œã‚‹å‰ã«èãã“ã¨ï¼‰
+    bool IsEmpty() const {
+        for (const auto& q : m_queues) {
+            if (!q.empty()) return false;
+        }
+        return true;
     }
 
     void SetOverrideVS(Shader* pVS)
