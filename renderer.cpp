@@ -315,6 +315,12 @@ void Renderer::Execute()
     const bool hasForwardObjects =
         !m_renderQueues[opaqueIdx].IsEmpty() || !m_renderQueues[transparentIdx].IsEmpty();
 
+    // シャドウパスのステートを明示する
+    // （以前は何もバインドしておらず、前フレームのTextRendererが残したCullNoneのまま描いていた）
+    // 深度ステートも同様に明示（EndFrameでDepthTestに戻しているが、ここで頼らないようにする）
+    m_rasterStates->BindShadow(pContext);
+    m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
+
     // ===== DirectionalLight のシャドウパス =====
     if (m_shadowSystem->NeedsDirectionalShadow(hasForwardObjects))
     {
@@ -347,6 +353,9 @@ void Renderer::Execute()
     // ===== PointLight のシャドウパス =====
     if (m_shadowSystem->NeedsPointShadow())
     {
+        // 点光源キューブはPSでSV_Depthを自分で書く（距離/farPlane）ので、ハードウェアの深度バイアスは効かない
+        // → バイアスなしの通常Backを使い、ずらしはこれまでどおりシェーダー側（0.05）に任せる
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
         m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ShadowPoint);
         m_shadowSystem->BeginPointPass(pContext);
         m_renderQueues[opaqueIdx].ExecuteGeometryOnly(pContext, m_perFrameCB.Get(), m_blendStates, false);
