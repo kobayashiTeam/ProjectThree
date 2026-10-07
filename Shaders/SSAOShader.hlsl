@@ -1,10 +1,10 @@
 // =========================================================
-// SSAO (Screen Space Ambient Occlusion) ¶¬ƒVƒF[ƒ_[
-// G-Buffer(ƒ[ƒ‹ƒh‹óŠÔ)‚ğ“Ç‚İ‚İAView‹óŠÔ‚É•ÏŠ·‚µ‚ÄŒvZ‚µ‚Ü‚·B
+// SSAO (Screen Space Ambient Occlusion) ç”Ÿæˆã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
+// G-Buffer(ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“)ã‚’èª­ã¿è¾¼ã¿ã€Viewç©ºé–“ã«å¤‰æ›ã—ã¦è¨ˆç®—ã—ã¾ã™ã€‚
 // =========================================================
 
 // ---------------------------------------------------------
-// ’è”ƒoƒbƒtƒ@
+// å®šæ•°ãƒãƒƒãƒ•ã‚¡
 // ---------------------------------------------------------
 cbuffer PerFrameBuffer : register(b0)
 {
@@ -46,31 +46,33 @@ cbuffer LightBuffer : register(b3)
 };
 
 // =========================================================
-// SSAOê—p‚Ìƒf[ƒ^‚ğ‹ó‚«ƒXƒƒbƒg (b6) ‚É”z’u
+// SSAOå°‚ç”¨ã®ãƒ‡ãƒ¼ã‚¿ã‚’ç©ºãã‚¹ãƒ­ãƒƒãƒˆ (b6) ã«é…ç½®
 // =========================================================
 cbuffer SSAOParamBuffer : register(b6)
 {
-    // samples ‚â radius ‚È‚ÇASSAO‚¾‚¯‚Åg‚¤’²®ƒpƒ‰ƒ[ƒ^‚ğ‚Ü‚Æ‚ß‚Ü‚·
-    float4 samples[64];
+    // samples ã‚„ radius ãªã©ã€SSAOã ã‘ã§ä½¿ã†èª¿æ•´ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’ã¾ã¨ã‚ã¾ã™
+    float4 samples[64]; // C++å´ã®SSAO_MAX_KERNEL_SIZEã¨ä¸€è‡´ã•ã›ã‚‹ï¼ˆä½¿ã†ã®ã¯å…ˆé ­kernelSizeå€‹ï¼‰
     float2 noiseScale;
     float radius;
     float bias;
+    int kernelSize; // å®Ÿéš›ã«ä½¿ã†ã‚µãƒ³ãƒ—ãƒ«æ•°ï¼ˆC++ã®SSAO_KERNEL_SIZEã‹ã‚‰é€ã‚‰ã‚Œã¦ãã‚‹ï¼‰
+    float3 ssaoPadding; // 16ãƒã‚¤ãƒˆå¢ƒç•Œåˆã‚ã›ï¼ˆLightBufferã®paddingã¨åå‰ãŒè¢«ã‚‰ãªã„ã‚ˆã†ã«åˆ¥åï¼‰
 };
 // ---------------------------------------------------------
-// ƒŠƒ\[ƒX (ƒeƒNƒXƒ`ƒƒ‚ÆƒTƒ“ƒvƒ‰[)
+// ãƒªã‚½ãƒ¼ã‚¹ (ãƒ†ã‚¯ã‚¹ãƒãƒ£ã¨ã‚µãƒ³ãƒ—ãƒ©ãƒ¼)
 // ---------------------------------------------------------
-// G-Buffer‚Í‘O’i‚ÌƒpƒX‚Åƒ[ƒ‹ƒh‹óŠÔ‚Æ‚µ‚Ä‘‚«‚Ü‚ê‚½‚à‚Ì‚ğ‘z’è
-Texture2D txNormal : register(t0); // G-Buffer: ƒ[ƒ‹ƒh‹óŠÔ‚Ì–@ü
-Texture2D txPosition : register(t1); // G-Buffer: ƒ[ƒ‹ƒh‹óŠÔ‚ÌÀ•W
-Texture2D txNoise : register(t2); // 4x4‚Ìƒ‰ƒ“ƒ_ƒ€ƒxƒNƒgƒ‹(‰ñ“]—p)
+// G-Bufferã¯å‰æ®µã®ãƒ‘ã‚¹ã§ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã¨ã—ã¦æ›¸ãè¾¼ã¾ã‚ŒãŸã‚‚ã®ã‚’æƒ³å®š
+Texture2D txNormal : register(t0); // G-Buffer: ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã®æ³•ç·š
+Texture2D txPosition : register(t1); // G-Buffer: ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã®åº§æ¨™
+Texture2D txNoise : register(t2); // 4x4ã®ãƒ©ãƒ³ãƒ€ãƒ ãƒ™ã‚¯ãƒˆãƒ«(å›è»¢ç”¨)
 
-// G-Buffer‚ÍƒsƒNƒZƒ‹’PˆÊ‚Å³Šm‚É“Ç‚İ‚½‚¢‚Ì‚ÅPointƒTƒ“ƒvƒŠƒ“ƒOAUV”ÍˆÍŠO‚ÍClamp
+// G-Bufferã¯ãƒ”ã‚¯ã‚»ãƒ«å˜ä½ã§æ­£ç¢ºã«èª­ã¿ãŸã„ã®ã§Pointã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã€UVç¯„å›²å¤–ã¯Clamp
 SamplerState samPointClamp : register(s4);
-// ƒmƒCƒYƒeƒNƒXƒ`ƒƒ‚Í‰æ–Ê‘S‘Ì‚É•~‚«‹l‚ß‚éiƒ^ƒCƒŠƒ“ƒO‚·‚éj‚Ì‚ÅWrapİ’è‚ª•K—v
+// ãƒã‚¤ã‚ºãƒ†ã‚¯ã‚¹ãƒãƒ£ã¯ç”»é¢å…¨ä½“ã«æ•·ãè©°ã‚ã‚‹ï¼ˆã‚¿ã‚¤ãƒªãƒ³ã‚°ã™ã‚‹ï¼‰ã®ã§Wrapè¨­å®šãŒå¿…è¦
 SamplerState samPointWrap : register(s5);
 
 // ---------------------------------------------------------
-// “üo—Í\‘¢‘Ì
+// å…¥å‡ºåŠ›æ§‹é€ ä½“
 // ---------------------------------------------------------
 struct VS_INPUT
 {
@@ -85,14 +87,14 @@ struct PS_INPUT
 };
 
 // ---------------------------------------------------------
-// ’¸“_ƒVƒF[ƒ_[ (ƒtƒ‹ƒXƒNƒŠ[ƒ“ƒNƒAƒbƒh—p)
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ (ãƒ•ãƒ«ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‚¯ã‚¢ãƒƒãƒ‰ç”¨)
 // ---------------------------------------------------------
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT) 0;
     
-    // ƒ|ƒXƒgƒvƒƒZƒX‚È‚Ì‚ÅA“ü—Í‚³‚ê‚½’¸“_À•W‚ğ‚»‚Ì‚Ü‚Ü‰æ–Ê‚ÌÀ•W(Clip Space)‚Æ‚µ‚Äˆµ‚¤
-    // (C++‘¤‚Ì•`‰æ‚Ég‚¤QuadƒƒbƒVƒ…‚Í x,y ‚ª -1.0 ` 1.0 ‚É‚È‚Á‚Ä‚¢‚é‘O’ñ)
+    // ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ãªã®ã§ã€å…¥åŠ›ã•ã‚ŒãŸé ‚ç‚¹åº§æ¨™ã‚’ãã®ã¾ã¾ç”»é¢ã®åº§æ¨™(Clip Space)ã¨ã—ã¦æ‰±ã†
+    // (C++å´ã®æç”»ã«ä½¿ã†Quadãƒ¡ãƒƒã‚·ãƒ¥ã¯ x,y ãŒ -1.0 ï½ 1.0 ã«ãªã£ã¦ã„ã‚‹å‰æ)
     output.Pos = float4(input.Pos.x, input.Pos.y, 0.0f, 1.0f);
     output.Tex = input.Tex;
     
@@ -100,61 +102,63 @@ PS_INPUT VS(VS_INPUT input)
 }
 
 // ---------------------------------------------------------
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_[
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
 // ---------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
-    // 1. G-Buffer‚©‚çî•ñ‚ğæ“¾ (World Space)
+    // 1. G-Bufferã‹ã‚‰æƒ…å ±ã‚’å–å¾— (World Space)
     float3 worldPos = txPosition.Sample(samPointClamp, input.Tex).xyz;
     float3 worldNormal = txNormal.Sample(samPointClamp, input.Tex).xyz;
     
-    // ¦‚à‚µ”wŒiiƒ‚ƒfƒ‹‚ª‚È‚¢êŠj‚È‚çSSAO‚ÍŒvZ‚¹‚¸”’(1.0)‚ğ•Ô‚·
-    // [“x’l‚âANormal‚ªƒ[ƒƒxƒNƒgƒ‹‚©‚Ç‚¤‚©“™‚Å”»’è‚Å‚«‚Ü‚·i‚±‚±‚Å‚Í’Pƒ‚È0”»’èj
+    // â€»ã‚‚ã—èƒŒæ™¯ï¼ˆãƒ¢ãƒ‡ãƒ«ãŒãªã„å ´æ‰€ï¼‰ãªã‚‰SSAOã¯è¨ˆç®—ã›ãšç™½(1.0)ã‚’è¿”ã™
+    // æ·±åº¦å€¤ã‚„ã€NormalãŒã‚¼ãƒ­ãƒ™ã‚¯ãƒˆãƒ«ã‹ã©ã†ã‹ç­‰ã§åˆ¤å®šã§ãã¾ã™ï¼ˆã“ã“ã§ã¯å˜ç´”ãª0åˆ¤å®šï¼‰
     if (length(worldNormal) < 0.1f)
         return float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // 2. World Space -> View Space ‚Ö‚Ì•ÏŠ·
-    // ˆÊ’u‚Ì•ÏŠ·i•½sˆÚ“®‚ğŠÜ‚Ş‚½‚ß mul(float4(v, 1), m)j
+    // 2. World Space -> View Space ã¸ã®å¤‰æ›
+    // ä½ç½®ã®å¤‰æ›ï¼ˆå¹³è¡Œç§»å‹•ã‚’å«ã‚€ãŸã‚ mul(float4(v, 1), m)ï¼‰
     float3 viewPos = mul(float4(worldPos, 1.0f), mView).xyz;
     
-    // –@ü‚Ì•ÏŠ·i•½sˆÚ“®‚ğ–³‹‚·‚é‚½‚ß 3x3 s—ñƒLƒƒƒXƒgA‚Ü‚½‚ÍW=0j
+    // æ³•ç·šã®å¤‰æ›ï¼ˆå¹³è¡Œç§»å‹•ã‚’ç„¡è¦–ã™ã‚‹ãŸã‚ 3x3 è¡Œåˆ—ã‚­ãƒ£ã‚¹ãƒˆã€ã¾ãŸã¯W=0ï¼‰
     float3 viewNormal = normalize(mul(float4(worldNormal, 0.0f), mView).xyz);
     
-    // 3. ƒ‰ƒ“ƒ_ƒ€‚È‰ñ“]—pƒxƒNƒgƒ‹‚Ìæ“¾ (ƒ^ƒCƒŠƒ“ƒO‚³‚¹‚é‚½‚ß‚É noiseScale ‚ğŠ|‚¯‚é)
+    // 3. ãƒ©ãƒ³ãƒ€ãƒ ãªå›è»¢ç”¨ãƒ™ã‚¯ãƒˆãƒ«ã®å–å¾— (ã‚¿ã‚¤ãƒªãƒ³ã‚°ã•ã›ã‚‹ãŸã‚ã« noiseScale ã‚’æ›ã‘ã‚‹)
     float3 randomVec = txNoise.Sample(samPointWrap, input.Tex * noiseScale).xyz;
     
-    // 4. TBNs—ñ‚Ì\’z (Tangent Space -> View Space)
-    // ƒOƒ‰ƒ€EƒVƒ…ƒ~ƒbƒg‚Ì’¼Œğ‰»–@‚ÅÚ‹óŠÔ‚ÌŠî’êƒxƒNƒgƒ‹‚ğì‚é
+    // 4. TBNè¡Œåˆ—ã®æ§‹ç¯‰ (Tangent Space -> View Space)
+    // ã‚°ãƒ©ãƒ ãƒ»ã‚·ãƒ¥ãƒŸãƒƒãƒˆã®ç›´äº¤åŒ–æ³•ã§æ¥ç©ºé–“ã®åŸºåº•ãƒ™ã‚¯ãƒˆãƒ«ã‚’ä½œã‚‹
     float3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
     float3 bitangent = cross(viewNormal, tangent);
-    float3x3 TBN = float3x3(tangent, bitangent, viewNormal); // HLSL‚Ìfloat3x3¶¬
+    float3x3 TBN = float3x3(tangent, bitangent, viewNormal); // HLSLã®float3x3ç”Ÿæˆ
     
-    // 5. SSAO‚ÌŒvZ (64ŒÂ‚ÌƒTƒ“ƒvƒ‹‚ğƒ‹[ƒv)
+    // 5. SSAOã®è¨ˆç®— (kernelSizeå€‹ã®ã‚µãƒ³ãƒ—ãƒ«ã‚’ãƒ«ãƒ¼ãƒ—)
+    // æ•°ã¯b6ã§C++ã‹ã‚‰å—ã‘å–ã‚‹ï¼ˆä»¥å‰ã¯ã“ã“ã«64ã‚’ç›´æ›¸ãã—ã¦ã„ãŸï¼‰ã€‚
+    // C++å´ã¯ã¡ã‚‡ã†ã©kernelSizeå€‹ã‚’ã€Œè¿‘ã„â†’é ã„ã€ã®é †ã«ä½œã£ã¦ã„ã‚‹ã®ã§ã€å…¨éƒ¨ã‚’1ã¤ãšã¤ä½¿ãˆã°ã‚ˆã„
     float occlusion = 0.0f;
-    int kernelSize = 64;
-    
-    for (int i = 0; i < kernelSize; ++i)
+
+    [loop]
+    for (int i = 0; i < kernelSize; i++)
     {
-        // ƒTƒ“ƒvƒ‹ƒ|ƒCƒ“ƒg‚ğTBNs—ñ‚Å‰ñ“]‚³‚¹‚ÄView‹óŠÔ‚É‚Á‚Ä‚­‚é
+        // ã‚µãƒ³ãƒ—ãƒ«ãƒã‚¤ãƒ³ãƒˆã‚’TBNè¡Œåˆ—ã§å›è»¢ã•ã›ã¦Viewç©ºé–“ã«æŒã£ã¦ãã‚‹
         float3 samplePos = mul(samples[i].xyz, TBN); // Tangent -> View
         
-        // ÀÛ‚ÌView‹óŠÔã‚ÌƒTƒ“ƒvƒ‹À•W‚ğŒˆ’è
+        // å®Ÿéš›ã®Viewç©ºé–“ä¸Šã®ã‚µãƒ³ãƒ—ãƒ«åº§æ¨™ã‚’æ±ºå®š
         samplePos = viewPos + samplePos * radius;
         
-        // 6. ƒTƒ“ƒvƒ‹À•W‚ğ‰æ–Êã‚ÌUVÀ•W(Screen Space)‚É•ÏŠ·‚µ‚ÄAÀÛ‚Ì[“x‚ğ”`‚«Œ©‚·‚é
+        // 6. ã‚µãƒ³ãƒ—ãƒ«åº§æ¨™ã‚’ç”»é¢ä¸Šã®UVåº§æ¨™(Screen Space)ã«å¤‰æ›ã—ã¦ã€å®Ÿéš›ã®æ·±åº¦ã‚’è¦—ãè¦‹ã™ã‚‹
         float4 offset = float4(samplePos, 1.0f);
         offset = mul(offset, mProjection); // View -> Clip Space
-        offset.xyz /= offset.w; // ƒp[ƒXƒyƒNƒeƒBƒuœZ (NDC‹óŠÔ‚Ö: -1.0 ` 1.0)
+        offset.xyz /= offset.w; // ãƒ‘ãƒ¼ã‚¹ãƒšã‚¯ãƒ†ã‚£ãƒ–é™¤ç®— (NDCç©ºé–“ã¸: -1.0 ï½ 1.0)
         
-        // NDC‹óŠÔ (-1.0 ` 1.0) ‚ğ UV‹óŠÔ (0.0 ` 1.0) ‚É•ÏŠ·
-        // ¦DirectX‚ÍY²‚ª‰ºŒü‚«‚È‚Ì‚Å”½“]‚³‚¹‚é (-0.5)
+        // NDCç©ºé–“ (-1.0 ï½ 1.0) ã‚’ UVç©ºé–“ (0.0 ï½ 1.0) ã«å¤‰æ›
+        // â€»DirectXã¯Yè»¸ãŒä¸‹å‘ããªã®ã§åè»¢ã•ã›ã‚‹ (-0.5)
         float2 sampleUV = offset.xy * float2(0.5f, -0.5f) + 0.5f;
         
-        // ”wŒi‚©‚Ç‚¤‚©‚ğæ‚Éƒ`ƒFƒbƒN
+        // èƒŒæ™¯ã‹ã©ã†ã‹ã‚’å…ˆã«ãƒã‚§ãƒƒã‚¯
         float4 sampleData = txPosition.SampleLevel(samPointClamp, sampleUV, 0);
         if (sampleData.w == 0.0f)
         {
-            continue; // ”wŒi‚ÍÕ•Á”»’è‚Ég‚í‚È‚¢
+            continue; // èƒŒæ™¯ã¯é®è”½åˆ¤å®šã«ä½¿ã‚ãªã„
         }
         float3 sampleWorldPos = sampleData.xyz;
         float sampleDepth = mul(float4(sampleWorldPos, 1.0f), mView).z;
@@ -167,9 +171,10 @@ float4 PS(PS_INPUT input) : SV_Target
         }
     }
     
-    // 7. ÅI“I‚ÈƒIƒNƒ‹[ƒWƒ‡ƒ“’l‚ÌZo (0.0=^‚ÁˆÃ, 1.0=Õ•Á‚È‚µ)
+    // 7. æœ€çµ‚çš„ãªã‚ªã‚¯ãƒ«ãƒ¼ã‚¸ãƒ§ãƒ³å€¤ã®ç®—å‡º (0.0=çœŸã£æš—, 1.0=é®è”½ãªã—)
+    // å‰²ã‚‹æ•°ã¯ã€Œå®Ÿéš›ã«æ•°ãˆãŸå›æ•°ã€ï¼kernelSize
     occlusion = 1.0f - (occlusion / (float) kernelSize);
     
-    // Rƒ`ƒƒƒ“ƒlƒ‹‚Ì‚İ‚ğg—p‚µ‚Ü‚·‚ªAŒ‹‰Ê‚ğŒ©‚â‚·‚­‚·‚é‚½‚ß‚Éfloat4‚Åo—Í
+    // Rãƒãƒ£ãƒ³ãƒãƒ«ã®ã¿ã‚’ä½¿ç”¨ã—ã¾ã™ãŒã€çµæœã‚’è¦‹ã‚„ã™ãã™ã‚‹ãŸã‚ã«float4ã§å‡ºåŠ›
     return float4(occlusion, occlusion, occlusion, 1.0f);
 }

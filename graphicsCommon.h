@@ -182,11 +182,22 @@ struct BloomParamsCB {
     float padding[2];
 };
 
+// SSAOのサンプル数
+// ・SSAO_MAX_KERNEL_SIZE：定数バッファに確保する配列の大きさ（シェーダー側の samples[64] と一致させる）
+// ・SSAO_KERNEL_SIZE    ：実際に使う数。変えるのはここ1か所だけ（C++でこの数だけ作り、b6で数もシェーダーへ渡す）
+//   計測（Scene11・垂直同期オフ・同じ構図）：64=4.35ms / 32=2.46ms / 16=1.46ms
+//   1サンプルあたり約0.06msで比例。固定分（G-Buffer読み込み・TBN・ブラー）は約0.5ms
+constexpr int SSAO_MAX_KERNEL_SIZE = 64;
+constexpr int SSAO_KERNEL_SIZE = 16;
+static_assert(SSAO_KERNEL_SIZE > 0 && SSAO_KERNEL_SIZE <= SSAO_MAX_KERNEL_SIZE, "SSAO_KERNEL_SIZE out of range");
+
 // SSAOパラメータ用構造体 (16バイトアライメントを保証)
 struct SSAOParam
 {
-    DirectX::XMFLOAT4 samples[64]; // 16バイト * 64 = 1024バイト
+    DirectX::XMFLOAT4 samples[SSAO_MAX_KERNEL_SIZE]; // 16バイト * 64 = 1024バイト（使うのは先頭kernelSize個）
     DirectX::XMFLOAT2 noiseScale;  // 8バイト
     float             radius;      // 4バイト
     float             bias;        // 4バイト  (合計 16バイト)
-}; // 全体で 1040 バイト（16バイトアライメント要件を満たす）
+    int               kernelSize;  // 4バイト  実際に使うサンプル数（シェーダーのループ回数と割る数）
+    float             padding[3];  // 12バイト (合計 16バイト)
+}; // 全体で 1056 バイト（16バイトアライメント要件を満たす）

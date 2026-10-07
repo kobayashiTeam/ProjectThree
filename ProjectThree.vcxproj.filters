@@ -225,9 +225,6 @@
     <ClCompile Include="Shaders\SSAOBlurShader.hlsl">
       <Filter>リソース ファイル\ssao</Filter>
     </ClCompile>
-    <ClCompile Include="Shaders\SSAOShader.hlsl">
-      <Filter>リソース ファイル\ssao</Filter>
-    </ClCompile>
     <ClCompile Include="ssaoPass.cpp">
       <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
@@ -558,6 +555,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SSAOShader.hlsl">
+      <Filter>リソース ファイル\ssao</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -1,48 +1,48 @@
-#include"ssaoPass.h"
+ï»¿#include"ssaoPass.h"
 #include<random>
 
 bool SSAOPass::initNoiseTexture(ID3D11Device* pDevice) {
 
     ID3D11Texture2D* m_pNoiseTexture = nullptr;
-    // 1. ‚à‚Æ‚É‚È‚éƒmƒCƒYFiƒxƒNƒgƒ‹j”z—ñ‚ğƒvƒƒOƒ‰ƒ€“à‚Å¶¬
+    // 1. ã‚‚ã¨ã«ãªã‚‹ãƒã‚¤ã‚ºè‰²ï¼ˆãƒ™ã‚¯ãƒˆãƒ«ï¼‰é…åˆ—ã‚’ãƒ—ãƒ­ã‚°ãƒ©ãƒ å†…ã§ç”Ÿæˆ
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
 
-    // 4x4 = 16‰æ‘f•ª‚Ìƒf[ƒ^B‚¸“x‚ÈFLOATƒtƒH[ƒ}ƒbƒg‚ğg‚¤‚½‚ß DirectX::XMFLOAT4 ‚ğg—p
+    // 4x4 = 16ç”»ç´ åˆ†ã®ãƒ‡ãƒ¼ã‚¿ã€‚é«˜ç²¾åº¦ãªFLOATãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’ä½¿ã†ãŸã‚ DirectX::XMFLOAT4 ã‚’ä½¿ç”¨
     DirectX::XMFLOAT4 noiseValues[16];
     for (int i = 0; i < 16; ++i)
     {
-        noiseValues[i].x = dis(gen); // -1.0 ` 1.0 ‚Ìƒ‰ƒ“ƒ_ƒ€
-        noiseValues[i].y = dis(gen); // -1.0 ` 1.0 ‚Ìƒ‰ƒ“ƒ_ƒ€
-        noiseValues[i].z = 0.0f;     // Ú‹óŠÔ‚ÌZi–@ü•ûŒüj‚Í‰ñ“]‚³‚¹‚È‚¢‚Ì‚Å 0
-        noiseValues[i].w = 0.0f;     // –¢g—p
+        noiseValues[i].x = dis(gen); // -1.0 ï½ 1.0 ã®ãƒ©ãƒ³ãƒ€ãƒ 
+        noiseValues[i].y = dis(gen); // -1.0 ï½ 1.0 ã®ãƒ©ãƒ³ãƒ€ãƒ 
+        noiseValues[i].z = 0.0f;     // æ¥ç©ºé–“ã®Zï¼ˆæ³•ç·šæ–¹å‘ï¼‰ã¯å›è»¢ã•ã›ãªã„ã®ã§ 0
+        noiseValues[i].w = 0.0f;     // æœªä½¿ç”¨
     }
 
-    // 2. ƒeƒNƒXƒ`ƒƒ‚Ìİ’èiID3D11Texture2Dj‚ğ’è‹`
+    // 2. ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è¨­å®šï¼ˆID3D11Texture2Dï¼‰ã‚’å®šç¾©
     D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width = 4;                       // 4ƒ}ƒX
-    texDesc.Height = 4;                       // 4ƒ}ƒX
+    texDesc.Width = 4;                       // 4ãƒã‚¹
+    texDesc.Height = 4;                       // 4ãƒã‚¹
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // •‚“®¬”“_‚Ì‚¸“xƒtƒH[ƒ}ƒbƒg
+    texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // æµ®å‹•å°æ•°ç‚¹ã®é«˜ç²¾åº¦ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ
     texDesc.SampleDesc.Count = 1;
     texDesc.SampleDesc.Quality = 0;
-    texDesc.Usage = D3D11_USAGE_DEFAULT;     // GPU‚©‚ç“Ç‚İ‚Ş‚¾‚¯‚È‚Ì‚ÅDEFAULT
-    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE; // ƒVƒF[ƒ_[‚É“n‚·—p
+    texDesc.Usage = D3D11_USAGE_DEFAULT;     // GPUã‹ã‚‰èª­ã¿è¾¼ã‚€ã ã‘ãªã®ã§DEFAULT
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE; // ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã«æ¸¡ã™ç”¨
     texDesc.CPUAccessFlags = 0;
     texDesc.MiscFlags = 0;
 
-    // ì¬‚Æ“¯‚ÉA‚³‚Á‚«ì‚Á‚½”z—ñƒf[ƒ^‚ğ‰Šúƒf[ƒ^‚Æ‚µ‚Ä—¬‚µ‚Ş
+    // ä½œæˆã¨åŒæ™‚ã«ã€ã•ã£ãä½œã£ãŸé…åˆ—ãƒ‡ãƒ¼ã‚¿ã‚’åˆæœŸãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦æµã—è¾¼ã‚€
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem = noiseValues;
-    initData.SysMemPitch = 4 * sizeof(DirectX::XMFLOAT4); // ‰¡1s•ª‚ÌƒoƒCƒg”
+    initData.SysMemPitch = 4 * sizeof(DirectX::XMFLOAT4); // æ¨ª1è¡Œåˆ†ã®ãƒã‚¤ãƒˆæ•°
     initData.SysMemSlicePitch = 0;
 
     HRESULT hr = pDevice->CreateTexture2D(&texDesc, &initData, &m_pNoiseTexture);
     if (FAILED(hr)) return false;
 
-    // 3. ƒeƒNƒXƒ`ƒƒ‚ğ‚à‚Æ‚ÉSRV‚ğ’è‹`Eì¬
+    // 3. ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’ã‚‚ã¨ã«SRVã‚’å®šç¾©ãƒ»ä½œæˆ
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = texDesc.Format;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -61,10 +61,10 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
     D3D11_SAMPLER_DESC sampDesc = {};
 
     // ---------------------------------------------------------
-    // ‡@ samPointClamp (“_ƒTƒ“ƒvƒŠƒ“ƒO / ”ÍˆÍŠOƒNƒ‰ƒ“ƒv)
+    // â‘  samPointClamp (ç‚¹ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚° / ç¯„å›²å¤–ã‚¯ãƒ©ãƒ³ãƒ—)
     // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Pointw’è
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // Clampw’è
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // PointæŒ‡å®š
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;    // ClampæŒ‡å®š
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
@@ -75,10 +75,10 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
     if (FAILED(hr)) return false;
 
     // ---------------------------------------------------------
-    // ‡A samPointWrap (“_ƒTƒ“ƒvƒŠƒ“ƒO / ”ÍˆÍŠOƒ‰ƒbƒvEƒ^ƒCƒŠƒ“ƒO)
+    // â‘¡ samPointWrap (ç‚¹ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚° / ç¯„å›²å¤–ãƒ©ãƒƒãƒ—ãƒ»ã‚¿ã‚¤ãƒªãƒ³ã‚°)
     // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Pointw’è
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // Wrapw’è (ƒ^ƒCƒŠƒ“ƒO—p)
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // PointæŒ‡å®š
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // WrapæŒ‡å®š (ã‚¿ã‚¤ãƒªãƒ³ã‚°ç”¨)
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 
@@ -86,10 +86,10 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
     if (FAILED(hr)) return false;
 
     // ---------------------------------------------------------
-    // ‡B samLinearClamp (üŒ`ƒTƒ“ƒvƒŠƒ“ƒO / ”ÍˆÍŠOƒNƒ‰ƒ“ƒv)
+    // â‘¢ samLinearClamp (ç·šå½¢ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚° / ç¯„å›²å¤–ã‚¯ãƒ©ãƒ³ãƒ—)
     // ---------------------------------------------------------
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // Linearw’è (‚Ú‚©‚µ—p)
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;     // Clampw’è
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // LinearæŒ‡å®š (ã¼ã‹ã—ç”¨)
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;     // ClampæŒ‡å®š
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
@@ -102,40 +102,45 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
 
 bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
 
-    //‚±‚±‚ÅÀÛ‚Ì‰æ–Ê‰ğ‘œ“xiƒrƒ…[ƒ|[ƒg‚Ì‰¡•Ec•j‚ğg‚Á‚ÄŒvZ‚·‚é
-    float windowWidth = 1280.0f; // ÀÛ‚ÌƒQ[ƒ€‰æ–Ê‚Ì‰¡•
-    float windowHeight = 720.0f; // ÀÛ‚ÌƒQ[ƒ€‰æ–Ê‚Ìc•
-    // --- 64ŒÂ‚ÌƒTƒ“ƒvƒ‹ƒxƒNƒgƒ‹‚Ì¶¬ƒƒWƒbƒN ---
+    //ã“ã“ã§å®Ÿéš›ã®ç”»é¢è§£åƒåº¦ï¼ˆãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã®æ¨ªå¹…ãƒ»ç¸¦å¹…ï¼‰ã‚’ä½¿ã£ã¦è¨ˆç®—ã™ã‚‹
+    float windowWidth = 1280.0f; // å®Ÿéš›ã®ã‚²ãƒ¼ãƒ ç”»é¢ã®æ¨ªå¹…
+    float windowHeight = 720.0f; // å®Ÿéš›ã®ã‚²ãƒ¼ãƒ ç”»é¢ã®ç¸¦å¹…
+    // --- SSAO_KERNEL_SIZEå€‹ã®ã‚µãƒ³ãƒ—ãƒ«ãƒ™ã‚¯ãƒˆãƒ«ã®ç”Ÿæˆãƒ­ã‚¸ãƒƒã‚¯ ---
+    // æ•°ã‚’å¤‰ãˆã‚‹ã¨ãã¯ graphicsCommon.h ã® SSAO_KERNEL_SIZE ã ã‘ã‚’å¤‰ãˆã‚‹
+    // ï¼ˆscaleã®åˆ†æ¯ã‚‚åŒã˜æ•°ã«ã™ã‚‹ã“ã¨ã§ã€ä½•å€‹ã«ã—ã¦ã‚‚ã€Œè¿‘ã„â†’é ã„ã€ãŒåŠå¾„ã„ã£ã±ã„ã¾ã§å‡ç­‰ã«ä¸¦ã¶ï¼‰
+    const int kernelSize = SSAO_KERNEL_SIZE;
+    m_paramData = {}; // ä½¿ã‚ãªã„å¾Œã‚ã®ã‚µãƒ³ãƒ—ãƒ«ã¨paddingã‚’0ã§åŸ‹ã‚ã¦ãŠãï¼ˆæœªåˆæœŸåŒ–ã®å€¤ã‚’GPUã¸é€ã‚‰ãªã„ï¼‰
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
-    std::uniform_real_distribution<float> disZ(0.0f, 1.0f); // Z‚Í”¼‹…‚È‚Ì‚Å0`1
+    std::uniform_real_distribution<float> disZ(0.0f, 1.0f); // Zã¯åŠçƒãªã®ã§0ï½1
 
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < kernelSize; ++i)
     {
         DirectX::XMVECTOR sample = DirectX::XMVectorSet(dis(gen), dis(gen), disZ(gen), 0.0f);
-        sample = DirectX::XMVector3Normalize(sample); // ³‹K‰»
+        sample = DirectX::XMVector3Normalize(sample); // æ­£è¦åŒ–
 
-        // ’†S‚É‹ß‚Ã‚­‚Ù‚Ç–§W‚³‚¹‚éƒXƒP[ƒ‹ˆ—
-        float scale = (float)i / 64.0f;
-        // üŒ`•âŠÔ (0.1f ` 1.0f ‚ÌŠÔ‚Å“ñŸŠÖ”“I‚É”z•ª)
+        // ä¸­å¿ƒã«è¿‘ã¥ãã»ã©å¯†é›†ã•ã›ã‚‹ã‚¹ã‚±ãƒ¼ãƒ«å‡¦ç†
+        float scale = (float)i / (float)kernelSize;
+        // ç·šå½¢è£œé–“ (0.1f ï½ 1.0f ã®é–“ã§äºŒæ¬¡é–¢æ•°çš„ã«é…åˆ†)
         scale = 0.1f + (scale * scale) * (1.0f - 0.1f);
         sample = DirectX::XMVectorScale(sample, scale);
 
         DirectX::XMStoreFloat4(&m_paramData.samples[i], sample);
     }
 
-    // --- ŒÅ’èƒpƒ‰ƒ[ƒ^‚Ì‰Šú’lİ’è ---
-    m_paramData.noiseScale = DirectX::XMFLOAT2(windowWidth / 4.0f, windowHeight / 4.0f); // ‰æ–Ê‰ğ‘œ“x‚É‡‚í‚¹‚ÄŒã‚ÅXV‚à‰Â
-    m_paramData.radius = 0.40f;   // Õ•Á‚ğ’²‚×‚é”¼ŒaiƒQ[ƒ€‚ÌƒXƒP[ƒ‹‚É‡‚í‚¹‚Ä—v’²®j
-    m_paramData.bias = 0.03f; // ƒAƒNƒli©ŒÈÕ•ÁƒmƒCƒYj‚ğ–h‚®‚½‚ß‚ÌƒoƒCƒAƒX’l
+    // --- å›ºå®šãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®åˆæœŸå€¤è¨­å®š ---
+    m_paramData.noiseScale = DirectX::XMFLOAT2(windowWidth / 4.0f, windowHeight / 4.0f); // ç”»é¢è§£åƒåº¦ã«åˆã‚ã›ã¦å¾Œã§æ›´æ–°ã‚‚å¯
+    m_paramData.radius = 0.40f;   // é®è”½ã‚’èª¿ã¹ã‚‹åŠå¾„ï¼ˆã‚²ãƒ¼ãƒ ã®ã‚¹ã‚±ãƒ¼ãƒ«ã«åˆã‚ã›ã¦è¦èª¿æ•´ï¼‰
+    m_paramData.bias = 0.03f; // ã‚¢ã‚¯ãƒï¼ˆè‡ªå·±é®è”½ãƒã‚¤ã‚ºï¼‰ã‚’é˜²ããŸã‚ã®ãƒã‚¤ã‚¢ã‚¹å€¤
+    m_paramData.kernelSize = kernelSize; // ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ãƒ«ãƒ¼ãƒ—å›æ•°ã¨å‰²ã‚‹æ•°ï¼ˆC++ã¨æ•°ãŒãšã‚Œãªã„ã‚ˆã†ã€ã“ã“ã‹ã‚‰æ¸¡ã™ï¼‰
 
-    // --- Dynamic’è”ƒoƒbƒtƒ@‚Ìì¬ ---
+    // --- Dynamicå®šæ•°ãƒãƒƒãƒ•ã‚¡ã®ä½œæˆ ---
     D3D11_BUFFER_DESC cbDesc = {};
     cbDesc.ByteWidth = sizeof(SSAOParam);
-    cbDesc.Usage = D3D11_USAGE_DYNAMIC;         // CPU‚©‚ç•p”É‚É‘‚«Š·‚¦‚é
-    cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // ’è”ƒoƒbƒtƒ@‚Æ‚µ‚Äg—p
-    cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;       // CPU‚©‚ç‚Ì‘‚«‚İ‹–‰Â
+    cbDesc.Usage = D3D11_USAGE_DYNAMIC;         // CPUã‹ã‚‰é »ç¹ã«æ›¸ãæ›ãˆã‚‹
+    cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // å®šæ•°ãƒãƒƒãƒ•ã‚¡ã¨ã—ã¦ä½¿ç”¨
+    cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;       // CPUã‹ã‚‰ã®æ›¸ãè¾¼ã¿è¨±å¯
     cbDesc.MiscFlags = 0;
     cbDesc.StructureByteStride = 0;
 
@@ -148,19 +153,19 @@ bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
 
 void SSAOPass::updateConstantBuffer(ID3D11DeviceContext* ctx) {
 
-    // TODO: «—ˆ“I‚ÉImGui“™‚Åradius/bias‚ğÀs’²®‚·‚éê‡‚ÍA‚±‚±‚Åm_paramData‚ğXV‚µ‚Ä‚©‚çMap‚·‚é
+    // TODO: å°†æ¥çš„ã«ImGuiç­‰ã§radius/biasã‚’å®Ÿè¡Œæ™‚èª¿æ•´ã™ã‚‹å ´åˆã¯ã€ã“ã“ã§m_paramDataã‚’æ›´æ–°ã—ã¦ã‹ã‚‰Mapã™ã‚‹
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    // GPU‚Ì‘‚«‚İ‚ªI‚í‚é‚Ì‚ğ‘Ò‚½‚¸‚ÉV‚µ‚¢ƒoƒbƒtƒ@‚ğŠ„‚è“–‚Ä‚é DISCARD ‚ğw’è
+    // GPUã®æ›¸ãè¾¼ã¿ãŒçµ‚ã‚ã‚‹ã®ã‚’å¾…ãŸãšã«æ–°ã—ã„ãƒãƒƒãƒ•ã‚¡ã‚’å‰²ã‚Šå½“ã¦ã‚‹ DISCARD ã‚’æŒ‡å®š
     HRESULT hr = ctx->Map(m_ssaoCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (SUCCEEDED(hr))
     {
-        // CPU‘¤‚Ìƒf[ƒ^‚ğƒoƒbƒtƒ@‚ÖƒRƒs[
+        // CPUå´ã®ãƒ‡ãƒ¼ã‚¿ã‚’ãƒãƒƒãƒ•ã‚¡ã¸ã‚³ãƒ”ãƒ¼
         memcpy(mappedResource.pData, &m_paramData, sizeof(SSAOParam));
         ctx->Unmap(m_ssaoCB.Get(), 0);
     }
 
-    // ƒsƒNƒZƒ‹ƒVƒF[ƒ_[‚ÌƒXƒƒbƒg 6 ‚É’è”ƒoƒbƒtƒ@‚ğƒZƒbƒg
+    // ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚¹ãƒ­ãƒƒãƒˆ 6 ã«å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚’ã‚»ãƒƒãƒˆ
     ctx->PSSetConstantBuffers(6, 1, m_ssaoCB.GetAddressOf());
 
 }

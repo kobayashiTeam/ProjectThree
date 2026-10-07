@@ -1,4 +1,4 @@
-#include "graphics.h"
+ï»¿#include "graphics.h"
 
 Graphics::Graphics()
 {
@@ -11,7 +11,7 @@ Graphics::~Graphics()
 
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
-    // ƒXƒƒbƒvƒ`ƒF[ƒ“‚Ìİ’è
+    // ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ã®è¨­å®š
     DXGI_SWAP_CHAIN_DESC sd = {};
     sd.BufferCount = 1;
     sd.BufferDesc.Width = width;
@@ -25,11 +25,11 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     sd.SampleDesc.Quality = 0;
     sd.Windowed = TRUE;
 
-    // g—p‚·‚é Direct3D ‚Ì‹@”\ƒŒƒxƒ‹
+    // ä½¿ç”¨ã™ã‚‹ Direct3D ã®æ©Ÿèƒ½ãƒ¬ãƒ™ãƒ«
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
     D3D_FEATURE_LEVEL featureLevel;
 
-    // 1. Device, Context, SwapChain ‚Ì¶¬
+    // 1. Device, Context, SwapChain ã®ç”Ÿæˆ
     HRESULT hr = D3D11CreateDeviceAndSwapChain(
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
         featureLevels, 1, D3D11_SDK_VERSION, &sd,
@@ -37,14 +37,14 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     );
     if (FAILED(hr)) return false;
 
-    // 2. ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒgƒrƒ…[‚Ìì¬
+    // 2. ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆãƒ“ãƒ¥ãƒ¼ã®ä½œæˆ
     pBackBuffer = nullptr;
     hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
     if (FAILED(hr)) return false;
     hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pRenderTargetView);
     if (FAILED(hr)) return false;
 
-    // 3. [“xƒoƒbƒtƒ@‚Ìì¬
+    // 3. æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã®ä½œæˆ
     D3D11_TEXTURE2D_DESC descDepth = {};
     descDepth.Width = width;
     descDepth.Height = height;
@@ -59,7 +59,7 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &m_pDepthStencil);
     if (FAILED(hr)) return false;
 
-    // 4. [“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[‚Ìì¬
+    // 4. æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ã®ä½œæˆ
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -68,12 +68,12 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
     hr = m_pd3dDevice->CreateDepthStencilView(m_pDepthStencil, &descDSV, &m_pDepthStencilView);
     if (FAILED(hr)) return false;
 
-    // ì¬‚µ‚½ƒŠƒ\[ƒX‚ğƒŒƒ“ƒ_ƒŠƒ“ƒOƒpƒCƒvƒ‰ƒCƒ“‚Öİ’è
+    // ä½œæˆã—ãŸãƒªã‚½ãƒ¼ã‚¹ã‚’ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã¸è¨­å®š
 
-    // ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg‚Æ[“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[‚ğİ’è
+    // ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã¨æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ã‚’è¨­å®š
     m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
 
-    // 5. ƒrƒ…[ƒ|[ƒg‚Ìİ’è
+    // 5. ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã®è¨­å®š
     D3D11_VIEWPORT vp;
     vp.Width = (float)width;
     vp.Height = (float)height;
