@@ -51,6 +51,8 @@ bool Renderer::Initialize(Graphics* graphics)
 {
     if (!graphics) return false;
     m_graphics = graphics;
+    m_width = static_cast<UINT>(m_graphics->GetWidth());
+    m_height = static_cast<UINT>(m_graphics->GetHeight());
     ID3D11Device* pDevice = m_graphics->GetDevice();
     ID3D11DeviceContext* pContext = m_graphics->GetContext();
 
@@ -76,19 +78,19 @@ bool Renderer::Initialize(Graphics* graphics)
 
     // 3. 「オフスクリーンRTの初期化（HDR対応のため R16G16B16A16_FLOAT）」
     m_offscreenRT = new RenderTarget();
-    if (!m_offscreenRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+    if (!m_offscreenRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
 
     m_offscreenRTwithMSAA = new RenderTarget();
     if (!m_offscreenRTwithMSAA->InitializeWithMSAA(
-        pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+        pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
 
     //オフスクリーンレンダー２号の初期化（swapChainで使用）
     m_tmpRT = new RenderTarget();
-    if (!m_tmpRT->Initialize(pDevice, 1280, 720, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+    if (!m_tmpRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
         return false;
     }
 
@@ -127,7 +129,7 @@ bool Renderer::Initialize(Graphics* graphics)
 
     // Bloom（HDRの段）は縮小／拡大の連鎖を持つ専用パスとして独立クラスで管理
     m_bloomPass = new BloomPass();
-    if (!m_bloomPass->Initialize(pDevice, 1280, 720)) return false;
+    if (!m_bloomPass->Initialize(pDevice, m_width, m_height)) return false;
 
     //最終描画用のquadをここで生成
     if (!this->createFinalRenderQuad())return false;
@@ -198,11 +200,11 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //GBufferPassの初期化
     m_gBufferPass = new GBufferPass();
-    m_gBufferPass->Initialize(pDevice, 1280, 720);
+    m_gBufferPass->Initialize(pDevice, m_width, m_height);
 
     //SSAO
     m_ssaoPass = new SSAOPass();
-    m_ssaoPass->Initialize(pDevice, 1280, 720);
+    m_ssaoPass->Initialize(pDevice, m_width, m_height);
 
     // GPUプロファイラ（タイムスタンプクエリ）
     m_gpuProfiler = new GpuProfiler();
@@ -530,7 +532,7 @@ void Renderer::Execute()
     m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Post);
     m_blendStates->Bind(pContext, BlendMode::Opaque);
     m_tmpRT->Clear(pContext);
-    m_tmpRT->Bind(pContext); // ビューポートも1280x720に戻る
+    m_tmpRT->Bind(pContext); // ビューポートも画面サイズに戻る
     m_tonemapPostProcess->SetBloomTexture(bloomSRV);
     m_tonemapPostProcess->Render(pContext, m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
@@ -596,7 +598,7 @@ void Renderer::UpdatePostProcessConstantBuffer()
     PostProcessConstantBuffer postParams;
     postParams.exposure = m_postProcessData.exposure;
     postParams.gammaCorrection = m_postProcessData.gammaCorrection;
-    postParams.tonemapper = (m_tonemapper == Tonemapper::ACES) ? 1.0f : 0.0f;
+    postParams.tonemapper = static_cast<int>(m_tonemapper); // enumの番号をそのまま送る
     postParams.bloomIntensity = m_bloomActive ? m_bloomIntensity : 0.0f;
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};

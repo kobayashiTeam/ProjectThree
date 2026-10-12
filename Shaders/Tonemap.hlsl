@@ -11,7 +11,7 @@ cbuffer PostProcessConfig : register(b5)
 {
     float g_Exposure;
     float g_GammaCorrection; // ScreenBlit用（ここでは未使用）
-    float g_Tonemapper; // 0.0=Exposure、1.0=ACES
+    int g_Tonemapper; // 0=Exposure、1=ACES（C++の enum Tonemapper の番号）
     float g_BloomIntensity; // Bloom OFFのときは0が送られてくる
 };
 
@@ -60,7 +60,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 
     // 2. トーンマッピング（露出を掛けてからカーブに通す）
     float3 ldr;
-    if (g_Tonemapper < 0.5)
+    if (g_Tonemapper == 0) // Exposure
     {
         ldr = 1.0 - exp(-hdr * g_Exposure);
     }

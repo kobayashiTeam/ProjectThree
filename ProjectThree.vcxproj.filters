@@ -541,16 +541,10 @@
     <FxCompile Include="Shaders\LitShader.hlsl">
       <Filter>リソース ファイル\shader_mat</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ScreenBlit.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\BloomDownsample.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\BloomUpsample.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\Tonemap.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
@@ -558,6 +552,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\SSAOShader.hlsl">
       <Filter>リソース ファイル\ssao</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ScreenBlit.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Tonemap.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

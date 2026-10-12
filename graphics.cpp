@@ -11,6 +11,9 @@ Graphics::~Graphics()
 
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
+    m_width = width;
+    m_height = height;
+
     // スワップチェーンの設定
     DXGI_SWAP_CHAIN_DESC sd = {};
     sd.BufferCount = 1;
@@ -100,7 +103,7 @@ void Graphics::BeginScene(float r, float g, float b, float a)
 {
     float clearColor[4] = { r, g, b, a };
     m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
-    m_pImmediateContext->ClearDepthStencilView(m_pDepthStencilView, 
+    m_pImmediateContext->ClearDepthStencilView(m_pDepthStencilView,
         D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
@@ -112,5 +115,5 @@ void Graphics::EndScene()
 
 void Graphics::bindDefaultRenderTarget()
 {
-	m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+    m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
 }

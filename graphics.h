@@ -19,12 +19,16 @@ public:
     ID3D11Device* GetDevice() const { return m_pd3dDevice; }
     ID3D11DeviceContext* GetContext() const { return m_pImmediateContext; }
 
-	void bindDefaultRenderTarget();
+    void bindDefaultRenderTarget();
     // 描画先カラーバッファを直接取得する場合に使用
-    ID3D11Texture2D* getBackBufferTexture() {return pBackBuffer; }
-    
+    ID3D11Texture2D* getBackBufferTexture() { return pBackBuffer; }
+
     void ToggleVSync() { m_vsync = !m_vsync; }
     bool IsVSyncEnabled() const { return m_vsync; }
+
+    // 画面（スワップチェーン）の大きさ。解像度を知りたいクラスはここから読む
+    int GetWidth()  const { return m_width; }
+    int GetHeight() const { return m_height; }
 
 private:
     ID3D11Device* m_pd3dDevice = nullptr;
@@ -35,5 +39,7 @@ private:
     ID3D11Texture2D* m_pDepthStencil = nullptr;
     ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
     bool m_vsync = true;   // 起動時は今までどおりオン
+    int m_width = 0;
+    int m_height = 0;
 
 };

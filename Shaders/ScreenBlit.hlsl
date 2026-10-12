@@ -4,7 +4,7 @@ cbuffer PostProcessConfig : register(b5)
 {
     float g_Exposure; // Tonemap用（ここでは未使用）
     float g_GammaCorrection; // Scene2用：1.0=ON（ガンマ補正あり）、0.0=OFF（補正なし・リニアのまま出力）
-    float g_Tonemapper; // Tonemap用（ここでは未使用）
+    int g_Tonemapper; // Tonemap用（ここでは未使用）
     float g_BloomIntensity; // Tonemap用（ここでは未使用）
 };
 

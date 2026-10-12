@@ -159,16 +159,17 @@ struct CascadeShadowCB
 };
 
 // トーンマッピングの方式（Scene6で切り替えて比較する）
+// 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
 enum class Tonemapper {
-    Exposure, // 1 - exp(-x * exposure)。従来の方式
-    ACES      // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ
+    Exposure = 0, // 1 - exp(-x * exposure)。従来の方式
+    ACES = 1  // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ
 };
 
 //ポストプロセス用のcb（b5）。Tonemap.hlsl と ScreenBlit.hlsl の両方が読む
 struct PostProcessConstantBuffer {
     float exposure = 1.0f;
     float gammaCorrection = 1.0f; // Scene2用：1.0=ON（補正あり）、0.0=OFF（補正なし）
-    float tonemapper = 0.0f;      // 0.0=Exposure、1.0=ACES（HLSL側で0.5を境に分岐）
+    int   tonemapper = 0;         // Tonemapperの番号（0=Exposure、1=ACES）。floatと同じ4バイトなので並びは変わらない
     float bloomIntensity = 0.0f;  // Bloomを足す強さ。Bloom OFFのときは0を送る
 };
 

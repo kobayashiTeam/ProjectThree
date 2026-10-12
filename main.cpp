@@ -44,14 +44,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     RegisterClass(&wc);
 
+    // 解像度はここだけで決める（Graphics → Renderer → 各パスへ流れていく）
+    const int kWidth = 1280;
+    const int kHeight = 720;
+
+    // CreateWindowExに渡す大きさは「枠・タイトルバー込み」なので、
+    // 描画できる領域（クライアント領域）がkWidth×kHeightになるよう逆算して広げる
+    RECT rc = { 0, 0, kWidth, kHeight };
+    AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+
     HWND hWnd = CreateWindowEx(0, CLASS_NAME, L"DirectX 11 - Clean Base",
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720,
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        rc.right - rc.left, rc.bottom - rc.top,
         nullptr, nullptr, hInstance, nullptr);
     if (!hWnd) return 0;
     ShowWindow(hWnd, nCmdShow);
 
     Game game;
-    if (!game.Initialize(hWnd, 1280, 720)) {
+    if (!game.Initialize(hWnd, kWidth, kHeight)) {
         return 0;
     }
 

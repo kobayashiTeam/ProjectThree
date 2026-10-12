@@ -118,6 +118,8 @@ private:
 
 private:
     Graphics* m_graphics = nullptr;
+    UINT m_width = 0;   // 画面の大きさ（Initializeで m_graphics から読む）
+    UINT m_height = 0;
     Camera* m_currentCamera = nullptr; // パラメータ更新や距離計算用に保持
 
     // メンバを独自ポインタからComPtrや適切なクラスポインタで管理
