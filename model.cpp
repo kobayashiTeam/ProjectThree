@@ -71,6 +71,32 @@ DirectX::XMMATRIX Model::GetWorldMatrix() const
     return mScale * mRot * mTrans;
 }
 
+// ⑤視錐台カリング用：各パーツのローカルAABBを「パーツのオフセット×配置行列」で
+// ワールドへ運び、それらを1つの箱にまとめる。
+// BoundingBox::Transform は回転後の8頂点を囲み直すので、回転しても箱は物体を必ず包む（そのぶん少し大きくなる）
+bool Model::GetWorldBounds(DirectX::BoundingBox& out) const
+{
+    const DirectX::XMMATRIX world = GetWorldMatrix();
+    bool hasAny = false;
+
+    for (const auto& part : m_Parts)
+    {
+        if (!part.pMesh) continue;
+
+        DirectX::BoundingBox partBox;
+        part.pMesh->GetLocalBounds().Transform(
+            partBox, DirectX::XMMatrixMultiply(part.localTransform, world));
+
+        if (!hasAny) { out = partBox; hasAny = true; }
+        else {
+            DirectX::BoundingBox merged;
+            DirectX::BoundingBox::CreateMerged(merged, out, partBox);
+            out = merged;
+        }
+    }
+    return hasAny;
+}
+
 void Model::Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer)
 {
     // フレームバッファ（スロット0）の適用はオブジェクト共通なのでループの前で1回

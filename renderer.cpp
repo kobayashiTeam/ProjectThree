@@ -308,6 +308,19 @@ void Renderer::Execute()
     int transparentIdx = static_cast<int>(RenderPass::Transparent);
     int deferredOpaqueIdx = static_cast<int>(RenderPass::DeferredOpaque);
 
+    // ===== ⑤視錐台カリングの準備 =====
+    // 射影行列から「カメラ空間の視錐台」を作り、ビュー行列の逆（カメラ→ワールド）でワールドへ運ぶ
+    // （物体の箱はワールド空間で持っているので、視錐台の側をワールドへ合わせる。物体の数だけ変換するより安い）
+    // ※使うのは本描画（G-Buffer・Forward不透明・半透明）だけ。
+    //   シャドウパスはカメラに映らない物体の影も描く必要があるので、ここでは渡さない（nullptr）
+    DirectX::BoundingFrustum viewSpaceFrustum;   // カメラ空間（カメラが原点、+Zを向いている）
+    DirectX::BoundingFrustum::CreateFromMatrix(viewSpaceFrustum, m_currentCamera->GetProjectionMatrix());
+    DirectX::BoundingFrustum cameraFrustum;      // ワールド空間
+    viewSpaceFrustum.Transform(cameraFrustum,
+        DirectX::XMMatrixInverse(nullptr, m_currentCamera->GetViewMatrix()));
+    const DirectX::BoundingFrustum* pCull = m_frustumCullingEnabled ? &cameraFrustum : nullptr;
+    m_cullStats = RenderQueue::CullStats{}; // 毎フレーム数え直す
+
     // ===== 1パス目：シャドウマップ生成 =====
     // 各マップは「このフレームで読まれるときだけ」描く（判定はShadowSystem::Needs〜）
     // フォワードの物体（Opaque/Transparent）は、CSMの有無に関係なく旧方向光マップ(t3)を読む
@@ -385,7 +398,7 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
 
-    m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    m_renderQueues[deferredOpaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true, pCull, &m_cullStats);
     // デバッグ表示の早期returnより前に閉じる（閉じ忘れると区間が記録されない）
     m_gpuProfiler->End(pContext, GpuProfiler::Section::GBuffer);
 
@@ -461,7 +474,7 @@ void Renderer::Execute()
     m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Forward);
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest); // 通常の深度テスト
-    m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    m_renderQueues[opaqueIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true, pCull, &m_cullStats);
 
 
     // ─── InstancedModelの描画 ───
@@ -484,7 +497,7 @@ void Renderer::Execute()
     // ─── 工程3: 半透明パス ───
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
-    m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true);
+    m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true, pCull, &m_cullStats);
 
 
 

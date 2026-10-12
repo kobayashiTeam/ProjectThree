@@ -27,6 +27,13 @@ bool Mesh::Create(
     Cleanup();
     m_indexCount = indexCount;
 
+    // ⑤視錐台カリング用：全頂点を囲む最小の箱（ローカル空間）を作っておく
+    // XMFLOAT3の配列をそのまま渡せる（ストライド＝1頂点ぶんのバイト数）
+    if (positions && vertexCount > 0) {
+        DirectX::BoundingBox::CreateFromPoints(
+            m_localBounds, vertexCount, positions, sizeof(DirectX::XMFLOAT3));
+    }
+
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -83,10 +90,10 @@ void Mesh::Render(ID3D11DeviceContext* pImmediateContext)
     if (!m_pPosBuffer || !m_pIndexBuffer) return;
 
     ID3D11Buffer* vbs[5] = { m_pPosBuffer, m_pNrmBuffer, m_pColorBuffer, m_pUvBuffer,m_pTangentBuffer };
-    UINT strides[5] = { 
-        sizeof(DirectX::XMFLOAT3), 
-        sizeof(DirectX::XMFLOAT3), 
-        sizeof(DirectX::XMFLOAT4), 
+    UINT strides[5] = {
+        sizeof(DirectX::XMFLOAT3),
+        sizeof(DirectX::XMFLOAT3),
+        sizeof(DirectX::XMFLOAT4),
         sizeof(DirectX::XMFLOAT2),
         sizeof(DirectX::XMFLOAT3), };
     UINT offsets[5] = { 0, 0, 0, 0,0 };
@@ -286,14 +293,14 @@ Mesh* Mesh::CreateCube(ID3D11Device* pDevice, float size) {
         16, 17, 18, 16, 18, 19,
         20, 21, 22, 20, 22, 23
     };
-	Mesh* pMesh = new Mesh();
-	
-    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,tangents,_countof(positions),indices,_countof(indices)))
+    Mesh* pMesh = new Mesh();
+
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs, tangents, _countof(positions), indices, _countof(indices)))
     {
         delete pMesh;
         return nullptr;
     }
-	return pMesh;
+    return pMesh;
 }
 
 Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
@@ -350,7 +357,7 @@ Mesh* Mesh::CreateQuad(ID3D11Device* pDevice, float size) {
     };
 
     Mesh* pMesh = new Mesh();
-    if (!pMesh->Create(pDevice, positions, normals, colors, uvs,tangents,_countof(positions), indices, _countof(indices)))
+    if (!pMesh->Create(pDevice, positions, normals, colors, uvs, tangents, _countof(positions), indices, _countof(indices)))
     {
         delete pMesh;
         return nullptr;

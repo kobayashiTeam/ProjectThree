@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include <vector>
 #include "graphicsCommon.h"
 #include "ModelResource.h" 
@@ -52,6 +53,10 @@ public:
 
     const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
     DirectX::XMMATRIX GetWorldMatrix() const;
+
+    // ⑤視錐台カリング用：全パーツを囲むワールド空間のAABBを求める
+    // パーツを持たない（メッシュが無い）Modelは false を返す → 呼び出し側は「常に描く」扱いにする
+    bool GetWorldBounds(DirectX::BoundingBox& out) const;
 
     void Draw(ID3D11DeviceContext* pContext, ID3D11Buffer* pFrameBuffer);
 

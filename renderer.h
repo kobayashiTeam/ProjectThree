@@ -105,6 +105,13 @@ public:
     // GPU計測（パスごとのms）。表示はGame側でTextRendererに描かせる
     GpuProfiler* GetGpuProfiler() const { return m_gpuProfiler; }
 
+    // ⑤視錐台カリング（本描画のみ。シャドウパスは間引かない）
+    // ON/OFFはフレームをまたいで保持する（計測で見比べるためのスイッチなので、BeginFrameでは戻さない）
+    void ToggleFrustumCulling() { m_frustumCullingEnabled = !m_frustumCullingEnabled; }
+    bool IsFrustumCullingEnabled() const { return m_frustumCullingEnabled; }
+    // 直近のフレームで、本描画のキューに登録された数と実際に描いた数
+    const RenderQueue::CullStats& GetCullStats() const { return m_cullStats; }
+
 
 private:
     void UpdatePerFrameConstantBuffer();
@@ -189,5 +196,9 @@ private:
 
     // ⑤最適化：タイムスタンプクエリでパスごとのGPU時間を測る
     GpuProfiler* m_gpuProfiler = nullptr;
+
+    // ⑤視錐台カリング
+    bool m_frustumCullingEnabled = true;
+    RenderQueue::CullStats m_cullStats;
 
 };

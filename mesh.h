@@ -1,7 +1,8 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include <vector>
 #include<DirectXMath.h>
+#include<DirectXCollision.h>
 
 
 class Mesh
@@ -10,7 +11,7 @@ public:
     Mesh();
     ~Mesh();
 
-    // ’¸“_ƒf[ƒ^‚ÆƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚©‚çƒoƒbƒtƒ@‚ğ¶¬‚·‚é
+    // é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã‹ã‚‰ãƒãƒƒãƒ•ã‚¡ã‚’ç”Ÿæˆã™ã‚‹
     bool Create(
         ID3D11Device* pDevice,
         const DirectX::XMFLOAT3* positions,
@@ -22,26 +23,32 @@ public:
         const DWORD* indices,
         UINT indexCount);
 
-    // ƒpƒCƒvƒ‰ƒCƒ“‚Éƒoƒbƒtƒ@‚ğƒZƒbƒg‚µ‚Ä•`‰æƒRƒ}ƒ“ƒh‚ğ”­s‚·‚é
+    // ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã«ãƒãƒƒãƒ•ã‚¡ã‚’ã‚»ãƒƒãƒˆã—ã¦æç”»ã‚³ãƒãƒ³ãƒ‰ã‚’ç™ºè¡Œã™ã‚‹
     void Render(ID3D11DeviceContext* pImmediateContext);
-    void RenderInstanced(ID3D11DeviceContext* context,UINT instanceCount,
-        ID3D11Buffer* pInstanceBuffer,UINT instanceStride);
+    void RenderInstanced(ID3D11DeviceContext* context, UINT instanceCount,
+        ID3D11Buffer* pInstanceBuffer, UINT instanceStride);
 
     void Cleanup();
 
-    // Ã“Iƒwƒ‹ƒp[ŠÖ”
+    // â‘¤è¦–éŒå°ã‚«ãƒªãƒ³ã‚°ç”¨ï¼šé ‚ç‚¹ä½ç½®ã‹ã‚‰æ±‚ã‚ãŸã€ã“ã®ãƒ¡ãƒƒã‚·ãƒ¥ã®ãƒ­ãƒ¼ã‚«ãƒ«ç©ºé–“ã§ã®AABB
+    // ï¼ˆCreate()ã®æ™‚ç‚¹ã§ä¸€åº¦ã ã‘è¨ˆç®—ã™ã‚‹ã€‚GPUã¸é€ã£ãŸå¾Œã¯é ‚ç‚¹ã‚’CPUå´ã«æŒãŸãªã„ãŸã‚ï¼‰
+    const DirectX::BoundingBox& GetLocalBounds() const { return m_localBounds; }
+
+    // é™çš„ãƒ˜ãƒ«ãƒ‘ãƒ¼é–¢æ•°
     static Mesh* CreateCube(ID3D11Device* pDevice, float size = 1.0f);
     static Mesh* CreatePlane(ID3D11Device* pDevice, float width = 10.0f, float depth = 10.0f);
     static Mesh* CreateQuad(ID3D11Device* pDevice, float size = 2.0f);
 
 private:
-    ID3D11Buffer* m_pVertexBuffer; // ’¸“_ƒoƒbƒtƒ@
-    ID3D11Buffer* m_pIndexBuffer;  // ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@
-    UINT m_indexCount;             // •`‰æ‚·‚éƒCƒ“ƒfƒbƒNƒX”
+    ID3D11Buffer* m_pVertexBuffer; // é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡
+    ID3D11Buffer* m_pIndexBuffer;  // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡
+    UINT m_indexCount;             // æç”»ã™ã‚‹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°
 
-    ID3D11Buffer* m_pPosBuffer=nullptr;
+    ID3D11Buffer* m_pPosBuffer = nullptr;
     ID3D11Buffer* m_pNrmBuffer = nullptr;
     ID3D11Buffer* m_pColorBuffer = nullptr;
     ID3D11Buffer* m_pUvBuffer = nullptr;
-	ID3D11Buffer* m_pTangentBuffer = nullptr;
+    ID3D11Buffer* m_pTangentBuffer = nullptr;
+
+    DirectX::BoundingBox m_localBounds; // æ—¢å®šã¯ä¸­å¿ƒ(0,0,0)ãƒ»åŠå¾„(1,1,1)ã®ç®±
 };

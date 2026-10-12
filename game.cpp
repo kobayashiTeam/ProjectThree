@@ -10,6 +10,7 @@
 #include"textRenderer.h"
 #include"input.h"
 #include"gpuProfiler.h"
+#include<cstdio> // swprintf_s
 
 // main.cppのWndProcが更新するグローバル入力状態を、今はそのまま参照する
 extern bool g_keyLeft;
@@ -76,6 +77,10 @@ void Game::Update(float dt)
     if (Input::IsKeyPressed(VK_F3)) {
         if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) profiler->ToggleVisible();
     }
+    // F5：視錐台カリングのON/OFF（全シーン共通。計測で見比べる用）
+    if (Input::IsKeyPressed(VK_F5)) {
+        m_renderer->ToggleFrustumCulling();
+    }
 
     Input::Update();
 
@@ -98,7 +103,19 @@ void Game::Render(float dt)
     m_textRenderer->Begin();
     m_currentScene->SubmitUI(m_textRenderer, dt);
     // GPU計測の結果（画面右上）。シーンのUIの上に重ねる
-    if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) profiler->DrawOverlay(m_textRenderer);
+    if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) {
+        profiler->DrawOverlay(m_textRenderer);
+
+        // 視錐台カリングの状態と「描いた数／登録数」（GPU計測の見出しのすぐ上）
+        if (profiler->IsVisible()) {
+            const RenderQueue::CullStats& cs = m_renderer->GetCullStats();
+            const bool on = m_renderer->IsFrustumCullingEnabled();
+            wchar_t buf[64];
+            swprintf_s(buf, L"Cull %s  %d/%d  F5", on ? L"ON " : L"OFF", cs.drawn, cs.total);
+            m_textRenderer->DrawString(buf, 1030.0f, 40.0f,
+                on ? 0.5f : 1.0f, on ? 1.0f : 0.6f, on ? 0.5f : 0.3f, 1.0f, 0.6f);
+        }
+    }
     m_textRenderer->End();
 
     m_renderer->EndFrame();
