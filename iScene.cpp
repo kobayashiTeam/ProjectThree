@@ -51,9 +51,11 @@ void IScene::displayCurrentScene(TextRenderer* textRenderer, int current) {
     int posX = UILayoutCommon::currentScenePositionX;
     int posY = UILayoutCommon::currentScenePositionY;
 
-    std::wstring text = L"Scene" + std::to_wstring(current) + L"/11";
+    std::wstring text = L"Scene" + std::to_wstring(current) + L"/" + std::to_wstring(UILayoutCommon::lastSceneIndex);
 
-    textRenderer->DrawString(text.c_str(), posX, posY);
+    // サブ情報なので、少し小さく・少し暗くして「Jump to Scene」の上に控えめに置く
+    textRenderer->DrawString(text.c_str(), (float)posX, (float)posY,
+        0.8f, 0.8f, 0.8f, 1.0f, UILayoutCommon::currentSceneScale);
 
 }
 

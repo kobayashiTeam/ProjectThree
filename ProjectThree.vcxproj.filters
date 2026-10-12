@@ -544,9 +544,6 @@
     <FxCompile Include="Shaders\BloomDownsample.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\BloomUpsample.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
     </FxCompile>
@@ -557,6 +554,9 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Tonemap.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\BloomUpsample.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
   </ItemGroup>
