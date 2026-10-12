@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 
 class Graphics
@@ -7,21 +7,24 @@ public:
     Graphics();
     ~Graphics();
 
-    // ‰Šú‰»‚Æ‰ğ•ú
+    // åˆæœŸåŒ–ã¨è§£æ”¾
     bool Initialize(HWND hWnd, int width, int height);
     void Finalize();
 
-    // ƒtƒŒ[ƒ€‚ÌŠJn‚ÆI—¹i•`‰æƒ‹[ƒv—pj
+    // ãƒ•ãƒ¬ãƒ¼ãƒ ã®é–‹å§‹ã¨çµ‚äº†ï¼ˆæç”»ãƒ«ãƒ¼ãƒ—ç”¨ï¼‰
     void BeginScene(float r, float g, float b, float a);
     void EndScene();
 
-    // DirectXƒŠƒ\[ƒX‚ÖƒAƒNƒZƒX‚·‚é‚½‚ß‚Ìæ“¾ŠÖ”
+    // DirectXãƒªã‚½ãƒ¼ã‚¹ã¸ã‚¢ã‚¯ã‚»ã‚¹ã™ã‚‹ãŸã‚ã®å–å¾—é–¢æ•°
     ID3D11Device* GetDevice() const { return m_pd3dDevice; }
     ID3D11DeviceContext* GetContext() const { return m_pImmediateContext; }
 
 	void bindDefaultRenderTarget();
-    // •`‰ææƒJƒ‰[ƒoƒbƒtƒ@‚ğ’¼Úæ“¾‚·‚éê‡‚Ég—p
+    // æç”»å…ˆã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ã‚’ç›´æ¥å–å¾—ã™ã‚‹å ´åˆã«ä½¿ç”¨
     ID3D11Texture2D* getBackBufferTexture() {return pBackBuffer; }
+    
+    void ToggleVSync() { m_vsync = !m_vsync; }
+    bool IsVSyncEnabled() const { return m_vsync; }
 
 private:
     ID3D11Device* m_pd3dDevice = nullptr;
@@ -31,5 +34,6 @@ private:
     ID3D11RenderTargetView* m_pRenderTargetView = nullptr;
     ID3D11Texture2D* m_pDepthStencil = nullptr;
     ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
+    bool m_vsync = true;   // èµ·å‹•æ™‚ã¯ä»Šã¾ã§ã©ãŠã‚Šã‚ªãƒ³
 
 };

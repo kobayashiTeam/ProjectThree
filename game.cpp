@@ -81,6 +81,10 @@ void Game::Update(float dt)
     if (Input::IsKeyPressed(VK_F5)) {
         m_renderer->ToggleFrustumCulling();
     }
+    // F4：垂直同期のON/OFF（計測時はOFFにしてGPUのクロックを安定させる）
+    if (Input::IsKeyPressed(VK_F4)) {
+        m_graphics->ToggleVSync();
+    }
 
     Input::Update();
 
@@ -114,6 +118,9 @@ void Game::Render(float dt)
             swprintf_s(buf, L"Cull %s  %d/%d  F5", on ? L"ON " : L"OFF", cs.drawn, cs.total);
             m_textRenderer->DrawString(buf, 1030.0f, 40.0f,
                 on ? 0.5f : 1.0f, on ? 1.0f : 0.6f, on ? 0.5f : 0.3f, 1.0f, 0.6f);
+            const bool vs = m_graphics->IsVSyncEnabled();
+            m_textRenderer->DrawString(vs ? L"VSync ON   F4" : L"VSync OFF  F4",
+                1030.0f, 22.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.6f);
         }
     }
     m_textRenderer->End();

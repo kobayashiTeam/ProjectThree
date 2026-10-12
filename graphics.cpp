@@ -106,7 +106,8 @@ void Graphics::BeginScene(float r, float g, float b, float a)
 
 void Graphics::EndScene()
 {
-    m_pSwapChain->Present(1, 0);
+    // 1 = 垂直同期を待つ／0 = 待たずにすぐ表示（計測用）
+    m_pSwapChain->Present(m_vsync ? 1 : 0, 0);
 }
 
 void Graphics::bindDefaultRenderTarget()
