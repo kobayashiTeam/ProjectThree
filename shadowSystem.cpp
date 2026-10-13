@@ -2,6 +2,7 @@
 #include"shaderManager.h"
 #include"camera.h"
 #include<cmath>
+#include<cassert>   // ← 追加
 
 bool ShadowSystem::Initialize(ID3D11Device* pDevice) {
 
@@ -161,12 +162,22 @@ void ShadowSystem::UpdateCascades(ID3D11DeviceContext* ctx, const Camera* camera
         // ---------------------------------------------------------
         // (2) 分割位置を決める（対数分割と等間隔分割をλで混ぜる：Practical Split Scheme）
         // ---------------------------------------------------------
+        // 対数分割のnearを [camNear, shadowFar] に収める（ガード）
+        //   ・0以下だと powf(shadowFar / 0, t) が無限大やNaNになり、全カスケードが壊れる
+        //   ・shadowFarより大きいと、分割位置がshadowFarを越えて「段の順番」が崩れる
+        //   この範囲に収まっていれば、対数分割も等間隔分割も camNear〜shadowFar の中で単調に増えるので、
+        //   それをλで混ぜた分割位置も必ず「近い順に並び、範囲からはみ出さない」
+        assert(m_splitNear > 0.0f && m_splitNear < shadowFar); // ← 追加：設定ミスはデバッグビルドで気づく
+        float splitNear = m_splitNear;
+        if (splitNear < camNear)   splitNear = camNear;
+        if (splitNear > shadowFar) splitNear = shadowFar;
+
         float splits[NUM_CASCADES + 1];
         splits[0] = camNear;
         for (int i = 1; i < NUM_CASCADES; i++)
         {
             float t = (float)i / (float)NUM_CASCADES;
-            float logSplit = m_splitNear * powf(shadowFar / m_splitNear, t);
+            float logSplit = splitNear * powf(shadowFar / splitNear, t);
             float uniformSplit = camNear + (shadowFar - camNear) * t;
             splits[i] = m_cascadeLambda * logSplit + (1.0f - m_cascadeLambda) * uniformSplit;
         }
