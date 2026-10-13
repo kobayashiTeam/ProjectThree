@@ -5,13 +5,17 @@
 class TextRenderer;
 
 // =========================================================
-// GPUプロファイラ（タイムスタンプクエリ）
+// GPUプロファイラ（タイムスタンプクエリ＋パイプライン統計クエリ）
 //
 // 考え方：
 //   CPUは注文票（コマンド）を積むだけで、GPUは後から自分のペースで処理する。
 //   なのでCPU側の時計（QueryPerformanceCounter）ではGPUの仕事時間は測れない。
 //   → 注文票の列に「ここで時刻を書いて」という票（タイムスタンプ）を差し込み、
 //     GPU自身の時計で区間の前後を記録してもらう。
+//
+//   同じ要領で「この区間で何頂点・何三角形を処理したか数えて」という票
+//   （PIPELINE_STATISTICS）も区間ごとに差し込む。
+//   タイムスタンプは「その瞬間」なので End だけ、統計は「区間」なので Begin/End で囲む。
 //
 // 使い方（1フレーム）：
 //   BeginFrame()                  … 外側のDisjointを開始＋フレーム先頭の時刻
@@ -21,6 +25,9 @@ class TextRenderer;
 // 結果はすぐ読まない：
 //   GPUは数フレーム遅れて動いているので、直後に読むとCPUが完了待ちで止まる。
 //   クエリを SLOT_COUNT 組用意して順番に使い回し、「SLOT_COUNT フレーム前」の結果を読む。
+//
+// msと頂点数・三角形数は「同じフレーム群」から作る：
+//   Disjointで捨てたフレームや、時刻が取れなかった区間は統計も積算しない。
 // =========================================================
 class GpuProfiler
 {
@@ -51,8 +58,12 @@ public:
     void Begin(ID3D11DeviceContext* ctx, Section s);
     void End(ID3D11DeviceContext* ctx, Section s);
 
-    // 画面右上に各区間のms（平均）を表示する。TextRendererのBegin/Endの間で呼ぶ
-    void DrawOverlay(TextRenderer* text) const;
+    // 画面右上に各区間の ms・頂点数・三角形数（平均）を表示する。
+    // TextRendererのBegin/Endの間で呼ぶ。screenWidth は Graphics::GetWidth() を渡す
+    void DrawOverlay(TextRenderer* text, float screenWidth) const;
+
+    // 表の左端のx座標。表の上に重ねる行（Cull・VSync）もこれにそろえる
+    static float OverlayLeft(float screenWidth) { return screenWidth - OVERLAY_WIDTH; }
 
     void ToggleVisible() { m_visible = !m_visible; }
     bool IsVisible() const { return m_visible; }
@@ -67,6 +78,8 @@ private:
     static constexpr int SECTION_COUNT = static_cast<int>(Section::Count);
     // 表示の数字がちらつかないよう、このフレーム数ぶん平均してから表示を更新する
     static constexpr int AVERAGE_FRAMES = 30;
+    // 表の幅（右端からこの幅だけ左に表を置く）。列の位置は .cpp の DrawOverlay で決める
+    static constexpr float OVERLAY_WIDTH = 340.0f;
 
     template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
@@ -77,6 +90,7 @@ private:
         ComPtr<ID3D11Query> frameEnd;
         ComPtr<ID3D11Query> begin[SECTION_COUNT];
         ComPtr<ID3D11Query> end[SECTION_COUNT];
+        ComPtr<ID3D11Query> stats[SECTION_COUNT];     // 区間ごとのパイプライン統計（Begin/Endで囲む）
         bool sectionIssued[SECTION_COUNT] = {};       // このフレームで実際に測った区間か
         bool frameIssued = false;                     // このスロットに結果が入っているか
     };
@@ -87,13 +101,17 @@ private:
 
     // 平均の積算
     double m_accumMs[SECTION_COUNT] = {};
+    double m_accumVerts[SECTION_COUNT] = {};
+    double m_accumTris[SECTION_COUNT] = {};
     int    m_accumCount[SECTION_COUNT] = {};
     double m_accumTotalMs = 0.0;
     int    m_accumFrames = 0;
 
-    // 表示用（AVERAGE_FRAMESごとに更新）。負の値＝そのフレーム群で一度も測っていない
-    float m_displayMs[SECTION_COUNT] = {};
-    float m_displayTotalMs = 0.0f;
+    // 表示用（AVERAGE_FRAMESごとに更新）。msが負の値＝そのフレーム群で一度も測っていない
+    float  m_displayMs[SECTION_COUNT] = {};
+    double m_displayVerts[SECTION_COUNT] = {};
+    double m_displayTris[SECTION_COUNT] = {};
+    float  m_displayTotalMs = 0.0f;
 
     bool m_visible = true;
 };

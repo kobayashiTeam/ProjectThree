@@ -108,19 +108,22 @@ void Game::Render(float dt)
     m_currentScene->SubmitUI(m_textRenderer, dt);
     // GPU計測の結果（画面右上）。シーンのUIの上に重ねる
     if (GpuProfiler* profiler = m_renderer->GetGpuProfiler()) {
-        profiler->DrawOverlay(m_textRenderer);
+        // 表の位置は画面幅から決める（解像度の持ち主は Graphics）
+        const float screenW = static_cast<float>(m_graphics->GetWidth());
+        profiler->DrawOverlay(m_textRenderer, screenW);
 
         // 視錐台カリングの状態と「描いた数／登録数」（GPU計測の見出しのすぐ上）
         if (profiler->IsVisible()) {
             const RenderQueue::CullStats& cs = m_renderer->GetCullStats();
             const bool on = m_renderer->IsFrustumCullingEnabled();
+            const float left = GpuProfiler::OverlayLeft(screenW); // 表の左端にそろえる
             wchar_t buf[64];
             swprintf_s(buf, L"Cull %s  %d/%d  F5", on ? L"ON " : L"OFF", cs.drawn, cs.total);
-            m_textRenderer->DrawString(buf, 1030.0f, 40.0f,
+            m_textRenderer->DrawString(buf, left, 40.0f,
                 on ? 0.5f : 1.0f, on ? 1.0f : 0.6f, on ? 0.5f : 0.3f, 1.0f, 0.6f);
             const bool vs = m_graphics->IsVSyncEnabled();
             m_textRenderer->DrawString(vs ? L"VSync ON   F4" : L"VSync OFF  F4",
-                1030.0f, 22.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.6f);
+                left, 22.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.6f);
         }
     }
     m_textRenderer->End();

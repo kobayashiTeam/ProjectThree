@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "IScene.h"
 #include "gameObject.h"
 #include <vector>
@@ -20,7 +20,7 @@ public:
     void Update(float dt) override {
         for (auto& obj : m_objects) obj->Update(dt);
 
-        // Directional Light ‚ÌŒü‚«‚ğ‘€ì
+        // Directional Light ã®å‘ãã‚’æ“ä½œ
         const float dirSpeed = 1.0f;
         if (Input::IsKeyDown('A')) m_dirX += dirSpeed * dt;
         if (Input::IsKeyDown('D')) m_dirX -= dirSpeed * dt;
@@ -31,8 +31,8 @@ public:
         if (m_dirY > 1.0f) m_dirY = 1.0f;
         if (m_dirY < -1.0f) m_dirY = -1.0f;
 
-        // Point Light ‚ÌˆÊ’u‚ğ‘€ì
-        // ‚±‚Ìƒ‰ƒCƒg‚ÍƒVƒƒƒhƒE”»’è‚Æ“¯‚ÉHDR+Bloom‚Ì”­‰ÎƒgƒŠƒK[‚àŒ“‚Ë‚é
+        // Point Light ã®ä½ç½®ã‚’æ“ä½œ
+        // ã“ã®ãƒ©ã‚¤ãƒˆã¯ã‚·ãƒ£ãƒ‰ã‚¦åˆ¤å®šã¨åŒæ™‚ã«HDR+Bloomã®ç™ºç«ãƒˆãƒªã‚¬ãƒ¼ã‚‚å…¼ã­ã‚‹
         const float pointSpeed = 4.0f;
         if (Input::IsKeyDown('J')) m_pointX -= pointSpeed * dt;
         if (Input::IsKeyDown('L')) m_pointX += pointSpeed * dt;
@@ -58,14 +58,14 @@ public:
         DirectX::XMFLOAT3 pointPos(m_pointX, m_pointHeight, m_pointZ);
         renderer->SetPointLightPosition(pointPos);
 
-        // “‡ƒfƒ‚‚Å‚Í—¼ƒ‰ƒCƒg“¯•\¦‚ª‘O’ñ‚Ì‚½‚ßAØ‘Ö‚È‚µ‚ÅŒÅ’è
+        // çµ±åˆãƒ‡ãƒ¢ã§ã¯ä¸¡ãƒ©ã‚¤ãƒˆåŒæ™‚è¡¨ç¤ºãŒå‰æã®ãŸã‚ã€åˆ‡æ›¿ãªã—ã§å›ºå®š
         renderer->SetLightVisibilityMode(LightVisibilityMode::Both);
 
-        // Exposure / Bloom‚ÍŒÅ’èi“‡ƒfƒ‚‚ÌåŠá‚Å‚Í‚È‚¢‚½‚ß‘€ì•s‰Âj
+        // Exposure / Bloomã¯å›ºå®šï¼ˆçµ±åˆãƒ‡ãƒ¢ã®ä¸»çœ¼ã§ã¯ãªã„ãŸã‚æ“ä½œä¸å¯ï¼‰
         renderer->SetExposure(m_exposure);
         renderer->SetBloomActive(true);
 
-        // GPUƒCƒ“ƒXƒ^ƒ“ƒVƒ“ƒOF‰œ‚ÖƒIƒtƒZƒbƒg‚µ‚½”wŒi‚ÌŒQ‚Æ‚µ‚ÄŒÅ’èŒÂ”‚ğ•\¦
+        // GPUã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚·ãƒ³ã‚°ï¼šå¥¥ã¸ã‚ªãƒ•ã‚»ãƒƒãƒˆã—ãŸèƒŒæ™¯ã®ç¾¤ã¨ã—ã¦å›ºå®šå€‹æ•°ã‚’è¡¨ç¤º
         renderer->SetInstanceCount(m_instanceCount, m_instanceGroupOffset);
 
         for (auto& obj : m_objects) obj->Submit(renderer);
@@ -89,6 +89,10 @@ public:
         DrawSceneNavigationHint(textRenderer);
     }
 
+    void Exit(Renderer* renderer)override {
+        renderer->SetInstanceCount(static_cast<UINT>(0));
+    }
+
 private:
     void AddObject(std::unique_ptr<GameObject> obj) {
         m_objects.push_back(std::move(obj));
@@ -102,10 +106,10 @@ private:
     float m_pointZ = 3.0f;
     const float m_pointHeight = 4.0f;
 
-    // Exposure‚ÍŒÅ’è’l‚ğg—p
+    // Exposureã¯å›ºå®šå€¤ã‚’ä½¿ç”¨
     const float m_exposure = 0.5f;
 
-    // •\¦”E‰œ‚Ö‚ÌƒIƒtƒZƒbƒg‚ÍŒÅ’èi”wŒi‚ÌŒQ‚Æ‚µ‚Äg‚¤‚½‚ß‘€ì•s‰Âj
+    // è¡¨ç¤ºæ•°ãƒ»å¥¥ã¸ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã¯å›ºå®šï¼ˆèƒŒæ™¯ã®ç¾¤ã¨ã—ã¦ä½¿ã†ãŸã‚æ“ä½œä¸å¯ï¼‰
     static constexpr UINT m_instanceCount = 125; // 5x5x5
     const DirectX::XMFLOAT3 m_instanceGroupOffset = DirectX::XMFLOAT3(0.0f, 0.0f, -40.0f);
 };

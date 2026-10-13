@@ -19,6 +19,23 @@ namespace
     };
     static_assert(sizeof(s_sectionNames) / sizeof(s_sectionNames[0]) ==
         static_cast<size_t>(GpuProfiler::Section::Count), "s_sectionNamesとSectionの数が合っていない");
+
+    // 大きな数を短く書く（例：950 / 12.3k / 1.25M）。列の幅をそろえるため
+    void FormatCount(wchar_t* buf, size_t bufCount, double v)
+    {
+        if (v < 10000.0)          swprintf_s(buf, bufCount, L"%.0f", v);
+        else if (v < 1000000.0)   swprintf_s(buf, bufCount, L"%.1fk", v / 1000.0);
+        else                      swprintf_s(buf, bufCount, L"%.2fM", v / 1000000.0);
+    }
+
+    // 右端を rightX にそろえて描く（数字の列用）。MeasureString は scale 前の大きさを返す
+    void DrawRight(TextRenderer* text, const wchar_t* s, float rightX, float y,
+        float r, float g, float b, float scale)
+    {
+        float w = 0.0f, h = 0.0f;
+        text->MeasureString(s, w, h);
+        text->DrawString(s, rightX - w * scale, y, r, g, b, 1.0f, scale);
+    }
 }
 
 bool GpuProfiler::Initialize(ID3D11Device* device)
@@ -29,6 +46,9 @@ bool GpuProfiler::Initialize(ID3D11Device* device)
     D3D11_QUERY_DESC tsDesc = {};
     tsDesc.Query = D3D11_QUERY_TIMESTAMP;
 
+    D3D11_QUERY_DESC statsDesc = {};
+    statsDesc.Query = D3D11_QUERY_PIPELINE_STATISTICS;
+
     for (Slot& slot : m_slots)
     {
         if (FAILED(device->CreateQuery(&disjointDesc, &slot.disjoint))) return false;
@@ -38,6 +58,7 @@ bool GpuProfiler::Initialize(ID3D11Device* device)
         {
             if (FAILED(device->CreateQuery(&tsDesc, &slot.begin[i]))) return false;
             if (FAILED(device->CreateQuery(&tsDesc, &slot.end[i]))) return false;
+            if (FAILED(device->CreateQuery(&statsDesc, &slot.stats[i]))) return false;
         }
     }
 
@@ -75,7 +96,10 @@ void GpuProfiler::EndFrame(ID3D11DeviceContext* ctx)
 void GpuProfiler::Begin(ID3D11DeviceContext* ctx, Section s)
 {
     if (!m_inFrame) return;
-    ctx->End(m_slots[m_current].begin[static_cast<int>(s)].Get());
+    Slot& slot = m_slots[m_current];
+    int i = static_cast<int>(s);
+    ctx->End(slot.begin[i].Get());      // 区間の開始時刻
+    ctx->Begin(slot.stats[i].Get());    // ここから数え始める
 }
 
 void GpuProfiler::End(ID3D11DeviceContext* ctx, Section s)
@@ -83,7 +107,8 @@ void GpuProfiler::End(ID3D11DeviceContext* ctx, Section s)
     if (!m_inFrame) return;
     Slot& slot = m_slots[m_current];
     int i = static_cast<int>(s);
-    ctx->End(slot.end[i].Get());
+    ctx->End(slot.stats[i].Get());      // 数えるのはここまで
+    ctx->End(slot.end[i].Get());        // 区間の終了時刻
     slot.sectionIssued[i] = true;
 }
 
@@ -97,6 +122,7 @@ void GpuProfiler::CollectSlot(ID3D11DeviceContext* ctx, int slotIndex)
     // 待つとCPUがGPUの完了待ちで止まり、計測そのものが遅さの原因になる
     const UINT flags = D3D11_ASYNC_GETDATA_DONOTFLUSH;
 
+    // Disjointで捨てるフレームは、統計も一緒に捨てる（msと同じフレーム群で数字をそろえる）
     D3D11_QUERY_DATA_TIMESTAMP_DISJOINT dj = {};
     if (ctx->GetData(slot.disjoint.Get(), &dj, sizeof(dj), flags) != S_OK) return; // 未完了 → このフレームは捨てる
     if (dj.Disjoint) return;            // 計測中にクロックが変わった等 → 信用できないので捨てる
@@ -115,9 +141,15 @@ void GpuProfiler::CollectSlot(ID3D11DeviceContext* ctx, int slotIndex)
     {
         if (!slot.sectionIssued[i]) continue;   // このフレームでは通らなかった区間（例：CSM無効）
         UINT64 b = 0, e = 0;
+        D3D11_QUERY_DATA_PIPELINE_STATISTICS st = {};
+        // 時刻と統計の3つがすべて取れた区間だけ積算する（片方だけ使うと別フレームの数字が混ざる）
         if (ctx->GetData(slot.begin[i].Get(), &b, sizeof(b), flags) != S_OK) continue;
         if (ctx->GetData(slot.end[i].Get(), &e, sizeof(e), flags) != S_OK) continue;
+        if (ctx->GetData(slot.stats[i].Get(), &st, sizeof(st), flags) != S_OK) continue;
+
         m_accumMs[i] += toMs(b, e);
+        m_accumVerts[i] += static_cast<double>(st.IAVertices);    // IAが読んだ頂点数（インデックスの数）
+        m_accumTris[i] += static_cast<double>(st.IAPrimitives);  // IAが組み立てた三角形の数
         m_accumCount[i]++;
     }
 
@@ -127,10 +159,21 @@ void GpuProfiler::CollectSlot(ID3D11DeviceContext* ctx, int slotIndex)
         m_displayTotalMs = static_cast<float>(m_accumTotalMs / m_accumFrames);
         for (int i = 0; i < SECTION_COUNT; i++)
         {
-            m_displayMs[i] = (m_accumCount[i] > 0)
-                ? static_cast<float>(m_accumMs[i] / m_accumCount[i])
-                : -1.0f;
+            if (m_accumCount[i] > 0)
+            {
+                m_displayMs[i] = static_cast<float>(m_accumMs[i] / m_accumCount[i]);
+                m_displayVerts[i] = m_accumVerts[i] / m_accumCount[i];
+                m_displayTris[i] = m_accumTris[i] / m_accumCount[i];
+            }
+            else
+            {
+                m_displayMs[i] = -1.0f;
+                m_displayVerts[i] = 0.0;
+                m_displayTris[i] = 0.0;
+            }
             m_accumMs[i] = 0.0;
+            m_accumVerts[i] = 0.0;
+            m_accumTris[i] = 0.0;
             m_accumCount[i] = 0;
         }
         m_accumTotalMs = 0.0;
@@ -138,43 +181,73 @@ void GpuProfiler::CollectSlot(ID3D11DeviceContext* ctx, int slotIndex)
     }
 }
 
-void GpuProfiler::DrawOverlay(TextRenderer* text) const
+void GpuProfiler::DrawOverlay(TextRenderer* text, float screenWidth) const
 {
     if (!m_visible || !text) return;
 
-    const float x = 1030.0f;
+    // 列の位置：名前は左端から、数字の列は右端をそろえる
+    const float x = OverlayLeft(screenWidth);
+    const float msR = x + 175.0f;     // ms 列の右端
+    const float vertsR = x + 255.0f;     // Verts 列の右端
+    const float trisR = x + 330.0f;     // Tris 列の右端（OVERLAY_WIDTH より少し内側）
     float y = 60.0f;
     const float lineH = 18.0f;
     const float scale = 0.6f;
     wchar_t buf[64];
 
-    text->DrawString(L"GPU (ms)  F3:Hide", x, y, 1.0f, 1.0f, 0.4f, 1.0f, scale);
+    // 見出し
+    text->DrawString(L"GPU  F3:Hide", x, y, 1.0f, 1.0f, 0.4f, 1.0f, scale);
+    DrawRight(text, L"ms", msR, y, 1.0f, 1.0f, 0.4f, scale);
+    DrawRight(text, L"Verts", vertsR, y, 1.0f, 1.0f, 0.4f, scale);
+    DrawRight(text, L"Tris", trisR, y, 1.0f, 1.0f, 0.4f, scale);
     y += lineH;
 
-    float sum = 0.0f;
+    float  sumMs = 0.0f;
+    double sumVerts = 0.0, sumTris = 0.0;
     for (int i = 0; i < SECTION_COUNT; i++)
     {
-        if (m_displayMs[i] < 0.0f)
+        const bool measured = (m_displayMs[i] >= 0.0f);
+        // 測っていない区間は灰色
+        const float c = measured ? 1.0f : 0.6f;
+        text->DrawString(s_sectionNames[i], x, y, c, c, c, 1.0f, scale);
+
+        if (!measured)
         {
-            swprintf_s(buf, L"%-12s   -", s_sectionNames[i]);
-            text->DrawString(buf, x, y, 0.6f, 0.6f, 0.6f, 1.0f, scale); // 測っていない区間は灰色
+            DrawRight(text, L"-", msR, y, c, c, c, scale);
+            DrawRight(text, L"-", vertsR, y, c, c, c, scale);
+            DrawRight(text, L"-", trisR, y, c, c, c, scale);
         }
         else
         {
-            swprintf_s(buf, L"%-12s %5.2f", s_sectionNames[i], m_displayMs[i]);
-            text->DrawString(buf, x, y, 1.0f, 1.0f, 1.0f, 1.0f, scale);
-            sum += m_displayMs[i];
+            swprintf_s(buf, L"%.2f", m_displayMs[i]);
+            DrawRight(text, buf, msR, y, c, c, c, scale);
+            FormatCount(buf, 64, m_displayVerts[i]);
+            DrawRight(text, buf, vertsR, y, c, c, c, scale);
+            FormatCount(buf, 64, m_displayTris[i]);
+            DrawRight(text, buf, trisR, y, c, c, c, scale);
+
+            sumMs += m_displayMs[i];
+            sumVerts += m_displayVerts[i];
+            sumTris += m_displayTris[i];
         }
         y += lineH;
     }
 
     // Other＝Totalのうち、どの区間にも入っていない部分（クリア・UIテキスト・区間の隙間など）
-    float other = m_displayTotalMs - sum;
+    // 頂点数・三角形数は区間の中でしか数えていないので、Other には出さない
+    float other = m_displayTotalMs - sumMs;
     if (other < 0.0f) other = 0.0f;
-    swprintf_s(buf, L"%-12s %5.2f", L"Other", other);
-    text->DrawString(buf, x, y, 0.8f, 0.8f, 0.8f, 1.0f, scale);
+    text->DrawString(L"Other", x, y, 0.8f, 0.8f, 0.8f, 1.0f, scale);
+    swprintf_s(buf, L"%.2f", other);
+    DrawRight(text, buf, msR, y, 0.8f, 0.8f, 0.8f, scale);
     y += lineH;
 
-    swprintf_s(buf, L"%-12s %5.2f", L"Total", m_displayTotalMs);
-    text->DrawString(buf, x, y, 1.0f, 1.0f, 0.4f, 1.0f, scale);
+    // Total の Verts/Tris は「全区間の合計」（UIテキストは含まない）
+    text->DrawString(L"Total", x, y, 1.0f, 1.0f, 0.4f, 1.0f, scale);
+    swprintf_s(buf, L"%.2f", m_displayTotalMs);
+    DrawRight(text, buf, msR, y, 1.0f, 1.0f, 0.4f, scale);
+    FormatCount(buf, 64, sumVerts);
+    DrawRight(text, buf, vertsR, y, 1.0f, 1.0f, 0.4f, scale);
+    FormatCount(buf, 64, sumTris);
+    DrawRight(text, buf, trisR, y, 1.0f, 1.0f, 0.4f, scale);
 }
