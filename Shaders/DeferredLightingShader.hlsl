@@ -84,7 +84,7 @@ cbuffer CascadeShadowBuffer : register(b7)
     int cascadeEnabled;
     int cascadeDebug;
     float cascadeTexelSize;
-    float cascadePadding;
+    float cascadeBlendRatio; // 段の奥側の何割を「次の段と混ぜる帯」にするか（0で混ぜない）
 };
 Texture2DArray cascadeShadowMap : register(t15);
 
@@ -151,6 +151,43 @@ float ShadowCalculation_Cascaded(float3 worldPos, int cascade)
         }
     }
     return shadow / 9.0f;
+}
+
+// 帯の中での混ぜ具合 t（0＝この段だけ、1＝次の段だけ）を求める
+//   帯 ＝ この段の奥側の境界の手前、段の厚み × cascadeBlendRatio の区間
+//   1段目の手前側の境界はカメラのnear（ほぼ0）なので 0 とみなす
+float CascadeBlendFactor(float viewDepth, int cascade)
+{
+    float farSplit = cascadeSplits[cascade];
+    // HLSLの三項演算子は両側を評価するので、cascade==0でも添字が-1にならないよう max で守る
+    float nearSplit = (cascade == 0) ? 0.0f : cascadeSplits[max(cascade - 1, 0)];
+    float bandWidth = (farSplit - nearSplit) * cascadeBlendRatio;
+    // bandWidth が0（ブレンドOFF）のときは、viewDepth < farSplit なので必ず t = 0 になる
+    return saturate((viewDepth - (farSplit - bandWidth)) / max(bandWidth, 1e-4f));
+}
+
+// 段の境界ブレンド＋影の届く距離の端のフェード
+//   ・帯の外：今までどおり、この段だけを読む（PCF 9回）
+//   ・帯の中：次の段も読んで t で混ぜる。最後の段の「次」は「影なし（1.0）」なので、
+//             影が届く距離の端に向かって影がだんだん薄くなる
+//   帯は画面の上でまとまった領域になるので、[branch] で帯の外のピクセルは2回目の読み込みを丸ごと飛ばす
+float ShadowCalculation_CascadedBlend(float3 worldPos, float viewDepth, int cascade)
+{
+    if (cascade < 0)
+        return 1.0f;
+
+    float shadow = ShadowCalculation_Cascaded(worldPos, cascade);
+
+    float t = CascadeBlendFactor(viewDepth, cascade);
+    [branch]
+    if (t > 0.0f)
+    {
+        float nextShadow = (cascade + 1 < NUM_CASCADES)
+            ? ShadowCalculation_Cascaded(worldPos, cascade + 1)
+            : 1.0f;
+        shadow = lerp(shadow, nextShadow, t);
+    }
+    return shadow;
 }
 
 float ShadowCalculation_Point(float3 worldPos, float3 lightPos, float farPlane)
@@ -268,9 +305,10 @@ PS_OUTPUT PS(PS_INPUT input)
 
     // CSM：このピクセルがカメラからどれだけ奥にあるか（ビュー空間のz）で段を選ぶ
     int cascade = -1;
+    float viewDepth = 0.0f; // 境界ブレンドでも使うので、ブロックの外に出しておく
     if (cascadeEnabled != 0)
     {
-        float viewDepth = mul(float4(worldPos, 1.0f), mView).z;
+        viewDepth = mul(float4(worldPos, 1.0f), mView).z;
         cascade = SelectCascade(viewDepth);
     }
 
@@ -299,7 +337,7 @@ PS_OUTPUT PS(PS_INPUT input)
         {
             if (cascadeEnabled != 0)
             {
-                shadow = ShadowCalculation_Cascaded(worldPos, cascade);
+                shadow = ShadowCalculation_CascadedBlend(worldPos, viewDepth, cascade);
             }
             else
             {
@@ -357,14 +395,18 @@ PS_OUTPUT PS(PS_INPUT input)
     float3 finalColor = ambient + Lo;
 
     // CSMデバッグ表示：段ごとに赤・緑・青で色を付け、境界がどこにあるかを見えるようにする
+    // 混ぜる帯の中では、次の段の色（最後の段は色なし）へだんだん変わるので、帯の位置と幅も目で見える
     if (cascadeEnabled != 0 && cascadeDebug != 0 && cascade >= 0)
     {
-        float3 tint = float3(1.0f, 0.35f, 0.35f); // 1段目：赤
-        if (cascade == 1)
-            tint = float3(0.35f, 1.0f, 0.35f); // 2段目：緑
-        if (cascade == 2)
-            tint = float3(0.35f, 0.35f, 1.0f); // 3段目：青
-        finalColor *= tint;
+        const float3 tints[NUM_CASCADES + 1] =
+        {
+            float3(1.0f, 0.35f, 0.35f), // 1段目：赤
+            float3(0.35f, 1.0f, 0.35f), // 2段目：緑
+            float3(0.35f, 0.35f, 1.0f), // 3段目：青
+            float3(1.0f, 1.0f, 1.0f) // 3段目の先：影なし（色なし）
+        };
+        float debugBlend = CascadeBlendFactor(viewDepth, cascade);
+        finalColor *= lerp(tints[cascade], tints[cascade + 1], debugBlend);
     }
 
     PS_OUTPUT output;

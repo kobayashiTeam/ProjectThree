@@ -238,6 +238,7 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     // （Rendererの状態がシーン遷移後に残り、他のシーンの見た目を変えてしまうのを防ぐ）
     m_shadowSystem->SetCascadeEnabled(false);
     m_shadowSystem->SetCascadeDebug(false);
+    m_shadowSystem->SetCascadeBlend(true);   // 境界ブレンドは既定でON（Scene11だけが比較のためにOFFにできる）
     // ライトのモードも毎フレーム既定値（Both）に戻す。使いたいシーンだけがSubmit()内で変える
     // （戻さないと、Scene0〜4・6・7が直前のシーンのモードを引き継ぎ、
     //   見た目だけでなく「どのシャドウマップを描くか」まで前のシーンに左右されてしまう）
@@ -670,6 +671,11 @@ void Renderer::SetCascadedShadowEnabled(bool isOn)
 void Renderer::SetCascadeDebug(bool isOn)
 {
     if (m_shadowSystem) m_shadowSystem->SetCascadeDebug(isOn);
+}
+
+void Renderer::SetCascadeBlend(bool isOn)
+{
+    if (m_shadowSystem) m_shadowSystem->SetCascadeBlend(isOn);
 }
 
 void Renderer::SetCascadeLambda(float lambda)

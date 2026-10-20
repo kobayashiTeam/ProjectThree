@@ -221,9 +221,9 @@ void GpuProfiler::DrawOverlay(TextRenderer* text, float screenWidth) const
         {
             swprintf_s(buf, L"%.2f", m_displayMs[i]);
             DrawRight(text, buf, msR, y, c, c, c, scale);
-            FormatCount(buf, 64, m_displayVerts[i]);
+            FormatCount(buf, _countof(buf), m_displayVerts[i]);
             DrawRight(text, buf, vertsR, y, c, c, c, scale);
-            FormatCount(buf, 64, m_displayTris[i]);
+            FormatCount(buf, _countof(buf), m_displayTris[i]);
             DrawRight(text, buf, trisR, y, c, c, c, scale);
 
             sumMs += m_displayMs[i];
@@ -246,8 +246,8 @@ void GpuProfiler::DrawOverlay(TextRenderer* text, float screenWidth) const
     text->DrawString(L"Total", x, y, 1.0f, 1.0f, 0.4f, 1.0f, scale);
     swprintf_s(buf, L"%.2f", m_displayTotalMs);
     DrawRight(text, buf, msR, y, 1.0f, 1.0f, 0.4f, scale);
-    FormatCount(buf, 64, sumVerts);
+    FormatCount(buf, _countof(buf), sumVerts);
     DrawRight(text, buf, vertsR, y, 1.0f, 1.0f, 0.4f, scale);
-    FormatCount(buf, 64, sumTris);
+    FormatCount(buf, _countof(buf), sumTris);
     DrawRight(text, buf, trisR, y, 1.0f, 1.0f, 0.4f, scale);
 }

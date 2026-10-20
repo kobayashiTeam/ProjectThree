@@ -20,6 +20,7 @@ class GameObject;
 //   ・C  ：CSMと旧シャドウマップ（20x20固定の1枚）を切り替えて、遠くの影が消える／残るを見比べる
 //   ・Tab：段ごとに赤・緑・青で色を付け、視錐台がどこで切り分けられているかを見せる
 //   ・N/M：分割の混ぜ具合λを変え、境界がリアルタイムに動く様子を見せる
+//   ・B  ：段の境界のブレンド＋影の端のフェードを切り替え、継ぎ目と影の打ち切り線が消える様子を見比べる
 // 矢印キーでカメラを回すと、球＋テクセルスナップにより影の縁がちらつかないことも確認できる
 class Scene11 : public IScene {
 public:
@@ -32,6 +33,8 @@ public:
         if (Input::IsKeyPressed('C')) m_cascadeOn = !m_cascadeOn;
         // Tab：段ごとの色分け表示
         if (Input::IsKeyPressed(VK_TAB)) m_cascadeDebug = !m_cascadeDebug;
+        // B：境界ブレンド＋端のフェード ON/OFF
+        if (Input::IsKeyPressed('B')) m_cascadeBlend = !m_cascadeBlend;
 
         // N/M：λ（0=等間隔、1=対数）
         const float lambdaSpeed = 0.5f;
@@ -65,6 +68,7 @@ public:
         // CSMの設定はBeginFrameで毎フレーム無効に戻るので、ここで毎フレーム指定する
         renderer->SetCascadedShadowEnabled(m_cascadeOn);
         renderer->SetCascadeDebug(m_cascadeDebug);
+        renderer->SetCascadeBlend(m_cascadeBlend);
         renderer->SetCascadeLambda(m_lambda);
 
         // UI表示用に、前フレームで計算された境界を控えておく
@@ -75,13 +79,14 @@ public:
 
     void SubmitUI(TextRenderer* textRenderer, float dt) override {
         textRenderer->DrawString(L"Scene11 - Cascaded Shadow Maps", 20.0f, 20.0f);
-        textRenderer->DrawString(L"C : CSM On/Off   Tab : Cascade Colors", 20.0f, 80.0f);
+        textRenderer->DrawString(L"C : CSM On/Off   Tab : Cascade Colors   B : Blend", 20.0f, 80.0f);
         textRenderer->DrawString(L"N/M : Split Lambda   WASD : Move Directional Light", 20.0f, 140.0f);
 
         std::wstringstream ss;
         ss << std::fixed << std::setprecision(2);
         ss << (m_cascadeOn ? L"CSM : ON" : L"CSM : OFF (single 20x20 map)");
         ss << L"   Lambda = " << m_lambda;
+        if (m_cascadeOn) ss << (m_cascadeBlend ? L"   Blend : ON" : L"   Blend : OFF");
         textRenderer->DrawString(ss.str().c_str(), 20.0f, 200.0f);
 
         if (m_cascadeOn) {
@@ -105,6 +110,7 @@ private:
 
     bool  m_cascadeOn = true;
     bool  m_cascadeDebug = false;
+    bool  m_cascadeBlend = true;
     float m_lambda = 0.75f;
     float m_splits[NUM_CASCADES] = {};
 

@@ -141,6 +141,7 @@ void ShadowSystem::UpdateCascades(ID3D11DeviceContext* ctx, const Camera* camera
     cb.cascadeEnabled = m_cascadeEnabled ? 1 : 0;
     cb.cascadeDebug = m_cascadeDebug ? 1 : 0;
     cb.cascadeTexelSize = 1.0f / (float)CASCADE_SHADOW_MAP_SIZE;
+    cb.cascadeBlendRatio = m_cascadeBlend ? m_cascadeBlendRatio : 0.0f; // 0ならシェーダー側で帯の幅が0になる
 
     if (m_cascadeEnabled && camera && !m_directionalLights.empty())
     {

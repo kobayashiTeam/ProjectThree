@@ -99,6 +99,7 @@ public:
     // 有効/デバッグ表示はBeginFrameで毎フレーム無効に戻るので、使うシーンはSubmit()内で毎フレーム呼ぶ
     void SetCascadedShadowEnabled(bool isOn);
     void SetCascadeDebug(bool isOn);
+    void SetCascadeBlend(bool isOn);   // 境界ブレンド＋端のフェード。BeginFrameで毎フレームONに戻る
     void SetCascadeLambda(float lambda);
     float GetCascadeSplit(int index) const;
 

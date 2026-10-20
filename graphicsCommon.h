@@ -155,7 +155,8 @@ struct CascadeShadowCB
     int   cascadeEnabled;             // 0ならライティングは旧20x20シャドウマップを使う
     int   cascadeDebug;               // 1なら段ごとに色を付けて表示する
     float cascadeTexelSize;           // PCF用：1テクセルのUV幅（1/2048）
-    float padding;
+    float cascadeBlendRatio;          // 段の奥側の何割を、次の段と混ぜる帯にするか（0で混ぜない）
+    // 旧paddingの位置をそのまま使うので、cbufferの並び・サイズは変わらない
 };
 
 // トーンマッピングの方式（Scene6で切り替えて比較する）

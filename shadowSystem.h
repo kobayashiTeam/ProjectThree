@@ -120,6 +120,8 @@ public:
     void SetCascadeEnabled(bool isOn) { m_cascadeEnabled = isOn; }
     bool IsCascadeEnabled() const { return m_cascadeEnabled; }
     void SetCascadeDebug(bool isOn) { m_cascadeDebug = isOn; }
+    // 段の境界のブレンド＋影の届く距離の端のフェード（OFFで従来どおりパキッと切り替わる）
+    void SetCascadeBlend(bool isOn) { m_cascadeBlend = isOn; }
     // λ：1.0で純粋な対数分割、0.0で純粋な等間隔分割
     void SetCascadeLambda(float lambda) { m_cascadeLambda = lambda; }
     float GetCascadeLambda() const { return m_cascadeLambda; }
@@ -158,6 +160,8 @@ private:
     bool  m_cascadeEnabled = false;
     bool  m_cascadeDebug = false;
     float m_cascadeLambda = 0.75f;   // 分割の混ぜ具合
+    bool  m_cascadeBlend = true;
+    float m_cascadeBlendRatio = 0.1f; // 各段の奥側10%を、次の段（最後の段は「影なし」）と混ぜる帯にする
     float m_shadowDistance = 60.0f;  // 影を出す最大距離（カメラのfar=1000とは別に割り切る）
     float m_splitNear = 1.0f;        // 対数分割の計算に使うnear。カメラのnear(0.01)をそのまま使うと1段目が極端に薄くなる
     float m_casterExtension = 30.0f; // 視錐台の外（光源側）にある影を落とす物体を拾うため、正射影の奥行きを手前に延ばす量
