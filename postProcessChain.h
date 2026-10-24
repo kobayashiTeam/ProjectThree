@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include<d3d11.h>
 #include<vector>
 #include"shaderManager.h"
@@ -12,7 +12,8 @@ public:
     template<typename T>
     T* AddEffect(ID3D11Device* device, ShaderID shaderID, bool activeByDefault) {
         T* effect = new T();
-        effect->Initialize(device, ShaderManager::GetInstance().GetShader(shaderID));
+        // どのシェーダー（VS/PS か CS か）を取り出すかはエフェクト側が決める
+        effect->InitializeFromID(device, shaderID);
         effect->SetActive(activeByDefault);
         m_effects.push_back(effect);
         return effect;
@@ -25,11 +26,11 @@ public:
         m_effects.clear();
     }
 
-    // �߂�l�F�`�F�[���𔲂�����A�ŐV�̊G���ǂ�����RT�ɓ����Ă��邩
+    // 戻り値：チェーンを抜けた後、最新の絵がどっちのRTに入っているか
     RenderTarget* Render(
-        ID3D11DeviceContext* ctx, 
-        RenderTarget* input, 
-        RenderTarget* output, 
+        ID3D11DeviceContext* ctx,
+        RenderTarget* input,
+        RenderTarget* output,
         Mesh* fullscreenQuad) {
 
         RenderTarget* pCurrentInput = input;
@@ -38,15 +39,13 @@ public:
         for (PostProcess* fx : m_effects) {
             if (!fx->IsActive()) continue;
 
-            pCurrentOutput->Clear(ctx);
-            pCurrentOutput->Bind(ctx);
-
-            fx->Render(ctx, pCurrentInput);
-            fullscreenQuad->Render(ctx);
+            // 描き方（PSで四角形を描く／CSでDispatchする）はエフェクトに任せる
+            // チェーンの仕事は「入力と出力を渡して、書けたら入れ替える」ことだけ
+            if (!fx->Apply(ctx, pCurrentInput, pCurrentOutput, fullscreenQuad)) continue;
 
             std::swap(pCurrentInput, pCurrentOutput);
         }
-        return pCurrentInput; // �Ō��swap�̌�A"�ŐV�̊G"��input���ɗ��Ă���
+        return pCurrentInput; // 最後のswapの後、"最新の絵"はinput側に来ている
     }
 
 private:

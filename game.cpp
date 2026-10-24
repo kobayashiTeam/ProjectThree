@@ -26,6 +26,7 @@ bool Game::Initialize(HWND hWnd, UINT width, UINT height)
     ID3D11Device* pDevice = m_graphics->GetDevice();
     if (!ShaderManager::GetInstance().LoadAllShaders(pDevice)) return false;
     if (!ShaderManager::GetInstance().LoadAllGeometryShaders(pDevice)) return false;
+    if (!ShaderManager::GetInstance().LoadAllComputeShaders(pDevice)) return false;
 
     m_camera = new Camera((float)width, (float)height);
 

@@ -521,6 +521,9 @@
     <ClInclude Include="gpuProfiler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="inversionCSPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
@@ -558,6 +561,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\InversionCS.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

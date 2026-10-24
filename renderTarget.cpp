@@ -1,16 +1,16 @@
-#include "renderTarget.h"
+ï»¿#include "renderTarget.h"
 #include<vector>
 
 bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
-    DXGI_FORMAT colorFormat, bool createDepth)
+    DXGI_FORMAT colorFormat, bool createDepth, bool createUAV)
 {
     m_width = width;
     m_height = height;
-    m_hasDepth = createDepth; // Œã‘±‚Ì Bind / Resize ‚ÅQÆ‚·‚é‚½‚ßó‘Ô‚ğ•Û
+    m_hasDepth = createDepth; // å¾Œç¶šã® Bind / Resize ã§å‚ç…§ã™ã‚‹ãŸã‚çŠ¶æ…‹ã‚’ä¿æŒ
 
     HRESULT hr;
 
-    // „Ÿ„Ÿ„Ÿ ‹¤’Êˆ—FƒJƒ‰[ƒoƒbƒtƒ@iƒeƒNƒXƒ`ƒƒERTVESRVj‚Ì¶¬ „Ÿ„Ÿ„Ÿ
+    // â”€â”€â”€ å…±é€šå‡¦ç†ï¼šã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ»RTVãƒ»SRVï¼‰ã®ç”Ÿæˆ â”€â”€â”€
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width = width;
     textureDesc.Height = height;
@@ -20,26 +20,36 @@ bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t hei
     textureDesc.SampleDesc.Count = 1;
     textureDesc.Usage = D3D11_USAGE_DEFAULT;
     textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    // CSã‹ã‚‰æ›¸ãè¾¼ã‚€ï¼ˆUAVï¼‰äºˆå®šãŒã‚ã‚‹ã¨ãã ã‘ã€ãã®ç”¨é€”ã‚‚ãƒ†ã‚¯ã‚¹ãƒãƒ£ã«å®£è¨€ã—ã¦ãŠã
+    // ï¼ˆBindFlags ã¯ä½œæˆæ™‚ã«æ±ºã¾ã‚Šã€å¾Œã‹ã‚‰è¶³ã›ãªã„ï¼‰
+    if (createUAV) textureDesc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 
-    // 1. ƒeƒNƒXƒ`ƒƒiƒJƒ‰[À‘Ìj‚Ì¶¬
+    // 1. ãƒ†ã‚¯ã‚¹ãƒãƒ£ï¼ˆã‚«ãƒ©ãƒ¼å®Ÿä½“ï¼‰ã®ç”Ÿæˆ
     hr = device->CreateTexture2D(&textureDesc, nullptr, &m_texture);
     if (FAILED(hr)) return false;
 
-    // 2. ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒgƒrƒ…[i‘‚«‚İ‘‹Œûj‚Ìì¬
+    // 2. ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆãƒ“ãƒ¥ãƒ¼ï¼ˆæ›¸ãè¾¼ã¿çª“å£ï¼‰ã®ä½œæˆ
     hr = device->CreateRenderTargetView(m_texture.Get(), nullptr, &m_rtv);
     if (FAILED(hr)) return false;
 
-    // 3. ƒVƒF[ƒ_[ƒŠƒ\[ƒXƒrƒ…[i“Ç‚İ‚İ‘‹Œûj‚Ìì¬
+    // 3. ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ãƒªã‚½ãƒ¼ã‚¹ãƒ“ãƒ¥ãƒ¼ï¼ˆèª­ã¿è¾¼ã¿çª“å£ï¼‰ã®ä½œæˆ
     hr = device->CreateShaderResourceView(m_texture.Get(), nullptr, &m_srv);
     if (FAILED(hr)) return false;
 
-
-    // „Ÿ„Ÿ„Ÿ ğŒ•t‚«ˆ—F[“xƒoƒbƒtƒ@‚ª•K—v‚Èê‡‚Ì‚İÀs „Ÿ„Ÿ„Ÿ
-    if (!createDepth) {
-        return true; // [“x‚ª•s—viƒ|ƒXƒgƒvƒƒZƒX—p‚È‚Çj‚È‚çA‚±‚±‚Å¬Œ÷‚Æ‚µ‚ÄI—¹
+    // 3.5 ã‚¢ãƒ³ã‚ªãƒ¼ãƒ€ãƒ¼ãƒ‰ã‚¢ã‚¯ã‚»ã‚¹ãƒ“ãƒ¥ãƒ¼ï¼ˆCSã®æ›¸ãè¾¼ã¿çª“å£ï¼‰ã®ä½œæˆ
+    //     RTVã¨é•ã„ã€ã©ã®ãƒ”ã‚¯ã‚»ãƒ«ã«æ›¸ãã‹ã‚’ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ãŒè‡ªç”±ã«æ±ºã‚ã‚‰ã‚Œã‚‹ï¼ˆé †ç•ªã®æ±ºã¾ã£ã¦ã„ãªã„æ›¸ãè¾¼ã¿ï¼‰
+    if (createUAV) {
+        hr = device->CreateUnorderedAccessView(m_texture.Get(), nullptr, &m_uav);
+        if (FAILED(hr)) return false;
     }
 
-    // 4. [“xƒoƒbƒtƒ@iƒeƒNƒXƒ`ƒƒÀ‘Ìj‚Ìì¬
+
+    // â”€â”€â”€ æ¡ä»¶ä»˜ãå‡¦ç†ï¼šæ·±åº¦ãƒãƒƒãƒ•ã‚¡ãŒå¿…è¦ãªå ´åˆã®ã¿å®Ÿè¡Œ â”€â”€â”€
+    if (!createDepth) {
+        return true; // æ·±åº¦ãŒä¸è¦ï¼ˆãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ç”¨ãªã©ï¼‰ãªã‚‰ã€ã“ã“ã§æˆåŠŸã¨ã—ã¦çµ‚äº†
+    }
+
+    // 4. æ·±åº¦ãƒãƒƒãƒ•ã‚¡ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£å®Ÿä½“ï¼‰ã®ä½œæˆ
     D3D11_TEXTURE2D_DESC descDepth = {};
     descDepth.Width = width;
     descDepth.Height = height;
@@ -54,7 +64,7 @@ bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t hei
     hr = device->CreateTexture2D(&descDepth, nullptr, &m_depthTexture);
     if (FAILED(hr)) return false;
 
-    // 5. [“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[i[“x‚Ì‘‹Œûj‚Ìì¬
+    // 5. æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ï¼ˆæ·±åº¦ã®çª“å£ï¼‰ã®ä½œæˆ
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -68,14 +78,14 @@ bool RenderTarget::Initialize(ID3D11Device* device, uint32_t width, uint32_t hei
 }
 
 void RenderTarget::Bind(ID3D11DeviceContext* context) {
-    // m_hasDepth ‚ª false ‚Ìê‡Am_dsv.Get() ‚Í©“®“I‚É nullptr ‚É‚È‚éB
-    // D3D11‚Í‘æ3ˆø”‚Ì nullptr ‚ğu[“xƒoƒbƒtƒ@‚È‚µv‚Æ‚µ‚Ä³‚µ‚­ó‚¯•t‚¯‚éB
+    // m_hasDepth ãŒ false ã®å ´åˆã€m_dsv.Get() ã¯è‡ªå‹•çš„ã« nullptr ã«ãªã‚‹ã€‚
+    // D3D11ã¯ç¬¬3å¼•æ•°ã® nullptr ã‚’ã€Œæ·±åº¦ãƒãƒƒãƒ•ã‚¡ãªã—ã€ã¨ã—ã¦æ­£ã—ãå—ã‘ä»˜ã‘ã‚‹ã€‚
     ID3D11DepthStencilView* dsv = m_hasDepth ? m_dsv.Get() : nullptr;
 
-    // ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg‚Æ[“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[‚ğƒoƒCƒ“ƒh
+    // ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã¨æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ã‚’ãƒã‚¤ãƒ³ãƒ‰
     context->OMSetRenderTargets(1, m_rtv.GetAddressOf(), dsv);
 
-    // ƒrƒ…[ƒ|[ƒg‚à‚±‚Ìƒoƒbƒtƒ@‚ÌƒTƒCƒY‚É‡‚í‚¹‚é
+    // ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã‚‚ã“ã®ãƒãƒƒãƒ•ã‚¡ã®ã‚µã‚¤ã‚ºã«åˆã‚ã›ã‚‹
     D3D11_VIEWPORT vp{};
     vp.Width = static_cast<float>(m_width);
     vp.Height = static_cast<float>(m_height);
@@ -89,18 +99,18 @@ void RenderTarget::Bind(ID3D11DeviceContext* context) {
 
 void RenderTarget::Clear(ID3D11DeviceContext* context, const float* color) {
 
-	// 1. ƒJƒ‰[ƒoƒbƒtƒ@‚ÌƒNƒŠƒA
-	if (color) {
-		context->ClearRenderTargetView(m_rtv.Get(), color);
-	}
-	else {
-		float defaultColor[4] = { 0, 0, 0, 0 }; // •‚Å‰Šú‰»
-		context->ClearRenderTargetView(m_rtv.Get(), defaultColor);
-	}
-	// 2. [“xƒoƒbƒtƒ@‚ÌƒNƒŠƒAi‘¶İ‚·‚éê‡‚Ì‚İj
-	if (m_hasDepth) {
-		context->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	}
+    // 1. ã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ã®ã‚¯ãƒªã‚¢
+    if (color) {
+        context->ClearRenderTargetView(m_rtv.Get(), color);
+    }
+    else {
+        float defaultColor[4] = { 0, 0, 0, 0 }; // é»’ã§åˆæœŸåŒ–
+        context->ClearRenderTargetView(m_rtv.Get(), defaultColor);
+    }
+    // 2. æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã®ã‚¯ãƒªã‚¢ï¼ˆå­˜åœ¨ã™ã‚‹å ´åˆã®ã¿ï¼‰
+    if (m_hasDepth) {
+        context->ClearDepthStencilView(m_dsv.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    }
 }
 
 
@@ -110,11 +120,11 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     m_width = width;
     m_height = height;
     m_hasDepth = createDepth;
-    m_isMSAA = true; // MSAA‚Æ‚µ‚Ä‰Šú‰»‚³‚ê‚½‚±‚Æ‚ğ‹L˜^
+    m_isMSAA = true; // MSAAã¨ã—ã¦åˆæœŸåŒ–ã•ã‚ŒãŸã“ã¨ã‚’è¨˜éŒ²
 
     HRESULT hr;
 
-    // „Ÿ„Ÿ„Ÿ ‹¤’Êˆ—FMSAAƒJƒ‰[ƒoƒbƒtƒ@iƒeƒNƒXƒ`ƒƒERTVj‚Ì¶¬ „Ÿ„Ÿ„Ÿ
+    // â”€â”€â”€ å…±é€šå‡¦ç†ï¼šMSAAã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ»RTVï¼‰ã®ç”Ÿæˆ â”€â”€â”€
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width = width;
     textureDesc.Height = height;
@@ -122,33 +132,33 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     textureDesc.ArraySize = 1;
     textureDesc.Format = colorFormat;
 
-    // MSAA‚Ìİ’è
-    textureDesc.SampleDesc.Count = sampleCount; // 4 ‚â 8 ‚È‚Ç
+    // MSAAã®è¨­å®š
+    textureDesc.SampleDesc.Count = sampleCount; // 4 ã‚„ 8 ãªã©
     textureDesc.SampleDesc.Quality = 0;
     textureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-    // MSAAƒeƒNƒXƒ`ƒƒ‚Í‚»‚Ì‚Ü‚ÜƒVƒF[ƒ_[‚Å“Ç‚ß‚È‚¢‚½‚ßA
-    // BIND_SHADER_RESOURCE ‚ÍŠO‚µARENDER_TARGET ‚Ì‚İ‚ÉB
+    // MSAAãƒ†ã‚¯ã‚¹ãƒãƒ£ã¯ãã®ã¾ã¾ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã§èª­ã‚ãªã„ãŸã‚ã€
+    // BIND_SHADER_RESOURCE ã¯å¤–ã—ã€RENDER_TARGET ã®ã¿ã«ã€‚
     textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
 
-    // 1. ƒeƒNƒXƒ`ƒƒiƒJƒ‰[À‘Ìj‚Ì¶¬
+    // 1. ãƒ†ã‚¯ã‚¹ãƒãƒ£ï¼ˆã‚«ãƒ©ãƒ¼å®Ÿä½“ï¼‰ã®ç”Ÿæˆ
     hr = device->CreateTexture2D(&textureDesc, nullptr, &m_texture);
     if (FAILED(hr)) return false;
 
-    // 2. ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒgƒrƒ…[i‘‚«‚İ‘‹Œûj‚Ìì¬
-    // nullptr w’è‚Åƒ}ƒ‹ƒ`ƒTƒ“ƒvƒ‹—pRTV‚ğì¬
+    // 2. ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆãƒ“ãƒ¥ãƒ¼ï¼ˆæ›¸ãè¾¼ã¿çª“å£ï¼‰ã®ä½œæˆ
+    // nullptr æŒ‡å®šã§ãƒãƒ«ãƒã‚µãƒ³ãƒ—ãƒ«ç”¨RTVã‚’ä½œæˆ
     hr = device->CreateRenderTargetView(m_texture.Get(), nullptr, &m_rtv);
     if (FAILED(hr)) return false;
 
-    // MSAA‚Ì‚½‚ß SRV ‚Íì¬‚µ‚È‚¢
+    // MSAAã®ãŸã‚ SRV ã¯ä½œæˆã—ãªã„
 
 
-    // „Ÿ„Ÿ„Ÿ ğŒ•t‚«ˆ—F[“xƒoƒbƒtƒ@‚ª•K—v‚Èê‡‚Ì‚İÀs „Ÿ„Ÿ„Ÿ
+    // â”€â”€â”€ æ¡ä»¶ä»˜ãå‡¦ç†ï¼šæ·±åº¦ãƒãƒƒãƒ•ã‚¡ãŒå¿…è¦ãªå ´åˆã®ã¿å®Ÿè¡Œ â”€â”€â”€
     if (!createDepth) {
         return true;
     }
 
-    // 4. [“xƒoƒbƒtƒ@iƒeƒNƒXƒ`ƒƒÀ‘Ìj‚Ìì¬
+    // 4. æ·±åº¦ãƒãƒƒãƒ•ã‚¡ï¼ˆãƒ†ã‚¯ã‚¹ãƒãƒ£å®Ÿä½“ï¼‰ã®ä½œæˆ
     D3D11_TEXTURE2D_DESC descDepth = {};
     descDepth.Width = width;
     descDepth.Height = height;
@@ -156,7 +166,7 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     descDepth.ArraySize = 1;
     descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-    //ƒJƒ‰[ƒoƒbƒtƒ@‚ÆƒTƒ“ƒvƒ‹”‚ğŠ®‘S‚Éˆê’v‚³‚¹‚é
+    //ã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ã¨ã‚µãƒ³ãƒ—ãƒ«æ•°ã‚’å®Œå…¨ã«ä¸€è‡´ã•ã›ã‚‹
     descDepth.SampleDesc.Count = sampleCount;
     descDepth.SampleDesc.Quality = 0;
     descDepth.Usage = D3D11_USAGE_DEFAULT;
@@ -165,11 +175,11 @@ bool RenderTarget::InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint
     hr = device->CreateTexture2D(&descDepth, nullptr, &m_depthTexture);
     if (FAILED(hr)) return false;
 
-    // 5. [“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[i[“x‚Ì‘‹Œûj‚Ìì¬
+    // 5. æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ï¼ˆæ·±åº¦ã®çª“å£ï¼‰ã®ä½œæˆ
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
 
-    // MSAA ‚Ìê‡‚Í TEXTURE2DMS ‚ğw’è
+    // MSAA ã®å ´åˆã¯ TEXTURE2DMS ã‚’æŒ‡å®š
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &descDSV, &m_dsv);
@@ -187,17 +197,17 @@ void RenderTarget::BindMultiple(
 ) {
     if (count == 0 || !targets) return;
 
-    // 1. RTV‚Ìƒ|ƒCƒ“ƒ^”z—ñ‚ğì‚é
+    // 1. RTVã®ãƒã‚¤ãƒ³ã‚¿é…åˆ—ã‚’ä½œã‚‹
     std::vector<ID3D11RenderTargetView*> rtvs(count);
     for (uint32_t i = 0; i < count; ++i) {
         rtvs[i] = targets[i]->m_rtv.Get();
     }
 
-    // 2. ƒpƒCƒvƒ‰ƒCƒ“‚É‚Ü‚Æ‚ß‚ÄƒoƒCƒ“ƒh
+    // 2. ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã«ã¾ã¨ã‚ã¦ãƒã‚¤ãƒ³ãƒ‰
     context->OMSetRenderTargets(count, &rtvs[0], dsv);
 
-    // 3. ƒrƒ…[ƒ|[ƒg‚Íu0”Ô–Ú‚Ìƒ^[ƒQƒbƒgv‚ÌƒTƒCƒY‚É‡‚í‚¹‚é
-    // (MRT‚ÌŒ´‘¥‚Æ‚µ‚ÄA“¯‚ÉƒoƒCƒ“ƒh‚·‚éRT‚ÌƒTƒCƒY‚Í“¯‚¶‚Å‚ ‚é‚½‚ß)
+    // 3. ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã¯ã€Œ0ç•ªç›®ã®ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã€ã®ã‚µã‚¤ã‚ºã«åˆã‚ã›ã‚‹
+    // (MRTã®åŸå‰‡ã¨ã—ã¦ã€åŒæ™‚ã«ãƒã‚¤ãƒ³ãƒ‰ã™ã‚‹RTã®ã‚µã‚¤ã‚ºã¯åŒã˜ã§ã‚ã‚‹ãŸã‚)
     D3D11_VIEWPORT vp{};
     vp.Width = static_cast<float>(targets[0]->m_width);
     vp.Height = static_cast<float>(targets[0]->m_height);
@@ -216,37 +226,37 @@ bool RenderTarget::InitializeDepthOnly(ID3D11Device* device, uint32_t width, uin
     m_hasDepth = true;
     m_isMSAA = false;
 
-    // [“xƒeƒNƒXƒ`ƒƒ‚¾‚¯ì¬(m_texture‚âm_rtv, m_srv‚ÍˆêØ¶¬‚µ‚È‚¢)
+    // æ·±åº¦ãƒ†ã‚¯ã‚¹ãƒãƒ£ã ã‘ä½œæˆ(m_textureã‚„m_rtv, m_srvã¯ä¸€åˆ‡ç”Ÿæˆã—ãªã„)
     D3D11_TEXTURE2D_DESC depthDesc = {};
     depthDesc.Width = width;
     depthDesc.Height = height;
     depthDesc.MipLevels = 1;
     depthDesc.ArraySize = 1;
-    depthDesc.Format = DXGI_FORMAT_R32_TYPELESS; 
+    depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     depthDesc.SampleDesc.Count = 1;
     depthDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // —¼•û—§‚Ä‚é
+    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // ä¸¡æ–¹ç«‹ã¦ã‚‹
 
     HRESULT hr = device->CreateTexture2D(&depthDesc, nullptr, m_depthTexture.GetAddressOf());
     if (FAILED(hr)) return false;
 
-	//DSV‚Ìì¬
+    //DSVã®ä½œæˆ
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
     hr = device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsv.GetAddressOf());
-    if (FAILED(hr)) return false; 
+    if (FAILED(hr)) return false;
 
-    // SRV ‚Ìì¬
-   // Lighting Pass‚È‚Ç‚Å‚±‚Ì[“x‚ğƒeƒNƒXƒ`ƒƒ‚Æ‚µ‚Ä“Ç‚İ‚Ş‚½‚ß‚É•K—v
+    // SRV ã®ä½œæˆ
+   // Lighting Passãªã©ã§ã“ã®æ·±åº¦ã‚’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã¨ã—ã¦èª­ã¿è¾¼ã‚€ãŸã‚ã«å¿…è¦
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // SRV‘¤‚ÍFloat‚Æ‚µ‚Ä‰ğß
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // SRVå´ã¯Floatã¨ã—ã¦è§£é‡ˆ
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.MipLevels = 1;
     hr = device->CreateShaderResourceView(m_depthTexture.Get(), &srvDesc, m_srv.GetAddressOf());
     if (FAILED(hr)) return false;
 
-	return true;    
+    return true;
 }

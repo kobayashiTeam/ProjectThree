@@ -1,29 +1,32 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include "shader.h"
 #include"renderTarget.h"
+#include "graphicsCommon.h"
+#include "shaderManager.h"
+#include "mesh.h"
 
 class RenderTarget;
 
 class PostProcess {
 protected:
-    Shader* m_pShader;         // g—p‚·‚éƒ|ƒXƒgƒvƒƒZƒX—pƒVƒF[ƒ_[
-    ID3D11SamplerState* m_pSamplerLinear;  // ƒ|ƒXƒgƒvƒƒZƒX—p‚ÌƒTƒ“ƒvƒ‰[iŠî–{‚ÍCLAMPj
-    bool m_isActive = true; //@‚±‚ÌƒGƒtƒFƒNƒg‚ğ¡“K—p‚·‚é‚©‚Ç‚¤‚©
+    Shader* m_pShader;         // ä½¿ç”¨ã™ã‚‹ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ç”¨ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
+    ID3D11SamplerState* m_pSamplerLinear;  // ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ç”¨ã®ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ï¼ˆåŸºæœ¬ã¯CLAMPï¼‰
+    bool m_isActive = true; //ã€€ã“ã®ã‚¨ãƒ•ã‚§ã‚¯ãƒˆã‚’ä»Šé©ç”¨ã™ã‚‹ã‹ã©ã†ã‹
 
 public:
     PostProcess() : m_pShader(nullptr), m_pSamplerLinear(nullptr) {}
     virtual ~PostProcess() { Cleanup(); }
 
-    // ‰Šú‰»FƒVƒF[ƒ_[‚ğó‚¯æ‚èAƒTƒ“ƒvƒ‰[‚ğ\’z‚·‚é
+    // åˆæœŸåŒ–ï¼šã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’å—ã‘å–ã‚Šã€ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ã‚’æ§‹ç¯‰ã™ã‚‹
     virtual bool Initialize(ID3D11Device* pDevice, Shader* pShader) {
         if (!pShader) return false;
         m_pShader = pShader;
 
-        // ƒ|ƒXƒgƒvƒƒZƒX—p‚ÌƒTƒ“ƒvƒ‰[iLINEAR & CLAMPj‚ğì¬
+        // ãƒã‚¹ãƒˆãƒ—ãƒ­ã‚»ã‚¹ç”¨ã®ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ï¼ˆLINEAR & CLAMPï¼‰ã‚’ä½œæˆ
         D3D11_SAMPLER_DESC sampDesc = {};
         sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; // ‰æ–Ê’[‚Ì‚É‚¶‚İ–h~
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; // ç”»é¢ç«¯ã®ã«ã˜ã¿é˜²æ­¢
         sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
         sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
         sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
@@ -34,22 +37,22 @@ public:
         return SUCCEEDED(hr);
     }
 
-    // “ü—ÍRT‚ğ“Ç‚İ‚ñ‚ÅAo—ÍRT‚É•`‰æ‚·‚é
-    // sourceRT‚ª–³Œø‚Èê‡‚Í‰½‚à‚µ‚È‚¢iŒÄ‚Ño‚µ‘¤‚Å•K‚¸—LŒø‚ÈRT‚ğ“n‚·‘O’ñj
+    // å…¥åŠ›RTã‚’èª­ã¿è¾¼ã‚“ã§ã€å‡ºåŠ›RTã«æç”»ã™ã‚‹
+    // sourceRTãŒç„¡åŠ¹ãªå ´åˆã¯ä½•ã‚‚ã—ãªã„ï¼ˆå‘¼ã³å‡ºã—å´ã§å¿…ãšæœ‰åŠ¹ãªRTã‚’æ¸¡ã™å‰æï¼‰
     virtual void Render(ID3D11DeviceContext* pContext, RenderTarget* sourceRT) {
         if (!pContext || !sourceRT) return;
 
-        // 1. ƒVƒF[ƒ_[‚ÌƒoƒCƒ“ƒh
+        // 1. ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ãƒã‚¤ãƒ³ãƒ‰
         if (m_pShader) m_pShader->Bind(pContext);
 
-        // 2. ‘O‚ÌH’ö‚ÌƒeƒNƒXƒ`ƒƒiŒiFj‚ÆƒTƒ“ƒvƒ‰[‚ğƒoƒCƒ“ƒh
+        // 2. å‰ã®å·¥ç¨‹ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£ï¼ˆæ™¯è‰²ï¼‰ã¨ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ã‚’ãƒã‚¤ãƒ³ãƒ‰
         ID3D11ShaderResourceView* srv = sourceRT->GetSRV();
         pContext->PSSetShaderResources(0, 1, &srv);
         pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
     }
 
-    // Scene3‚ÌGƒoƒbƒtƒ@ƒfƒoƒbƒO•\¦—pFRenderTarget‚ğ‰î‚³‚¸A¶‚ÌSRV‚ğ’¼Ú“n‚¹‚é”Å
-    // iGBufferPass‚ÍRenderTarget*‚Å‚Í‚È‚­SRV‚Ìgetter‚µ‚©ŒöŠJ‚µ‚Ä‚¢‚È‚¢‚½‚ßj
+    // Scene3ã®Gãƒãƒƒãƒ•ã‚¡ãƒ‡ãƒãƒƒã‚°è¡¨ç¤ºç”¨ï¼šRenderTargetã‚’ä»‹ã•ãšã€ç”Ÿã®SRVã‚’ç›´æ¥æ¸¡ã›ã‚‹ç‰ˆ
+    // ï¼ˆGBufferPassã¯RenderTarget*ã§ã¯ãªãSRVã®getterã—ã‹å…¬é–‹ã—ã¦ã„ãªã„ãŸã‚ï¼‰
     virtual void Render(ID3D11DeviceContext* pContext, ID3D11ShaderResourceView* sourceSRV) {
         if (!pContext || !sourceSRV) return;
 
@@ -59,12 +62,34 @@ public:
         pContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
     }
 
+    // ãƒã‚§ãƒ¼ãƒ³ã‹ã‚‰å‘¼ã°ã‚Œã‚‹åˆæœŸåŒ–ã®å…¥å£ã€‚ShaderID ã‹ã‚‰è‡ªåˆ†ã«å¿…è¦ãªã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã‚’å–ã‚Šå‡ºã™
+    // æ—¢å®šï¼šVS/PSã®çµ„ã‚’å–ã‚Šå‡ºã—ã¦ Initialize ã¸æ¸¡ã™ã€‚CSç‰ˆã®ã‚¨ãƒ•ã‚§ã‚¯ãƒˆã¯ã“ã“ã‚’ä¸Šæ›¸ãã—ã¦CSã‚’å–ã‚Šå‡ºã™
+    // ï¼ˆInitialize(Shader*) ã¨åå‰ã‚’åˆ†ã‘ã¦ã„ã‚‹ã®ã¯ã€æ´¾ç”Ÿã‚¯ãƒ©ã‚¹ã§åŒã˜åå‰ã®ç‰‡æ–¹ã ã‘ã‚’ä¸Šæ›¸ãã™ã‚‹ã¨
+    //   ã‚‚ã†ç‰‡æ–¹ãŒè¦‹ãˆãªããªã‚‹ï¼ˆåå‰ã®éš è”½ï¼‰ãŸã‚ï¼‰
+    virtual bool InitializeFromID(ID3D11Device* pDevice, ShaderID id) {
+        return Initialize(pDevice, ShaderManager::GetInstance().GetShader(id));
+    }
+
+    // ãƒã‚§ãƒ¼ãƒ³ã‹ã‚‰å‘¼ã°ã‚Œã‚‹ã€Œ1æ®µã¶ã‚“ã®å‡¦ç†ã€ï¼šinput ã‚’èª­ã‚“ã§ output ã«æ›¸ã
+    // æ—¢å®šï¼šPSç‰ˆã®æµã‚Œï¼ˆoutput ã‚’RTã¨ã—ã¦ã¤ãªã â†’ ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã¨å…¥åŠ›ã‚’ã¤ãªã â†’ å…¨ç”»é¢ã®å››è§’å½¢ã‚’æãï¼‰
+    // CSç‰ˆã®ã‚¨ãƒ•ã‚§ã‚¯ãƒˆã¯ã“ã“ã‚’ä¸Šæ›¸ãã—ã¦ã€output ã‚’UAVã¨ã—ã¦ã¤ãªã Dispatch ã™ã‚‹
+    // æˆ»ã‚Šå€¤ï¼šoutput ã«æ›¸ã‘ãŸã‹ï¼ˆfalse ãªã‚‰ãƒã‚§ãƒ¼ãƒ³ã¯å…¥ã‚Œæ›¿ãˆã‚’ã›ãšã€input ã‚’ãã®ã¾ã¾æ¬¡ã®æ®µã¸æ¸¡ã™ï¼‰
+    virtual bool Apply(ID3D11DeviceContext* pContext, RenderTarget* input, RenderTarget* output,
+        Mesh* fullscreenQuad) {
+        if (!pContext || !input || !output || !fullscreenQuad) return false;
+        output->Clear(pContext);
+        output->Bind(pContext);
+        Render(pContext, input);
+        fullscreenQuad->Render(pContext);
+        return true;
+    }
+
     virtual void Cleanup() {
-        m_pShader = nullptr; // ŠÇ—Œ ‚ÍƒVƒF[ƒ_[ƒ}ƒl[ƒWƒƒ[‚É‚ ‚é‚½‚ßQÆ‚ğØ‚é‚¾‚¯
+        m_pShader = nullptr; // ç®¡ç†æ¨©ã¯ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã«ã‚ã‚‹ãŸã‚å‚ç…§ã‚’åˆ‡ã‚‹ã ã‘
         if (m_pSamplerLinear) { m_pSamplerLinear->Release(); m_pSamplerLinear = nullptr; }
     }
 
-    //@—LŒøE–³Œø‚ÌØ‚è‘Ö‚¦ƒAƒNƒZƒT
+    //ã€€æœ‰åŠ¹ãƒ»ç„¡åŠ¹ã®åˆ‡ã‚Šæ›¿ãˆã‚¢ã‚¯ã‚»ã‚µ
     void SetActive(bool active) { m_isActive = active; }
     bool IsActive() const { return m_isActive; }
 };

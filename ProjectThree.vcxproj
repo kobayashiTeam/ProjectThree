@@ -214,6 +214,7 @@
     <ClInclude Include="gsEffect.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="instancedModel.h" />
+    <ClInclude Include="inversionCSPostProcess.h" />
     <ClInclude Include="inversionPostProcess.h" />
     <ClInclude Include="IrradianceConvolutionPass.h" />
     <ClInclude Include="iScene.h" />
@@ -423,6 +424,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\GBufferDebugAlphaBlit.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\InversionCS.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>

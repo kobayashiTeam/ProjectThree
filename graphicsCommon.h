@@ -91,7 +91,9 @@ enum class ShaderID {
     //Scene3デバッグ表示用（Gバッファをそのままブリット）
     GBufferDebug,
     GBufferDebugDepth, //Depth専用：線形化＋グレースケール化
-    GBufferDebugAlpha  //Scene9用。アルファチャンネル(metallic/roughness)をグレースケール表示
+    GBufferDebugAlpha, //Scene9用。アルファチャンネル(metallic/roughness)をグレースケール表示
+    //compute（VS/PSと組にならない単独のシェーダー。ShaderManager::GetCS で取り出す）
+    InversionCS
 };
 
 //ライト関連
@@ -161,6 +163,13 @@ struct CascadeShadowCB
 
 // トーンマッピングの方式（Scene6で切り替えて比較する）
 // 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
+// Scene6：色反転をどちらの方式で掛けるか（PS版とCS版を見比べ・測り比べるため）
+enum class InversionMode {
+    Off,
+    PixelShader,
+    ComputeShader
+};
+
 enum class Tonemapper {
     Exposure = 0, // 1 - exp(-x * exposure)。従来の方式
     ACES = 1  // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ

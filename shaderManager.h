@@ -11,6 +11,8 @@ private:
     //描画に必須なシェーダ（VS,PS）と、geometryシェーダを分けて保管する
     std::unordered_map<ShaderID, Shader*> m_shaders;
     std::unordered_map<ShaderID, ID3D11GeometryShader*> m_geometryShaders;
+    // CSはVS/PSと組にならない単独のシェーダーなので、GSと同じく別に保管する
+    std::unordered_map<ShaderID, ComPtr<ID3D11ComputeShader>> m_computeShaders;
 
 
     // シングルトンのお作法
@@ -94,6 +96,17 @@ public:
 
     ID3D11GeometryShader* getGS(ShaderID id) {
         return m_geometryShaders[id];
+    }
+
+    // Compute Shader（エントリポイントは CSMain）
+    bool LoadAllComputeShaders(ID3D11Device* pDevice) {
+        if (!loadComputeShader(pDevice, ShaderID::InversionCS, L"Shaders/InversionCS.hlsl")) return false;
+        return true;
+    }
+
+    ID3D11ComputeShader* GetCS(ShaderID id) {
+        auto it = m_computeShaders.find(id);
+        return (it != m_computeShaders.end()) ? it->second.Get() : nullptr;
     }
 
 private:
@@ -252,6 +265,26 @@ private:
         hr = pDevice->CreateGeometryShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &gs);
         if (FAILED(hr)) return false;
         m_geometryShaders[id] = gs;
+        return true;
+    }
+
+    // 最適化のフラグはPS（Shader::Create）と同じ既定（0）にそろえる
+    // （GSのようにデバッグ用に最適化を切ると、PS版とのmsの比べ合いが公平でなくなる）
+    bool loadComputeShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+        ComPtr<ID3DBlob> blob, errBlob;
+        HRESULT hr = D3DCompileFromFile(
+            filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "CSMain", "cs_5_0",
+            0, 0, &blob, &errBlob
+        );
+        if (FAILED(hr)) {
+            if (errBlob) OutputDebugStringA((char*)errBlob->GetBufferPointer());
+            return false;
+        }
+        ComPtr<ID3D11ComputeShader> cs;
+        hr = pDevice->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &cs);
+        if (FAILED(hr)) return false;
+        m_computeShaders[id] = cs;
         return true;
     }
 

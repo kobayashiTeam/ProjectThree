@@ -13,6 +13,7 @@
 #include"shaderManager.h"
 #include"monochromePostProcess.h"
 #include"inversionPostProcess.h"
+#include"inversionCSPostProcess.h"
 #include"sepiaPostProcess.h"
 #include"simpleBoxBlurPostProcess.h"
 #include"sharpenPostProcess.h"
@@ -78,7 +79,8 @@ bool Renderer::Initialize(Graphics* graphics)
 
     // 3. 「オフスクリーンRTの初期化（HDR対応のため R16G16B16A16_FLOAT）」
     m_offscreenRT = new RenderTarget();
-    if (!m_offscreenRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+    // LDRチェーンのピンポン先にもなるので、CS版のエフェクトが書き込めるよう UAV も作る
+    if (!m_offscreenRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT, true, true)) {
         return false;
     }
 
@@ -90,7 +92,8 @@ bool Renderer::Initialize(Graphics* graphics)
 
     //オフスクリーンレンダー２号の初期化（swapChainで使用）
     m_tmpRT = new RenderTarget();
-    if (!m_tmpRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT)) {
+    // offscreenRT と組でピンポンするので、こちらも UAV を作る
+    if (!m_tmpRT->Initialize(pDevice, m_width, m_height, DXGI_FORMAT_R16G16B16A16_FLOAT, true, true)) {
         return false;
     }
 
@@ -121,7 +124,9 @@ bool Renderer::Initialize(Graphics* graphics)
     // 並び順＝適用順：色を変える系 → ぼかし・シャープ → ビネット（画面の枠に関わるものは最後）
     m_postProcessChain = new PostProcessChain();
     m_postProcessChain->AddEffect<MonochromePostProcess>(pDevice, ShaderID::Monochromatic, false);
-    m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
+    // 色反転はPS版とCS版を隣に並べ、どちらか片方だけを有効にする（同じ位置で差し替えて比べるため）
+    m_inversionPS = m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
+    m_inversionCS = m_postProcessChain->AddEffect<InversionCSPostProcess>(pDevice, ShaderID::InversionCS, false);
     m_postProcessChain->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
     m_postProcessChain->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
     m_postProcessChain->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
@@ -251,6 +256,7 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     m_bloomIntensity = 0.3f;
     m_tonemapper = Tonemapper::Exposure;
     SetVignetteActive(false);
+    SetInversionMode(InversionMode::Off);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -654,6 +660,12 @@ void Renderer::SetInstanceCount(UINT count)
 void Renderer::SetVignetteActive(bool isOn)
 {
     if (m_vignette) m_vignette->SetActive(isOn);
+}
+
+void Renderer::SetInversionMode(InversionMode mode)
+{
+    if (m_inversionPS) m_inversionPS->SetActive(mode == InversionMode::PixelShader);
+    if (m_inversionCS) m_inversionCS->SetActive(mode == InversionMode::ComputeShader);
 }
 
 void Renderer::SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset)

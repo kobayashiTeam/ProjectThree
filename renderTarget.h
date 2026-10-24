@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <cstdint>
@@ -7,7 +7,7 @@ template<typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class RenderTarget {
 public:
-	RenderTarget() = default;
+    RenderTarget() = default;
 
     ~RenderTarget() = default;
 
@@ -21,21 +21,24 @@ public:
     ID3D11DepthStencilView* GetDSV() const { return m_dsv.Get(); }
     ID3D11ShaderResourceView* GetSRV() const { return m_srv.Get(); }
     ID3D11Texture2D* GetTexture() const { return m_texture.Get(); }
+    // CSã®æ›¸ãè¾¼ã¿çª“å£ã€‚Initialize ã§ createUAV = true ã«ã—ãŸã¨ãã ã‘æœ‰åŠ¹ï¼ˆãã‚Œä»¥å¤–ã¯ nullptrï¼‰
+    ID3D11UnorderedAccessView* GetUAV() const { return m_uav.Get(); }
 
     uint32_t Width() const { return m_width; }
     uint32_t Height() const { return m_height; }
 
 
     bool Initialize(ID3D11Device* device, uint32_t width, uint32_t height,
-        DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true);
-    bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height, 
-        DXGI_FORMAT colorFormat= DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount=4, 
-        bool createDepth=true);
-    // •¡”‚ÌRenderTarget‚Å‹¤—L‚·‚é[“xƒoƒbƒtƒ@‚ğ¶¬‚·‚é
-    // ƒJƒ‰[ƒoƒbƒtƒ@‚Íg—p‚µ‚È‚¢‚½‚ßARTV‚Íì¬‚µ‚È‚¢
+        DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, bool createDepth = true,
+        bool createUAV = false);
+    bool InitializeWithMSAA(ID3D11Device* device, uint32_t width, uint32_t height,
+        DXGI_FORMAT colorFormat = DXGI_FORMAT_R8G8B8A8_UNORM, uint32_t sampleCount = 4,
+        bool createDepth = true);
+    // è¤‡æ•°ã®RenderTargetã§å…±æœ‰ã™ã‚‹æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã‚’ç”Ÿæˆã™ã‚‹
+    // ã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡ã¯ä½¿ç”¨ã—ãªã„ãŸã‚ã€RTVã¯ä½œæˆã—ãªã„
     bool InitializeDepthOnly(ID3D11Device* device, uint32_t width, uint32_t height,
         DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT);
-    // •¡”‚ÌRenderTarget‚ğ“¯‚ÉƒoƒCƒ“ƒh‚·‚é‚½‚ß‚ÌÃ“IŠÖ”
+    // è¤‡æ•°ã®RenderTargetã‚’åŒæ™‚ã«ãƒã‚¤ãƒ³ãƒ‰ã™ã‚‹ãŸã‚ã®é™çš„é–¢æ•°
     static void BindMultiple(
         ID3D11DeviceContext* context,
         uint32_t count,
@@ -44,15 +47,16 @@ public:
     );
 
 private:
-	ComPtr<ID3D11Texture2D> m_texture;// ƒJƒ‰[ƒoƒbƒtƒ@
+    ComPtr<ID3D11Texture2D> m_texture;// ã‚«ãƒ©ãƒ¼ãƒãƒƒãƒ•ã‚¡
     ComPtr<ID3D11RenderTargetView> m_rtv;
     ComPtr<ID3D11ShaderResourceView> m_srv;
+    ComPtr<ID3D11UnorderedAccessView> m_uav; // CSã®æ›¸ãè¾¼ã¿çª“å£ï¼ˆcreateUAV ã®ã¨ãã ã‘ä½œã‚‹ï¼‰
 
-    ComPtr<ID3D11Texture2D> m_depthTexture;   // [“x•t‚«‚Ìê‡‚Ìƒoƒbƒtƒ@
+    ComPtr<ID3D11Texture2D> m_depthTexture;   // æ·±åº¦ä»˜ãã®å ´åˆã®ãƒãƒƒãƒ•ã‚¡
     ComPtr<ID3D11DepthStencilView> m_dsv;
 
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     bool m_hasDepth = false;
-    bool m_isMSAA = false; // MSAA‚©‚Ç‚¤‚©‚ğ‹L˜^‚µ‚Ä‚¨‚­‚Æ•Ö—˜
+    bool m_isMSAA = false; // MSAAã‹ã©ã†ã‹ã‚’è¨˜éŒ²ã—ã¦ãŠãã¨ä¾¿åˆ©
 };

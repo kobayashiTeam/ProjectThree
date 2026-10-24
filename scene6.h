@@ -70,6 +70,15 @@ public:
             m_vignetteActive = !m_vignetteActive;
         }
 
+        // ===== 色反転（C）：OFF → PS版 → CS版 → OFF。見た目が同じで、Post の ms だけが変わるかを見る =====
+        if (Input::IsKeyPressed('C')) {
+            switch (m_inversionMode) {
+            case InversionMode::Off:          m_inversionMode = InversionMode::PixelShader;   break;
+            case InversionMode::PixelShader:  m_inversionMode = InversionMode::ComputeShader; break;
+            case InversionMode::ComputeShader:m_inversionMode = InversionMode::Off;           break;
+            }
+        }
+
         // 全シーン共通のシーン番号キー判定
         CheckSceneNumberKeys();
     }
@@ -85,6 +94,7 @@ public:
         renderer->SetBloomIntensity(m_bloomIntensity);
         renderer->SetTonemapper(m_tonemapper);
         renderer->SetVignetteActive(m_vignetteActive);
+        renderer->SetInversionMode(m_inversionMode);
 
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
@@ -98,22 +108,29 @@ public:
         textRenderer->DrawString(L"T    : Tonemapper (Exposure / ACES)", 20.0f, 230.0f);
         textRenderer->DrawString(L"V    : Vignette ON / OFF", 20.0f, 270.0f);
         textRenderer->DrawString(L"O / U : Point Light Intensity Up / Down", 20.0f, 310.0f);
+        textRenderer->DrawString(L"C    : Inversion (OFF / PS / CS)", 20.0f, 350.0f);
 
         wchar_t buf[128];
         swprintf_s(buf, L"Point Light : (%.2f, %.2f)  Intensity %.1f", m_pointX, m_pointZ, m_pointIntensity);
-        textRenderer->DrawString(buf, 20.0f, 370.0f);
-
-        swprintf_s(buf, L"Exposure : %.2f", m_exposure);
         textRenderer->DrawString(buf, 20.0f, 410.0f);
 
-        swprintf_s(buf, L"Bloom : %ls  (Intensity %.2f)", m_bloomActive ? L"ON" : L"OFF", m_bloomIntensity);
+        swprintf_s(buf, L"Exposure : %.2f", m_exposure);
         textRenderer->DrawString(buf, 20.0f, 450.0f);
 
-        swprintf_s(buf, L"Tonemapper : %ls", m_tonemapper == Tonemapper::ACES ? L"ACES" : L"Exposure");
+        swprintf_s(buf, L"Bloom : %ls  (Intensity %.2f)", m_bloomActive ? L"ON" : L"OFF", m_bloomIntensity);
         textRenderer->DrawString(buf, 20.0f, 490.0f);
 
-        swprintf_s(buf, L"Vignette : %ls", m_vignetteActive ? L"ON" : L"OFF");
+        swprintf_s(buf, L"Tonemapper : %ls", m_tonemapper == Tonemapper::ACES ? L"ACES" : L"Exposure");
         textRenderer->DrawString(buf, 20.0f, 530.0f);
+
+        swprintf_s(buf, L"Vignette : %ls", m_vignetteActive ? L"ON" : L"OFF");
+        textRenderer->DrawString(buf, 20.0f, 570.0f);
+
+        const wchar_t* inversionText =
+            (m_inversionMode == InversionMode::PixelShader) ? L"PS (Pixel Shader)" :
+            (m_inversionMode == InversionMode::ComputeShader) ? L"CS (Compute Shader)" : L"OFF";
+        swprintf_s(buf, L"Inversion : %ls", inversionText);
+        textRenderer->DrawString(buf, 20.0f, 610.0f);
 
         // トータル時間の更新
         m_uiTime += dt;
@@ -145,4 +162,5 @@ private:
     float m_bloomIntensity = 0.3f;
     Tonemapper m_tonemapper = Tonemapper::Exposure;
     bool m_vignetteActive = false;
+    InversionMode m_inversionMode = InversionMode::Off;
 };
