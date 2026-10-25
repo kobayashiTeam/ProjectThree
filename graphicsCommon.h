@@ -93,7 +93,9 @@ enum class ShaderID {
     GBufferDebugDepth, //Depth専用：線形化＋グレースケール化
     GBufferDebugAlpha, //Scene9用。アルファチャンネル(metallic/roughness)をグレースケール表示
     //compute（VS/PSと組にならない単独のシェーダー。ShaderManager::GetCS で取り出す）
-    InversionCS
+    InversionCS,
+    BoxBlurCS,         // 分離ボックスブラー：近所を groupshared から読む（BoxBlurCS.hlsl の CSMain）
+    BoxBlurCSNoShared  // 分離ボックスブラー：近所を毎回テクスチャから読む（同じファイルの CSMainNoShared）
 };
 
 //ライト関連
@@ -161,8 +163,6 @@ struct CascadeShadowCB
     // 旧paddingの位置をそのまま使うので、cbufferの並び・サイズは変わらない
 };
 
-// トーンマッピングの方式（Scene6で切り替えて比較する）
-// 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
 // Scene6：色反転をどちらの方式で掛けるか（PS版とCS版を見比べ・測り比べるため）
 enum class InversionMode {
     Off,
@@ -170,6 +170,18 @@ enum class InversionMode {
     ComputeShader
 };
 
+// Scene6：ボックスブラーをどの方式で掛けるか（3つとも同じ絵になり、Post の ms だけが変わるはず）
+//   PS → CS(共有なし) の差：2Dのまま読むか、横→縦に分けるか
+//   CS(共有なし) → CS(共有あり) の差：近所をテクスチャから読むか、groupshared から読むか
+enum class BlurMode {
+    Off,
+    PixelShader,     // 2D：(2r+1)×(2r+1) 個を1回で平均（SimpleBoxBlur）
+    ComputeNoShared, // 分離（横→縦）。近所を毎回テクスチャから読む
+    ComputeShared    // 分離（横→縦）。近所を groupshared から読む
+};
+
+// トーンマッピングの方式（Scene6で切り替えて比較する）
+// 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
 enum class Tonemapper {
     Exposure = 0, // 1 - exp(-x * exposure)。従来の方式
     ACES = 1  // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ

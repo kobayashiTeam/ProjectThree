@@ -1,24 +1,31 @@
+ï»¿#pragma once
 #include"postProcess.h"
 
+// ãƒœãƒƒã‚¯ã‚¹ãƒ–ãƒ©ãƒ¼ã®PSç‰ˆï¼š1å›ã®æç”»ã§ (2r+1)Ã—(2r+1) å€‹ã‚’å¹³å‡ã™ã‚‹ï¼ˆ2Dã®ã¾ã¾ã€åˆ†é›¢ã—ãªã„ï¼‰
+// CSç‰ˆï¼ˆBoxBlurCSPostProcessï¼‰ã¨åŒã˜åŠå¾„ãƒ»åŒã˜çµæœã«ãªã‚‹ã‚ˆã†ã«ãã‚ãˆã¦ã‚ã‚Šã€ms ã®æ¯”ã¹åˆã„ã®åŸºæº–ã«ä½¿ã†
 class SimpleBoxBlurPostProcess : public PostProcess {
 public:
+    // HLSLå´ã® cbuffer PerEffectCBï¼ˆb2ï¼‰ã¨åŒã˜ä¸¦ã³
+    // ï¼ˆä»¥å‰ã¯ C++ å´ãŒ {intensity, dummy[3]} ã®ã¾ã¾ã§ã€HLSL å´ã® texelSize ã« 0 ãŒå…¥ã‚Šã€ã¼ã‘ã¦ã„ãªã‹ã£ãŸï¼‰
     struct PerEffectCB {
-        float intensity; // ƒuƒ‰[‚Ì‹­‚³ (0.0 = ’Êí, 1.0 = Š®‘S‚Èƒuƒ‰[)
-        float dummy[3];  // 16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg—p‚ÌƒpƒfƒBƒ“ƒO
+        int   radius;       // åŠå¾„ã€‚CSç‰ˆã¨åŒã˜ã 1 ã‹ã‚‰ 16 ã®ç¯„å›²ã§ä½¿ã†
+        float texelSize[2]; // (1/å¹…, 1/é«˜ã•)ã€‚Render ã§å…¥åŠ›ã®å¤§ãã•ã‹ã‚‰æ¯å›ä½œã‚‹
+        float pad;          // 16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆç”¨ã®ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°
     };
+    static_assert(sizeof(PerEffectCB) % 16 == 0, "cbuffer size must be a multiple of 16 bytes");
 
 private:
     ID3D11Buffer* m_pConstantBuffer = nullptr;
-    PerEffectCB   m_cbData;
+    PerEffectCB   m_cbData = {};
 
 public:
-    SimpleBoxBlurPostProcess() { m_cbData.intensity = 1.0f; }
+    SimpleBoxBlurPostProcess() { m_cbData.radius = 2; }
     ~SimpleBoxBlurPostProcess() override { if (m_pConstantBuffer) m_pConstantBuffer->Release(); }
 
     bool Initialize(ID3D11Device* pDevice, Shader* pShader) override {
         if (!PostProcess::Initialize(pDevice, pShader)) return false;
 
-        // ƒGƒtƒFƒNƒgê—p‚Ì’è”ƒoƒbƒtƒ@iƒXƒƒbƒg2—pj‚ğì¬
+        // ã‚¨ãƒ•ã‚§ã‚¯ãƒˆå°‚ç”¨ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¹ãƒ­ãƒƒãƒˆ2ç”¨ï¼‰ã‚’ä½œæˆ
         D3D11_BUFFER_DESC cbd = {};
         cbd.Usage = D3D11_USAGE_DEFAULT;
         cbd.ByteWidth = sizeof(PerEffectCB);
@@ -28,14 +35,18 @@ public:
         return SUCCEEDED(hr);
     }
 
-    // ŠO•”‚©‚çƒuƒ‰[‚Ì‹­‚³‚ğ•Ï‚¦‚éƒAƒNƒZƒT
-    void SetIntensity(float intensity) { m_cbData.intensity = intensity; }
+    void SetRadius(int radius) { m_cbData.radius = (radius < 1) ? 1 : (radius > 16 ? 16 : radius); }
 
     void Render(ID3D11DeviceContext* pContext, RenderTarget* sourceRT) override {
-        // 1. eƒNƒ‰ƒX‚ÌŠî–{ƒoƒCƒ“ƒhiƒVƒF[ƒ_[AƒeƒNƒXƒ`ƒƒAƒTƒ“ƒvƒ‰[j‚ğŒÄ‚Ô
+        // 1. è¦ªã‚¯ãƒ©ã‚¹ã®åŸºæœ¬ãƒã‚¤ãƒ³ãƒ‰ï¼ˆã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£ã€ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ï¼‰ã‚’å‘¼ã¶
         PostProcess::Render(pContext, sourceRT);
+        if (!sourceRT) return;
 
-        // 2. ©•ªê—p‚Ì’è”ƒoƒbƒtƒ@‚ğXV‚µ‚ÄƒXƒƒbƒg2‚ÉƒoƒCƒ“ƒh
+        // 2. 1ãƒ”ã‚¯ã‚»ãƒ«ã¶ã‚“ã®UVã®å¤§ãã•ã¯ã€èª­ã‚€å´ï¼ˆå…¥åŠ›ï¼‰ã®å¤§ãã•ã‹ã‚‰ä½œã‚‹
+        m_cbData.texelSize[0] = 1.0f / (float)sourceRT->Width();
+        m_cbData.texelSize[1] = 1.0f / (float)sourceRT->Height();
+
+        // 3. è‡ªåˆ†å°‚ç”¨ã®å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚’æ›´æ–°ã—ã¦ã‚¹ãƒ­ãƒƒãƒˆ2ã«ãƒã‚¤ãƒ³ãƒ‰
         if (m_pConstantBuffer) {
             pContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &m_cbData, 0, 0);
             pContext->PSSetConstantBuffers(2, 1, &m_pConstantBuffer);

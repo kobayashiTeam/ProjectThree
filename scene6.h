@@ -79,6 +79,21 @@ public:
             }
         }
 
+        // ===== ボックスブラー（B）：OFF → PS → CS(共有なし) → CS(共有あり) → OFF =====
+        //       3つとも同じ絵になり、Post の ms だけが変わるかを見る
+        if (Input::IsKeyPressed('B')) {
+            switch (m_blurMode) {
+            case BlurMode::Off:             m_blurMode = BlurMode::PixelShader;     break;
+            case BlurMode::PixelShader:     m_blurMode = BlurMode::ComputeNoShared; break;
+            case BlurMode::ComputeNoShared: m_blurMode = BlurMode::ComputeShared;   break;
+            case BlurMode::ComputeShared:   m_blurMode = BlurMode::Off;             break;
+            }
+        }
+        // ===== ブラーの半径（R）：2 → 4 → 8 → 16 → 2。半径が大きいほど groupshared の差が出るはず =====
+        if (Input::IsKeyPressed('R')) {
+            m_blurRadius = (m_blurRadius >= 16) ? 2 : m_blurRadius * 2;
+        }
+
         // 全シーン共通のシーン番号キー判定
         CheckSceneNumberKeys();
     }
@@ -95,6 +110,8 @@ public:
         renderer->SetTonemapper(m_tonemapper);
         renderer->SetVignetteActive(m_vignetteActive);
         renderer->SetInversionMode(m_inversionMode);
+        renderer->SetBlurMode(m_blurMode);
+        renderer->SetBlurRadius(m_blurRadius);
 
         for (auto& obj : m_objects) obj->Submit(renderer);
     }
@@ -109,6 +126,7 @@ public:
         textRenderer->DrawString(L"V    : Vignette ON / OFF", 20.0f, 270.0f);
         textRenderer->DrawString(L"O / U : Point Light Intensity Up / Down", 20.0f, 310.0f);
         textRenderer->DrawString(L"C    : Inversion (OFF / PS / CS)", 20.0f, 350.0f);
+        textRenderer->DrawString(L"B / R : Box Blur Mode / Radius", 20.0f, 380.0f);
 
         wchar_t buf[128];
         swprintf_s(buf, L"Point Light : (%.2f, %.2f)  Intensity %.1f", m_pointX, m_pointZ, m_pointIntensity);
@@ -131,6 +149,13 @@ public:
             (m_inversionMode == InversionMode::ComputeShader) ? L"CS (Compute Shader)" : L"OFF";
         swprintf_s(buf, L"Inversion : %ls", inversionText);
         textRenderer->DrawString(buf, 20.0f, 610.0f);
+
+        const wchar_t* blurText =
+            (m_blurMode == BlurMode::PixelShader) ? L"PS (2D)" :
+            (m_blurMode == BlurMode::ComputeNoShared) ? L"CS (no shared)" :
+            (m_blurMode == BlurMode::ComputeShared) ? L"CS (groupshared)" : L"OFF";
+        swprintf_s(buf, L"Box Blur : %ls  r=%d", blurText, m_blurRadius);
+        textRenderer->DrawString(buf, 20.0f, 650.0f);
 
         // トータル時間の更新
         m_uiTime += dt;
@@ -163,4 +188,6 @@ private:
     Tonemapper m_tonemapper = Tonemapper::Exposure;
     bool m_vignetteActive = false;
     InversionMode m_inversionMode = InversionMode::Off;
+    BlurMode m_blurMode = BlurMode::Off;
+    int m_blurRadius = 2; // Rendererの既定値（BeginFrameで戻す値）に合わせる
 };

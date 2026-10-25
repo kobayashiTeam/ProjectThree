@@ -98,9 +98,11 @@ public:
         return m_geometryShaders[id];
     }
 
-    // Compute Shader（エントリポイントは CSMain）
+    // Compute Shader（エントリポイントは既定で CSMain。1つのファイルに複数あるときは名前を渡す）
     bool LoadAllComputeShaders(ID3D11Device* pDevice) {
         if (!loadComputeShader(pDevice, ShaderID::InversionCS, L"Shaders/InversionCS.hlsl")) return false;
+        if (!loadComputeShader(pDevice, ShaderID::BoxBlurCS, L"Shaders/BoxBlurCS.hlsl")) return false;
+        if (!loadComputeShader(pDevice, ShaderID::BoxBlurCSNoShared, L"Shaders/BoxBlurCS.hlsl", "CSMainNoShared")) return false;
         return true;
     }
 
@@ -270,11 +272,12 @@ private:
 
     // 最適化のフラグはPS（Shader::Create）と同じ既定（0）にそろえる
     // （GSのようにデバッグ用に最適化を切ると、PS版とのmsの比べ合いが公平でなくなる）
-    bool loadComputeShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+    bool loadComputeShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename,
+        const char* entryPoint = "CSMain") {
         ComPtr<ID3DBlob> blob, errBlob;
         HRESULT hr = D3DCompileFromFile(
             filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-            "CSMain", "cs_5_0",
+            entryPoint, "cs_5_0",
             0, 0, &blob, &errBlob
         );
         if (FAILED(hr)) {

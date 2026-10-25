@@ -26,6 +26,7 @@ class MonochromePostProcess;
 class PostProcess;
 class InversionPostProcess;
 class InversionCSPostProcess;
+class BoxBlurCSPostProcess;
 class SepiaPostProcess;
 class SimpleBoxBlurPostProcess;
 class SharpenPostProcess;
@@ -80,6 +81,10 @@ public:
     void SetVignetteActive(bool isOn);
     // 色反転の方式（Off / PS版 / CS版）。BeginFrameで毎フレームOffに戻る
     void SetInversionMode(InversionMode mode);
+    // ボックスブラーの方式（Off / PS版 / CS版 共有なし / CS版 共有あり）と半径（1～16）
+    // どちらもBeginFrameで毎フレーム戻る（Off／半径2）
+    void SetBlurMode(BlurMode mode);
+    void SetBlurRadius(int radius);
     // ガンマ補正のON/OFF切り替え（ScreenBlitパスのpow(1/2.2)を分岐）
     void SetGammaCorrection(bool isOn) { m_postProcessData.gammaCorrection = isOn ? 1.0f : 0.0f; }
 
@@ -156,6 +161,9 @@ private:
     VignettePostProcess* m_vignette = nullptr; // チェーン内の要素への参照（所有はチェーン）
     InversionPostProcess* m_inversionPS = nullptr;   // 同上。PS版の色反転
     InversionCSPostProcess* m_inversionCS = nullptr; // 同上。CS版の色反転
+    SimpleBoxBlurPostProcess* m_boxBlurPS = nullptr;        // 同上。PS版のボックスブラー（2D）
+    BoxBlurCSPostProcess* m_boxBlurCSNoShared = nullptr;    // 同上。CS版（分離・共有なし）
+    BoxBlurCSPostProcess* m_boxBlurCSShared = nullptr;      // 同上。CS版（分離・groupshared）
     // HDRの段：Bloom（縮小／拡大の連鎖）
     BloomPass* m_bloomPass = nullptr;
     bool m_bloomActive = true;

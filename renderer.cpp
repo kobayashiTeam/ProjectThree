@@ -14,6 +14,7 @@
 #include"monochromePostProcess.h"
 #include"inversionPostProcess.h"
 #include"inversionCSPostProcess.h"
+#include"boxBlurCSPostProcess.h"
 #include"sepiaPostProcess.h"
 #include"simpleBoxBlurPostProcess.h"
 #include"sharpenPostProcess.h"
@@ -128,7 +129,10 @@ bool Renderer::Initialize(Graphics* graphics)
     m_inversionPS = m_postProcessChain->AddEffect<InversionPostProcess>(pDevice, ShaderID::Inversion, false);
     m_inversionCS = m_postProcessChain->AddEffect<InversionCSPostProcess>(pDevice, ShaderID::InversionCS, false);
     m_postProcessChain->AddEffect<SepiaPostProcess>(pDevice, ShaderID::Sepia, false);
-    m_postProcessChain->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
+    // ボックスブラーも同じく、PS版とCS版2つを隣に並べてどれか1つだけを有効にする
+    m_boxBlurPS = m_postProcessChain->AddEffect<SimpleBoxBlurPostProcess>(pDevice, ShaderID::SimpleBoxBlur, false);
+    m_boxBlurCSNoShared = m_postProcessChain->AddEffect<BoxBlurCSPostProcess>(pDevice, ShaderID::BoxBlurCSNoShared, false);
+    m_boxBlurCSShared = m_postProcessChain->AddEffect<BoxBlurCSPostProcess>(pDevice, ShaderID::BoxBlurCS, false);
     m_postProcessChain->AddEffect<SharpenPostProcess>(pDevice, ShaderID::Sharpen, false);
     m_vignette = m_postProcessChain->AddEffect<VignettePostProcess>(pDevice, ShaderID::Vignette, false);
 
@@ -257,6 +261,8 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     m_tonemapper = Tonemapper::Exposure;
     SetVignetteActive(false);
     SetInversionMode(InversionMode::Off);
+    SetBlurMode(BlurMode::Off);
+    SetBlurRadius(2);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -666,6 +672,21 @@ void Renderer::SetInversionMode(InversionMode mode)
 {
     if (m_inversionPS) m_inversionPS->SetActive(mode == InversionMode::PixelShader);
     if (m_inversionCS) m_inversionCS->SetActive(mode == InversionMode::ComputeShader);
+}
+
+void Renderer::SetBlurMode(BlurMode mode)
+{
+    if (m_boxBlurPS) m_boxBlurPS->SetActive(mode == BlurMode::PixelShader);
+    if (m_boxBlurCSNoShared) m_boxBlurCSNoShared->SetActive(mode == BlurMode::ComputeNoShared);
+    if (m_boxBlurCSShared) m_boxBlurCSShared->SetActive(mode == BlurMode::ComputeShared);
+}
+
+void Renderer::SetBlurRadius(int radius)
+{
+    // 3つとも同じ半径にそろえる（同じ絵で ms だけを比べるため）
+    if (m_boxBlurPS) m_boxBlurPS->SetRadius(radius);
+    if (m_boxBlurCSNoShared) m_boxBlurCSNoShared->SetRadius(radius);
+    if (m_boxBlurCSShared) m_boxBlurCSShared->SetRadius(radius);
 }
 
 void Renderer::SetInstanceCount(UINT count, DirectX::XMFLOAT3 offset)
