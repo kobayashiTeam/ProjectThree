@@ -10,6 +10,7 @@ namespace
         L"ShadowDir",
         L"ShadowCSM",
         L"ShadowPoint",
+        L"Particles",
         L"GBuffer",
         L"SSAO",
         L"Lighting",

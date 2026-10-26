@@ -170,6 +170,7 @@
     <ClCompile Include="normalMappingMaterial.cpp" />
     <ClCompile Include="normalVizMaterial.cpp" />
     <ClCompile Include="parallaxMappingMaterial.cpp" />
+    <ClCompile Include="particleSystem.cpp" />
     <ClCompile Include="PointSpriteGSEffect.cpp" />
     <ClCompile Include="rasterizerStates.cpp" />
     <ClCompile Include="renderer.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="scene1.cpp" />
     <ClCompile Include="scene10.cpp" />
     <ClCompile Include="scene11.cpp" />
+    <ClCompile Include="scene12.cpp" />
     <ClCompile Include="scene2.cpp" />
     <ClCompile Include="scene3.cpp" />
     <ClCompile Include="scene4.cpp" />
@@ -234,6 +236,7 @@
     <ClInclude Include="normalVizGSEffect.h" />
     <ClInclude Include="normalVizMaterial.h" />
     <ClInclude Include="parallaxMappingMaterial.h" />
+    <ClInclude Include="particleSystem.h" />
     <ClInclude Include="pointSpriteGSEffect.h" />
     <ClInclude Include="postProcess.h" />
     <ClInclude Include="postProcessChain.h" />
@@ -247,6 +250,7 @@
     <ClInclude Include="scene1.h" />
     <ClInclude Include="scene10.h" />
     <ClInclude Include="scene11.h" />
+    <ClInclude Include="scene12.h" />
     <ClInclude Include="scene2.h" />
     <ClInclude Include="scene3.h" />
     <ClInclude Include="scene4.h" />
@@ -505,6 +509,14 @@
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <FxCompile Include="Shaders\ParticleDraw.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticleUpdateCS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\PrefilterSpecular.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

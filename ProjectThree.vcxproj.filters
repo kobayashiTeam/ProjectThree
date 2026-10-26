@@ -88,6 +88,9 @@
     <Filter Include="ヘッダー ファイル\common">
       <UniqueIdentifier>{91b91f43-55d3-4eed-8a2a-aba3d100c9a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\particle">
+      <UniqueIdentifier>{fda12786-450b-4e35-9cd4-cc6be4ce385b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -299,6 +302,12 @@
     </ClCompile>
     <ClCompile Include="gpuProfiler.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="particleSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="scene12.cpp">
+      <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -524,6 +533,12 @@
     <ClInclude Include="boxBlurCSPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
+    <ClInclude Include="particleSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="scene12.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
@@ -570,6 +585,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\BoxBlurCS.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticleDraw.hlsl">
+      <Filter>リソース ファイル\particle</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticleUpdateCS.hlsl">
+      <Filter>リソース ファイル\particle</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

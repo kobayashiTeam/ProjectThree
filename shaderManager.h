@@ -67,6 +67,8 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebug, L"Shaders/GBufferDebugBlit.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebugDepth, L"Shaders/GBufferDebugDepthBlit.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::GBufferDebugAlpha, L"Shaders/GBufferDebugAlphaBlit.hlsl")) return false;
+        //GPUパーティクル（VS/PS。GSは LoadAllGeometryShaders で同じファイルから読む）
+        if (!GetOrCreate(pDevice, ShaderID::ParticleDraw, L"Shaders/ParticleDraw.hlsl")) return false;
         return true;
     }
 
@@ -90,6 +92,9 @@ public:
             L"Shaders/PointSpriteGS.hlsl")) return false;
         if (!loadGeometryShader(pDevice, ShaderID::ShadowCubeGS,
             L"Shaders/ShadowCubeGS.hlsl")) return false;
+        // パーティクルは最大100万個の点を通すので、最適化を効かせる（計測にも使うため）
+        if (!loadGeometryShader(pDevice, ShaderID::ParticleDrawGS,
+            L"Shaders/ParticleDraw.hlsl", true)) return false;
 
         return true;
     }
@@ -103,6 +108,7 @@ public:
         if (!loadComputeShader(pDevice, ShaderID::InversionCS, L"Shaders/InversionCS.hlsl")) return false;
         if (!loadComputeShader(pDevice, ShaderID::BoxBlurCS, L"Shaders/BoxBlurCS.hlsl")) return false;
         if (!loadComputeShader(pDevice, ShaderID::BoxBlurCSNoShared, L"Shaders/BoxBlurCS.hlsl", "CSMainNoShared")) return false;
+        if (!loadComputeShader(pDevice, ShaderID::ParticleUpdateCS, L"Shaders/ParticleUpdateCS.hlsl")) return false;
         return true;
     }
 
@@ -231,6 +237,11 @@ private:
             layout = standardLayout;
             layoutCount = 4;
             break;
+        case ShaderID::ParticleDraw:
+            // 頂点バッファから何も読まない（VSは SV_VertexID だけを使う）ので、InputLayout を作らない
+            layout = nullptr;
+            layoutCount = 0;
+            break;
         case ShaderID::Monochromatic:
         case ShaderID::Inversion:
         case ShaderID::Sepia:
@@ -251,12 +262,14 @@ private:
     }
 
 
-    bool loadGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename) {
+    // optimize：既定（false）はデバッグ用に最適化を切る。計測に使うGSは true にしてPS/CSと同じ条件にする
+    bool loadGeometryShader(ID3D11Device* pDevice, ShaderID id, const wchar_t* filename,
+        bool optimize = false) {
         ComPtr<ID3DBlob> blob, errBlob;
         HRESULT hr = D3DCompileFromFile(
             filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
             "GSmain", "gs_5_0",
-            D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+            optimize ? 0 : (D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION),
             0, &blob, &errBlob
         );
         if (FAILED(hr)) {

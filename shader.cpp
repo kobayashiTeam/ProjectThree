@@ -1,38 +1,43 @@
-
+ï»¿
 #include "shader.h"
 
 bool Shader::Create(ID3D11Device* pDevice, const wchar_t* vsFileName, const wchar_t* psFileName,
-    const D3D11_INPUT_ELEMENT_DESC* layout,  UINT layoutCount)
+    const D3D11_INPUT_ELEMENT_DESC* layout, UINT layoutCount)
 {
     HRESULT hr;
     ID3DBlob* pVSBlob = nullptr;
     ID3DBlob* pErrorBlob = nullptr;
 
-    // 1. ’¸“_ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹‚Æ¶¬
+    // 1. é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã¨ç”Ÿæˆ
     hr = D3DCompileFromFile(vsFileName, nullptr, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, &pErrorBlob);
     if (FAILED(hr)) {
         if (pErrorBlob) {
-            // o—ÍƒEƒBƒ“ƒhƒE‚ÉƒRƒ“ƒpƒCƒ‹ƒGƒ‰[‚ÌÚ×‚ð•\Ž¦
+            // å‡ºåŠ›ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã‚¨ãƒ©ãƒ¼ã®è©³ç´°ã‚’è¡¨ç¤º
             OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
             pErrorBlob->Release();
-        } return false; }
+        } return false;
+    }
 
     hr = pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &m_pVertexShader);
     if (FAILED(hr)) { pVSBlob->Release(); return false; }
 
-    // 2. ’¸“_ƒŒƒCƒAƒEƒg‚Ìì¬
-    hr = pDevice->CreateInputLayout(layout, layoutCount, pVSBlob->GetBufferPointer(), 
-        pVSBlob->GetBufferSize(), &m_pVertexLayout);
+    // 2. é ‚ç‚¹ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆã®ä½œæˆ
+    //    layoutCount ãŒ 0 ã®ã¨ãã¯ä½œã‚‰ãªã„ï¼ˆé ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã‹ã‚‰ä½•ã‚‚èª­ã¾ãªã„VSã€‚ä¾‹ï¼šSV_VertexIDã ã‘ã‚’ä½¿ã†ãƒ‘ãƒ¼ãƒ†ã‚£ã‚¯ãƒ«ï¼‰
+    //    m_pVertexLayout ã¯ nullptr ã®ã¾ã¾ã§ã€Bind ã§ IASetInputLayout(nullptr) ã«ãªã‚‹
+    if (layoutCount > 0) {
+        hr = pDevice->CreateInputLayout(layout, layoutCount, pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), &m_pVertexLayout);
+        if (FAILED(hr)) { pVSBlob->Release(); return false; }
+    }
     pVSBlob->Release();
-    if (FAILED(hr)) return false;
 
-    // 3. ƒsƒNƒZƒ‹ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹‚Æ¶¬
+    // 3. ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã¨ç”Ÿæˆ
     ID3DBlob* pPSBlob = nullptr;
-    hr = D3DCompileFromFile(psFileName, nullptr, nullptr, "PS", "ps_5_0", 0, 0, 
+    hr = D3DCompileFromFile(psFileName, nullptr, nullptr, "PS", "ps_5_0", 0, 0,
         &pPSBlob, &pErrorBlob);
     if (FAILED(hr)) { if (pErrorBlob) pErrorBlob->Release(); return false; }
 
-    hr = pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), 
+    hr = pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(),
         pPSBlob->GetBufferSize(), nullptr, &m_pPixelShader);
     pPSBlob->Release();
     if (FAILED(hr)) return false;

@@ -45,6 +45,7 @@ class DeferredLightingPass;
 class IrradianceConvolutionPass;
 class PrefilterSpecularPass;
 class GpuProfiler;
+class ParticleSystem;
 
 class Renderer
 {
@@ -111,6 +112,10 @@ public:
     void SetCascadeLambda(float lambda);
     float GetCascadeSplit(int index) const;
 
+    // GPUパーティクル（Scene12）。所有はシーン側で、Rendererは借りて更新・描画するだけ
+    // BeginFrameで毎フレーム nullptr に戻るので、使うシーンはSubmit()内で毎フレーム渡す
+    void SubmitParticles(ParticleSystem* particles) { m_particles = particles; }
+
     // GPU計測（パスごとのms）。表示はGame側でTextRendererに描かせる
     GpuProfiler* GetGpuProfiler() const { return m_gpuProfiler; }
 
@@ -176,6 +181,8 @@ private:
     PointSpriteGSEffect* m_pPointSpriteGSEffect = nullptr;
     //instancedModel
     InstancedModel* m_pInstancedModel = nullptr;
+    // GPUパーティクル（借用。このフレームで渡されたときだけ nullptr 以外）
+    ParticleSystem* m_particles = nullptr;
 
 
     //ポストプロセスバッファ、参照

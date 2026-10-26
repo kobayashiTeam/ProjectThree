@@ -12,6 +12,7 @@
 #include"scene9.h"
 #include"scene10.h"
 #include"scene11.h"
+#include"scene12.h"
 
 void IScene::CheckSceneNumberKeys() {
     if (Input::IsKeyPressed('0')) { m_nextScene = new Scene0(); return; }
@@ -27,6 +28,8 @@ void IScene::CheckSceneNumberKeys() {
     //  Scene10は0〜9の数字を使い切っているのでF1に割り当て
     if (Input::IsKeyPressed(VK_F1)) { m_nextScene = new Scene10(); return; }
     if (Input::IsKeyPressed(VK_F2)) { m_nextScene = new Scene11(); return; }
+    //  F3〜F5は全シーン共通の計測スイッチ（GPU表示・VSync・カリング）に使っているので、Scene12はF6
+    if (Input::IsKeyPressed(VK_F6)) { m_nextScene = new Scene12(); return; }
 }
 
 void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
@@ -41,7 +44,7 @@ void IScene::DrawSceneNavigationHint(TextRenderer* textRenderer) {
         1.0f, 1.0f, 1.0f, 1.0f,   // 白色・不透明で表示
         0.7f);                    // scale：本文より小さく表示
     textRenderer->DrawString(
-        L"F1:PBR Interactive F2:Cascaded Shadow",
+        L"F1:PBR Interactive F2:Cascaded Shadow F6:GPU Particles",
         500.0f, 680.0f,
         1.0f, 1.0f, 1.0f, 1.0f,
         0.7f);

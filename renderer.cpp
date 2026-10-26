@@ -39,6 +39,7 @@
 #include"irradianceConvolutionPass.h"
 #include"prefilterSpecularPass.h"
 #include"gpuProfiler.h"
+#include"particleSystem.h"
 
 Renderer::~Renderer()
 {
@@ -263,6 +264,8 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     SetInversionMode(InversionMode::Off);
     SetBlurMode(BlurMode::Off);
     SetBlurRadius(2);
+    // パーティクルも毎フレーム外す（所有はシーンなので、シーンが消えた後に古いポインタを使わないため）
+    m_particles = nullptr;
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
@@ -392,6 +395,16 @@ void Renderer::Execute()
         m_gpuProfiler->End(pContext, GpuProfiler::Section::ShadowPoint);
     }
 
+    // ===== GPUパーティクルの更新（Scene12） =====
+    // 描画（Forwardの中）より前に、このフレームの位置へ進めておく
+    // GPU経路：CSのDispatch ／ CPU経路：C++のループ＋UpdateSubresource（ここで測れるのはGPU側の転送だけ）
+    if (m_particles)
+    {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Particles);
+        m_particles->Update(pContext);
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::Particles);
+    }
+
     // ==========================================
     // 1. オフスクリーンRTに描画先を切り替え
     // ==========================================
@@ -513,6 +526,21 @@ void Renderer::Execute()
     m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true, pCull, &m_cullStats);
+
+    // ─── 工程4: GPUパーティクル（Scene12）───
+    // 加算合成なので、描く順番に結果が左右されない（並べ替え不要）
+    // 深度は読むだけ：床や台座の後ろに隠れる粒は消えるが、粒どうしは隠し合わない（書くと手前の粒が奥の粒を消してしまう）
+    // 板は表裏を気にしないので、カリングなし
+    if (m_particles)
+    {
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthReadOnly);
+        m_blendStates->Bind(pContext, BlendMode::Additive);
+        m_particles->Draw(pContext, m_perFrameCB.Get());
+        m_blendStates->Bind(pContext, BlendMode::Opaque);
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
+    }
 
 
 

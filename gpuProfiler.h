@@ -38,6 +38,7 @@ public:
         ShadowDir,    // 旧・方向光シャドウマップ
         ShadowCSM,    // カスケードシャドウ（3段）
         ShadowPoint,  // 点光源キューブシャドウ（GSで6面）
+        Particles,    // パーティクルの更新（GPU経路：CSのDispatch ／ CPU経路：UpdateSubresourceの転送）。描画はForwardに含む
         GBuffer,      // G-Buffer書き込み（DeferredOpaque）
         SSAO,         // SSAO生成＋ブラー
         Lighting,     // Deferredライティング

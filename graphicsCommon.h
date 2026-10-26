@@ -95,7 +95,17 @@ enum class ShaderID {
     //compute（VS/PSと組にならない単独のシェーダー。ShaderManager::GetCS で取り出す）
     InversionCS,
     BoxBlurCS,         // 分離ボックスブラー：近所を groupshared から読む（BoxBlurCS.hlsl の CSMain）
-    BoxBlurCSNoShared  // 分離ボックスブラー：近所を毎回テクスチャから読む（同じファイルの CSMainNoShared）
+    BoxBlurCSNoShared, // 分離ボックスブラー：近所を毎回テクスチャから読む（同じファイルの CSMainNoShared）
+    // Scene12：GPUパーティクル
+    ParticleUpdateCS,  // 粒の更新（ParticleUpdateCS.hlsl の CSMain）
+    ParticleDraw,      // 粒の描画の VS/PS（ParticleDraw.hlsl。InputLayout なし、SV_VertexID で粒を読む）
+    ParticleDrawGS     // 粒の描画の GS（同じファイルの GSmain。点 → カメラ向きの板）
+};
+
+// Scene12：パーティクルの更新をどちらで行うか（同じ動きのまま、更新の ms だけを比べるため）
+enum class ParticleUpdateMode {
+    GPU, // CSで更新。CPUは粒の中身に触らない
+    CPU  // C++のループで更新し、毎フレーム UpdateSubresource でGPUへ送る
 };
 
 //ライト関連
