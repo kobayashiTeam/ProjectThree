@@ -38,11 +38,12 @@ public:
         ShadowDir,    // 旧・方向光シャドウマップ
         ShadowCSM,    // カスケードシャドウ（3段）
         ShadowPoint,  // 点光源キューブシャドウ（GSで6面）
-        Particles,    // パーティクルの更新（GPU経路：CSのDispatch ／ CPU経路：UpdateSubresourceの転送）。描画はForwardに含む
+        Particles,    // パーティクルの更新（GPU経路：CSのDispatch ／ CPU経路：UpdateSubresourceの転送）。描画はParticleDraw
         GBuffer,      // G-Buffer書き込み（DeferredOpaque）
         SSAO,         // SSAO生成＋ブラー
         Lighting,     // Deferredライティング
         Forward,      // フォワード不透明・インスタンシング・スカイ・半透明＋MSAAのResolve
+        ParticleDraw, // パーティクルの描画（Resolveの後、MSAAなしのRTへ加算）
         Bloom,        // HDR段：Bloom（縮小／拡大）
         Post,         // Tonemap＋LDRチェーン＋最終ブリット
         Count

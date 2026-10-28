@@ -592,10 +592,10 @@
     <FxCompile Include="Shaders\BoxBlurCS.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ParticleDraw.hlsl">
+    <FxCompile Include="Shaders\ParticleUpdateCS.hlsl">
       <Filter>リソース ファイル\particle</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ParticleUpdateCS.hlsl">
+    <FxCompile Include="Shaders\ParticleDraw.hlsl">
       <Filter>リソース ファイル\particle</Filter>
     </FxCompile>
   </ItemGroup>

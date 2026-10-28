@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include<d3d11.h>
 #include"renderTarget.h"
 
@@ -31,7 +31,7 @@ public:
         delete m_depthOnly;
     }
 
-    // MRT‚ÌƒNƒŠƒA{ƒoƒCƒ“ƒh‚Ì‚ÝBƒXƒe[ƒgÝ’è‚ÆƒLƒ…[ŽÀs‚ÍRenderer‘¤‚ÉŽc‚·
+    // MRTã®ã‚¯ãƒªã‚¢ï¼‹ãƒã‚¤ãƒ³ãƒ‰ã®ã¿ã€‚ã‚¹ãƒ†ãƒ¼ãƒˆè¨­å®šã¨ã‚­ãƒ¥ãƒ¼å®Ÿè¡Œã¯Rendererå´ã«æ®‹ã™
     void Begin(ID3D11DeviceContext* ctx) {
         m_position->Clear(ctx);
         m_normal->Clear(ctx);
@@ -42,11 +42,13 @@ public:
         RenderTarget::BindMultiple(ctx, 3, targets, m_depthOnly->GetDSV());
     }
 
-    // ƒQƒbƒ^[ŒQiSSAO/LightingƒpƒX‚©‚çŽg‚¤j
+    // ã‚²ãƒƒã‚¿ãƒ¼ç¾¤ï¼ˆSSAO/Lightingãƒ‘ã‚¹ã‹ã‚‰ä½¿ã†ï¼‰
     ID3D11ShaderResourceView* GetAlbedoSRV()   const { return m_albedo->GetSRV(); }
     ID3D11ShaderResourceView* GetNormalSRV()   const { return m_normal->GetSRV(); }
     ID3D11ShaderResourceView* GetPositionSRV() const { return m_position->GetSRV(); }
     ID3D11ShaderResourceView* GetDepthSRV()    const { return m_depthOnly->GetSRV(); }
+    // ãƒ‘ãƒ¼ãƒ†ã‚£ã‚¯ãƒ«ç”¨ï¼šMSAAãªã—ã®RTã«æãã¨ãã€æ·±åº¦ãƒ†ã‚¹ãƒˆï¼ˆèª­ã‚€ã ã‘ï¼‰ã«ä½¿ã†
+    ID3D11DepthStencilView* GetDepthDSV()      const { return m_depthOnly->GetDSV(); }
     ID3D11SamplerState* GetDepthSampler()      const { return m_depthSampler.Get(); }
 
 private:

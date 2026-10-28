@@ -396,7 +396,7 @@ void Renderer::Execute()
     }
 
     // ===== GPUパーティクルの更新（Scene12） =====
-    // 描画（Forwardの中）より前に、このフレームの位置へ進めておく
+    // 描画（Resolveの後の ParticleDraw）より前に、このフレームの位置へ進めておく
     // GPU経路：CSのDispatch ／ CPU経路：C++のループ＋UpdateSubresource（ここで測れるのはGPU側の転送だけ）
     if (m_particles)
     {
@@ -527,20 +527,7 @@ void Renderer::Execute()
     m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
     m_renderQueues[transparentIdx].Execute(pContext, m_perFrameCB.Get(), m_blendStates, true, pCull, &m_cullStats);
 
-    // ─── 工程4: GPUパーティクル（Scene12）───
-    // 加算合成なので、描く順番に結果が左右されない（並べ替え不要）
-    // 深度は読むだけ：床や台座の後ろに隠れる粒は消えるが、粒どうしは隠し合わない（書くと手前の粒が奥の粒を消してしまう）
-    // 板は表裏を気にしないので、カリングなし
-    if (m_particles)
-    {
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);
-        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthReadOnly);
-        m_blendStates->Bind(pContext, BlendMode::Additive);
-        m_particles->Draw(pContext, m_perFrameCB.Get());
-        m_blendStates->Bind(pContext, BlendMode::Opaque);
-        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
-        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
-    }
+    // ※GPUパーティクルは、ここ（MSAAのRT）ではなく、Resolveの後でMSAAなしのRTに描く（下の 3.5）
 
 
 
@@ -553,6 +540,47 @@ void Renderer::Execute()
         DXGI_FORMAT_R16G16B16A16_FLOAT
     );
     m_gpuProfiler->End(pContext, GpuProfiler::Section::Forward);
+
+    // ==========================================
+    // 3.5 GPUパーティクル（Scene12）：MSAAなしのRTに描く
+    // ==========================================
+    // 4x MSAA のRTに加算で描くと、出力の段（読む→足す→書く）が覆ったサンプルの数（最大4回）だけ走る。
+    // 粒は縁のぼやけた光なので、MSAAで縁をなめらかにしても見た目はほとんど得をしない
+    // → Resolve済みの offscreenRT（MSAAなし）に直接描き、出力の段の往復を1回にする
+    //
+    // 深度：offscreenRT の深度ではなく、G-Buffer の深度（MSAAなし・同じ大きさ）を読むだけでつなぐ
+    //   ・床や台座（DeferredOpaque）の後ろの粒は、いつもの深度テストで隠れる
+    //   ・ただしG-Bufferの深度にはフォワードの物（Opaqueキュー）とスカイボックスが入っていない
+    //     → それらの後ろの粒は隠れない（Scene12は遅延の物だけなので問題ない）
+    // 加算なので描く順番に結果が左右されない（並べ替え不要）。深度は書かない（粒どうしは隠し合わない）
+    // 板は表裏を気にしないので、カリングなし
+    if (m_particles)
+    {
+        m_gpuProfiler->Begin(pContext, GpuProfiler::Section::ParticleDraw);
+
+        // G-Bufferの深度は、ライティングパスが PS の t11 に SRV としてつないだまま。
+        // 同じテクスチャを深度バッファ（DSV）としてつなぐ前に外す（外さないとランタイムが自動で外し、警告を出す）
+        ID3D11ShaderResourceView* nullSRV = nullptr;
+        pContext->PSSetShaderResources(11, 1, &nullSRV);
+
+        // 書き込み先：Resolve済みの offscreenRT ＋ G-Bufferの深度
+        // ビューポートは MSAA のRTと同じ大きさのまま（どちらも画面サイズ）なので、設定し直さない
+        ID3D11RenderTargetView* rtv = m_offscreenRT->GetRTV();
+        pContext->OMSetRenderTargets(1, &rtv, m_gBufferPass->GetDepthDSV());
+
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::None);
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthReadOnly);
+        m_blendStates->Bind(pContext, BlendMode::Additive);
+        m_particles->Draw(pContext, m_perFrameCB.Get());
+        m_blendStates->Bind(pContext, BlendMode::Opaque);
+        m_dsStates->Bind(pContext, DepthStencilStates::Mode::DepthTest);
+        m_rasterStates->Bind(pContext, RasterizerStates::CullMode::Back);
+
+        // 後片付け：この後の Bloom／Tonemap は offscreenRT を SRV として読むので、RTV から外しておく
+        pContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+        m_gpuProfiler->End(pContext, GpuProfiler::Section::ParticleDraw);
+    }
 
     // b5（露出・トーンマッピング方式・Bloomの強さ・ガンマ）を更新してバインド
     UpdatePostProcessConstantBuffer();

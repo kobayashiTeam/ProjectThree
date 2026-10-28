@@ -15,6 +15,7 @@ namespace
         L"SSAO",
         L"Lighting",
         L"Forward",
+        L"ParticleDraw",
         L"Bloom",
         L"Post",
     };
