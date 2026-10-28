@@ -89,10 +89,6 @@ public:
         DrawSceneNavigationHint(textRenderer);
     }
 
-    void Exit(Renderer* renderer)override {
-        renderer->SetInstanceCount(static_cast<UINT>(0));
-    }
-
 private:
     void AddObject(std::unique_ptr<GameObject> obj) {
         m_objects.push_back(std::move(obj));

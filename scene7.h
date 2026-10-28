@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "IScene.h"
 #include "uiLayoutCommon.h"
 
@@ -11,14 +11,14 @@ public:
     bool Enter() override;
 
     void Update(float dt) override {
-        // P/MƒL[‚ÅƒCƒ“ƒXƒ^ƒ“ƒX”‚ğ˜A‘±“I‚É‘Œ¸
-        const float countSpeed = 60.0f; // 1•b‚ ‚½‚è‚Ì‘Œ¸”
+        // P/Mã‚­ãƒ¼ã§ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹æ•°ã‚’é€£ç¶šçš„ã«å¢—æ¸›
+        const float countSpeed = 60.0f; // 1ç§’ã‚ãŸã‚Šã®å¢—æ¸›æ•°
         if (Input::IsKeyDown('P')) m_instanceCountF += countSpeed * dt;
         if (Input::IsKeyDown('M')) m_instanceCountF -= countSpeed * dt;
         if (m_instanceCountF > static_cast<float>(kMaxInstances)) m_instanceCountF = static_cast<float>(kMaxInstances);
         if (m_instanceCountF < 0.0f) m_instanceCountF = 0.0f;
 
-        // ‘SƒV[ƒ“‹¤’Ê‚ÌƒV[ƒ“”Ô†ƒL[”»’è
+        // å…¨ã‚·ãƒ¼ãƒ³å…±é€šã®ã‚·ãƒ¼ãƒ³ç•ªå·ã‚­ãƒ¼åˆ¤å®š
         CheckSceneNumberKeys();
     }
 
@@ -35,19 +35,15 @@ public:
         textRenderer->DrawString(buf, 20.0f, 140.0f);
 
         m_uiTime += dt;
-        // Œ»İ‚Ìscene”Ô†•\¦
+        // ç¾åœ¨ã®sceneç•ªå·è¡¨ç¤º
         displayCurrentScene(textRenderer, 7);
-        // ”šƒL[‚Å‚Ì‘JˆÚ•û–@•\¦
+        // æ•°å­—ã‚­ãƒ¼ã§ã®é·ç§»æ–¹æ³•è¡¨ç¤º
         displayHowToUse(textRenderer, dt);
         DrawSceneNavigationHint(textRenderer);
     }
 
-    void Exit(Renderer* renderer)override {
-        renderer->SetInstanceCount(static_cast<UINT>(0));
-    }
-
 private:
     static constexpr int kMaxInstances = 512;
-    // ‰Šú’l‚Í‹ŒƒeƒXƒgƒR[ƒh‚Æ“¯‚¶3^3=27ŒÂ‚©‚çŠJn
+    // åˆæœŸå€¤ã¯æ—§ãƒ†ã‚¹ãƒˆã‚³ãƒ¼ãƒ‰ã¨åŒã˜3^3=27å€‹ã‹ã‚‰é–‹å§‹
     float m_instanceCountF = 27.0f;
 };

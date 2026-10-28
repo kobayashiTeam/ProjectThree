@@ -266,6 +266,9 @@ void Renderer::BeginFrame(Camera* camera, float r, float g, float b, float a)
     SetBlurRadius(2);
     // パーティクルも毎フレーム外す（所有はシーンなので、シーンが消えた後に古いポインタを使わないため）
     m_particles = nullptr;
+    // GPUインスタンシングの表示個数も毎フレーム0に戻す。使うシーン（Scene7・8）はSubmit()内で毎フレーム指定する
+    // （以前は各シーンのExit()で0に戻していたが、書き忘れると次のシーンに群れが残るため、他の設定と同じ約束事にそろえた）
+    SetInstanceCount(0);
 }
 
 void Renderer::UpdatePerFrameConstantBuffer()
