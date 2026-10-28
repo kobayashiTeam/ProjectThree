@@ -116,5 +116,9 @@ float4 PS(GSOut input) : SV_Target
     float r = length(input.UV * 2.0f - 1.0f);
     float falloff = saturate(1.0f - r);
     falloff *= falloff;
-    return float4(input.Color.rgb * falloff, 1.0f);
-}
+    if (falloff <= 0.0f)
+    {
+        discard;
+    }
+        return float4(input.Color.rgb * falloff, 1.0f);
+    }

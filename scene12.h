@@ -105,7 +105,7 @@ private:
     // 粒の数の段階（バッファは最大数で1回だけ作り、動かす数だけを変える）
     static constexpr int COUNT_LEVELS = 3;
     static constexpr UINT  COUNTS[COUNT_LEVELS] = { 10000, 100000, 1000000 };
-    static constexpr float SIZES[COUNT_LEVELS] = { 0.05f, 0.035f, 0.02f };
+    static constexpr float SIZES[COUNT_LEVELS] = { 0.05f, 0.035f, 0.02f };//0.035or0.005
     static constexpr float INTENSITIES[COUNT_LEVELS] = { 1.0f, 0.35f, 0.12f };
 
     // このシーンが持つ（最大100万個で32MB。他のシーンでは要らないので、シーンと一緒に消える）

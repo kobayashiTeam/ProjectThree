@@ -91,6 +91,12 @@
     <Filter Include="リソース ファイル\particle">
       <UniqueIdentifier>{fda12786-450b-4e35-9cd4-cc6be4ce385b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\particle">
+      <UniqueIdentifier>{b83fec17-9d1f-4aa6-92d1-c9e692e83ffb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\particle">
+      <UniqueIdentifier>{c3f842b7-90a2-4bd4-954a-502245a3471a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -303,11 +309,11 @@
     <ClCompile Include="gpuProfiler.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="particleSystem.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="scene12.cpp">
       <Filter>ソース ファイル\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="particleSystem.cpp">
+      <Filter>ソース ファイル\particle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -533,11 +539,11 @@
     <ClInclude Include="boxBlurCSPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
-    <ClInclude Include="particleSystem.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="scene12.h">
       <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="particleSystem.h">
+      <Filter>ヘッダー ファイル\particle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
