@@ -100,7 +100,7 @@ bool SSAOPass::initSamplers(ID3D11Device* pDevice) {
 
 }
 
-bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
+bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice) {
 
     // --- SSAO_KERNEL_SIZE個のサンプルベクトルの生成ロジック ---
     // 数を変えるときは graphicsCommon.h の SSAO_KERNEL_SIZE だけを変える
@@ -127,7 +127,7 @@ bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
     }
 
     // --- 固定パラメータの初期値設定 ---
-    m_paramData.noiseScale = DirectX::XMFLOAT2(w / 4.0f, h / 4.0f); // 4x4のノイズを画面全体に敷き詰める回数
+    // noiseScale（4x4のノイズを敷き詰める回数）は書き込む先の大きさで変わるので、毎フレーム updateConstantBuffer で入れる
     m_paramData.radius = 0.40f;   // 遮蔽を調べる半径（ゲームのスケールに合わせて要調整）
     m_paramData.bias = 0.03f; // アクネ（自己遮蔽ノイズ）を防ぐためのバイアス値
     m_paramData.kernelSize = kernelSize; // シェーダーのループ回数と割る数（C++と数がずれないよう、ここから渡す）
@@ -148,9 +148,12 @@ bool SSAOPass::initConstantBuffer(ID3D11Device* pDevice, float w, float h) {
 
 }
 
-void SSAOPass::updateConstantBuffer(ID3D11DeviceContext* ctx) {
+void SSAOPass::updateConstantBuffer(ID3D11DeviceContext* ctx, float targetW, float targetH) {
 
     // TODO: 将来的にImGui等でradius/biasを実行時調整する場合は、ここでm_paramDataを更新してからMapする
+
+    // 4x4のノイズを、書き込む先の1ピクセルに1マスずつ敷き詰める回数（全解像度と半分で変わる）
+    m_paramData.noiseScale = DirectX::XMFLOAT2(targetW / 4.0f, targetH / 4.0f);
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     // GPUの書き込みが終わるのを待たずに新しいバッファを割り当てる DISCARD を指定

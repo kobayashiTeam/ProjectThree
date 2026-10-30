@@ -779,3 +779,7 @@ float Renderer::GetCascadeSplit(int index) const
 {
     return m_shadowSystem ? m_shadowSystem->GetCascadeSplit(index) : 0.0f;
 }
+
+// SSAOの解像度の切り替え（実体はSSAOPassが持つ。Rendererは窓口だけ）
+void Renderer::ToggleSSAOHalfRes() { m_ssaoPass->ToggleHalfRes(); }
+bool Renderer::IsSSAOHalfRes() const { return m_ssaoPass->IsHalfRes(); }

@@ -17,6 +17,14 @@ public:
         if (FAILED(device->CreateSamplerState(&pointDesc, m_depthSampler.GetAddressOf())))
             return false;
 
+        // SSAOを読む用（s4）。SSAOが半分の解像度のとき、間を混ぜて元の大きさに戻す（バイリニアの拡大）
+        // 全解像度のときはテクセルの中心をちょうど読むので、Pointと同じ結果になる
+        // 画面の端で反対側を混ぜないようClamp
+        D3D11_SAMPLER_DESC linearDesc = pointDesc;
+        linearDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        if (FAILED(device->CreateSamplerState(&linearDesc, m_ssaoSampler.GetAddressOf())))
+            return false;
+
         return true;
     }
 
@@ -45,6 +53,8 @@ public:
         m_shader->Bind(ctx);
         ID3D11SamplerState* pointSampler = m_depthSampler.Get();
         ctx->PSSetSamplers(3, 1, &pointSampler);
+        ID3D11SamplerState* ssaoSampler = m_ssaoSampler.Get();
+        ctx->PSSetSamplers(4, 1, &ssaoSampler);
 
         dsStates->Bind(ctx, DepthStencilStates::Mode::DepthTest); // SV_Depth書き込みのため必要
         fullscreenQuad->Render(ctx);
@@ -53,4 +63,5 @@ public:
 private:
     Shader* m_shader = nullptr;
     ComPtr<ID3D11SamplerState> m_depthSampler;
+    ComPtr<ID3D11SamplerState> m_ssaoSampler; // s4：SSAOの拡大用（Linear・Clamp）
 };

@@ -123,6 +123,11 @@ public:
     // ON/OFFはフレームをまたいで保持する（計測で見比べるためのスイッチなので、BeginFrameでは戻さない）
     void ToggleFrustumCulling() { m_frustumCullingEnabled = !m_frustumCullingEnabled; }
     bool IsFrustumCullingEnabled() const { return m_frustumCullingEnabled; }
+    // SSAOを半分の解像度で作るかのON/OFF（全シーン共通。計測で見比べる用。BeginFrameでは戻さない）
+    // SSAOPassは前方宣言だけなので、中身はrenderer.cppに置く
+    void ToggleSSAOHalfRes();
+    bool IsSSAOHalfRes() const;
+
     // 直近のフレームで、本描画のキューに登録された数と実際に描いた数
     const RenderQueue::CullStats& GetCullStats() const { return m_cullStats; }
 

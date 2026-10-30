@@ -86,6 +86,10 @@ void Game::Update(float dt)
     if (Input::IsKeyPressed(VK_F4)) {
         m_graphics->ToggleVSync();
     }
+    // F7：SSAOを全解像度／半分の解像度で切り替え（全シーン共通。計測区間 SSAO で見比べる）
+    if (Input::IsKeyPressed(VK_F7)) {
+        m_renderer->ToggleSSAOHalfRes();
+    }
 
     Input::Update();
 
@@ -125,6 +129,10 @@ void Game::Render(float dt)
             const bool vs = m_graphics->IsVSyncEnabled();
             m_textRenderer->DrawString(vs ? L"VSync ON   F4" : L"VSync OFF  F4",
                 left, 22.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.6f);
+            // SSAOの解像度（VSyncの行のさらに上）
+            const bool half = m_renderer->IsSSAOHalfRes();
+            m_textRenderer->DrawString(half ? L"SSAO Half  F7" : L"SSAO Full  F7",
+                left, 4.0f, half ? 0.5f : 1.0f, 1.0f, half ? 0.5f : 1.0f, 1.0f, 0.6f);
         }
     }
     m_textRenderer->End();

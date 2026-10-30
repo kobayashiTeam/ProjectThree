@@ -580,9 +580,6 @@
     <FxCompile Include="Shaders\BloomUpsample.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
-      <Filter>リソース ファイル\deferred</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\InversionCS.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
@@ -597,6 +594,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\ParticleDraw.hlsl">
       <Filter>リソース ファイル\particle</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
+      <Filter>リソース ファイル\deferred</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

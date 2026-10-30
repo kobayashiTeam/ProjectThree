@@ -66,6 +66,7 @@ TextureCube prefilterMap : register(t14); // IBL：Specular用に畳み込み済
 
 SamplerState samLinear : register(s0);
 SamplerState samPoint : register(s3);
+SamplerState samSSAO : register(s4); // SSAO専用（Linear・Clamp）。半分の解像度のSSAOをなめらかに拡大する
 
 // シャドウマップ関連（既存の仕組みを維持）
 Texture2D shadowMap : register(t3);
@@ -296,7 +297,8 @@ PS_OUTPUT PS(PS_INPUT input)
     float NdotV = max(dot(N, V), 0.0f);
 
     // SSAOによる遮蔽率を取得
-    float ssao = txSSAOBlur.Sample(samPoint, input.Tex).r;
+    // SSAOは半分の解像度のこともあるので、Linearで間を混ぜて読む（Pointだと2x2のブロックが見える）
+    float ssao = txSSAOBlur.Sample(samSSAO, input.Tex).r;
 
     // 非金属は反射率0.04（一般的な誘電体の目安）、金属はアルベド自体を反射色として使う
     float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
