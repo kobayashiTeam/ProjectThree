@@ -67,6 +67,8 @@ enum class ShaderID {
     BloomDownsample,
     BloomUpsample,
     Tonemap,
+    // アンチエイリアス（Tonemapの直後、LDRの段の最初）
+    Fxaa,
     //skybox
     SkyBox,
     //IBL
@@ -192,6 +194,13 @@ enum class BlurMode {
 
 // トーンマッピングの方式（Scene6で切り替えて比較する）
 // 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
+// FXAAの状態（F8で循環。全シーン共通。BeginFrameでは戻さない）
+enum class FxaaMode {
+    Off,
+    On,
+    EdgeView // 輪郭として扱ったピクセルを色で表示（横向きの線＝赤、縦向きの線＝青）
+};
+
 enum class Tonemapper {
     Exposure = 0, // 1 - exp(-x * exposure)。従来の方式
     ACES = 1  // ACES Filmic（Narkowiczの近似式）。暗部が締まり、明部が粘る映画的なカーブ

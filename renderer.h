@@ -35,6 +35,7 @@ class SkyBox;
 class PointSpriteGSEffect;
 class InstancedModel;
 class TonemapPostProcess;
+class FxaaPostProcess;
 class PostProcessChain;
 class BloomPass;
 class GBufferPass;
@@ -127,6 +128,9 @@ public:
     // SSAOPassは前方宣言だけなので、中身はrenderer.cppに置く
     void ToggleSSAOHalfRes();
     bool IsSSAOHalfRes() const;
+    // FXAA：Off → On → EdgeView（デバッグ表示）→ Off の順に切り替え（全シーン共通。BeginFrameでは戻さない）
+    void CycleFxaaMode();
+    FxaaMode GetFxaaMode() const { return m_fxaaMode; }
 
     // 直近のフレームで、本描画のキューに登録された数と実際に描いた数
     const RenderQueue::CullStats& GetCullStats() const { return m_cullStats; }
@@ -166,6 +170,9 @@ private:
 
     // HDR→LDRの境目（Bloom合成＋トーンマッピング）。チェーンには入れず直接呼ぶ
     TonemapPostProcess* m_tonemapPostProcess = nullptr;
+    // LDRの段の最初：FXAA。チェーンには入れず、Tonemapの直後に直接呼ぶ
+    FxaaPostProcess* m_fxaa = nullptr;
+    FxaaMode m_fxaaMode = FxaaMode::On;
     // LDRの段のポストプロセス（モノクロ・セピア・ビネットなど）を担当するクラス
     PostProcessChain* m_postProcessChain = nullptr;
     VignettePostProcess* m_vignette = nullptr; // チェーン内の要素への参照（所有はチェーン）

@@ -545,6 +545,9 @@
     <ClInclude Include="particleSystem.h">
       <Filter>ヘッダー ファイル\particle</Filter>
     </ClInclude>
+    <ClInclude Include="fxaaPostProcess.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MoveGS.hlsl">
@@ -597,6 +600,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\DeferredLightingShader.hlsl">
       <Filter>リソース ファイル\deferred</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\FxaaShader.hlsl">
+      <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -90,6 +90,10 @@ void Game::Update(float dt)
     if (Input::IsKeyPressed(VK_F7)) {
         m_renderer->ToggleSSAOHalfRes();
     }
+    // F8：FXAAを OFF → ON → 輪郭の表示 の順に切り替え（全シーン共通）
+    if (Input::IsKeyPressed(VK_F8)) {
+        m_renderer->CycleFxaaMode();
+    }
 
     Input::Update();
 
@@ -133,6 +137,14 @@ void Game::Render(float dt)
             const bool half = m_renderer->IsSSAOHalfRes();
             m_textRenderer->DrawString(half ? L"SSAO Half  F7" : L"SSAO Full  F7",
                 left, 4.0f, half ? 0.5f : 1.0f, 1.0f, half ? 0.5f : 1.0f, 1.0f, 0.6f);
+            // FXAAの状態（SSAOの行の右側）
+            const FxaaMode fxaa = m_renderer->GetFxaaMode();
+            const wchar_t* fxaaText =
+                (fxaa == FxaaMode::Off) ? L"FXAA OFF  F8" :
+                (fxaa == FxaaMode::On) ? L"FXAA ON   F8" : L"FXAA Edge F8";
+            const bool fxaaOn = (fxaa != FxaaMode::Off);
+            m_textRenderer->DrawString(fxaaText, left + 170.0f, 4.0f,
+                fxaaOn ? 0.5f : 1.0f, 1.0f, fxaaOn ? 0.5f : 1.0f, 1.0f, 0.6f);
         }
     }
     m_textRenderer->End();

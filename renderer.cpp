@@ -29,6 +29,7 @@
 #include"light.h"
 #include"graphicsCommon.h"
 #include"tonemapPostProcess.h"
+#include"fxaaPostProcess.h"
 #include<random>
 #include"postProcessChain.h"
 #include"bloomPass.h"
@@ -48,6 +49,7 @@ Renderer::~Renderer()
     delete m_dsStates;
     delete m_blendStates;
     delete m_gpuProfiler;
+    delete m_fxaa;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -121,6 +123,10 @@ bool Renderer::Initialize(Graphics* graphics)
     m_tonemapPostProcess = new TonemapPostProcess();
     m_tonemapPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Tonemap));
+
+    // LDRの段の最初：FXAA（Tonemapの直後に直接呼ぶ。チェーンの外）
+    m_fxaa = new FxaaPostProcess();
+    if (!m_fxaa->Initialize(pDevice, ShaderManager::GetInstance().GetShader(ShaderID::Fxaa))) return false;
 
     // PostProcessChain の生成・初期化（すべてLDRの段＝トーンマッピングの後で実行される）
     // 並び順＝適用順：色を変える系 → ぼかし・シャープ → ビネット（画面の枠に関わるものは最後）
@@ -611,11 +617,26 @@ void Renderer::Execute()
     m_tonemapPostProcess->Unbind(pContext);
 
     // ==========================================
+    // 5.5 LDRの段の最初：FXAA（tmpRT → offscreenRT）
+    //    シャープなど輪郭を強めるポストプロセスより前に、ジャギーを消しておく。
+    //    HDRの役目を終えた offscreenRT を書き込み先にし、書けたら入力と予備を入れ替えてチェーンへ渡す
+    //    ※計測は Post 区間に含まれる。効果は F8 の ON/OFF で Post の差を見る
+    // ==========================================
+    RenderTarget* ldrInput = m_tmpRT;
+    RenderTarget* ldrSpare = m_offscreenRT;
+    if (m_fxaa && m_fxaaMode != FxaaMode::Off) {
+        m_fxaa->SetEdgeView(m_fxaaMode == FxaaMode::EdgeView);
+        if (m_fxaa->Apply(pContext, ldrInput, ldrSpare, m_finalRenderMesh)) {
+            std::swap(ldrInput, ldrSpare);
+        }
+    }
+
+    // ==========================================
     // 6. LDRの段：ポストプロセス・ピンポン・チェーン
-    //    HDRの役目を終えた offscreenRT を、2枚目のピンポンバッファとして再利用する
+    //    tmpRT と offscreenRT の2枚で読み書きを入れ替える（FXAAの後なら、最新の絵は offscreenRT 側）
     // ==========================================
     RenderTarget* finalResult = m_postProcessChain->Render(
-        pContext, m_tmpRT, m_offscreenRT, m_finalRenderMesh);
+        pContext, ldrInput, ldrSpare, m_finalRenderMesh);
 
     // ==========================================
     // 7. 出力先を「デフォルト（画面）」に戻して最終転写（ガンマ補正のみ）
@@ -783,3 +804,13 @@ float Renderer::GetCascadeSplit(int index) const
 // SSAOの解像度の切り替え（実体はSSAOPassが持つ。Rendererは窓口だけ）
 void Renderer::ToggleSSAOHalfRes() { m_ssaoPass->ToggleHalfRes(); }
 bool Renderer::IsSSAOHalfRes() const { return m_ssaoPass->IsHalfRes(); }
+
+// FXAAの切り替え：Off → On → EdgeView → Off
+void Renderer::CycleFxaaMode()
+{
+    switch (m_fxaaMode) {
+    case FxaaMode::Off:      m_fxaaMode = FxaaMode::On;       break;
+    case FxaaMode::On:       m_fxaaMode = FxaaMode::EdgeView; break;
+    case FxaaMode::EdgeView: m_fxaaMode = FxaaMode::Off;      break;
+    }
+}

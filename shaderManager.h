@@ -49,6 +49,8 @@ public:
         if (!GetOrCreate(pDevice, ShaderID::BloomDownsample, L"Shaders/BloomDownsample.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::BloomUpsample, L"Shaders/BloomUpsample.hlsl")) return false;
         if (!GetOrCreate(pDevice, ShaderID::Tonemap, L"Shaders/Tonemap.hlsl")) return false;
+        // アンチエイリアス
+        if (!GetOrCreate(pDevice, ShaderID::Fxaa, L"Shaders/FxaaShader.hlsl")) return false;
         // skybox
         if (!GetOrCreate(pDevice, ShaderID::SkyBox, L"Shaders/SkyBoxShader.hlsl")) return false;
         //IBL
