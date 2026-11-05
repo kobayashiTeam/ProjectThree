@@ -97,6 +97,15 @@
     <Filter Include="ソース ファイル\particle">
       <UniqueIdentifier>{c3f842b7-90a2-4bd4-954a-502245a3471a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\gpuProfiler">
+      <UniqueIdentifier>{352f7338-647d-4b95-ae05-5f1d7d025630}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\gpuProfiler">
+      <UniqueIdentifier>{28fde28f-15a4-4ac9-ba02-230975d3f57a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\colorGrading">
+      <UniqueIdentifier>{21af1a10-2b4c-4960-9f25-d99cb73ae312}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -306,14 +315,14 @@
     <ClCompile Include="bloomPass.cpp">
       <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
-    <ClCompile Include="gpuProfiler.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="scene12.cpp">
       <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
     <ClCompile Include="particleSystem.cpp">
       <Filter>ソース ファイル\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="gpuProfiler.cpp">
+      <Filter>ソース ファイル\gpuProfiler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -530,9 +539,6 @@
     <ClInclude Include="tonemapPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
-    <ClInclude Include="gpuProfiler.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="inversionCSPostProcess.h">
       <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
@@ -547,6 +553,12 @@
     </ClInclude>
     <ClInclude Include="fxaaPostProcess.h">
       <Filter>ヘッダー ファイル\pass</Filter>
+    </ClInclude>
+    <ClInclude Include="colorGradingLut.h">
+      <Filter>ヘッダー ファイル\colorGrading</Filter>
+    </ClInclude>
+    <ClInclude Include="gpuProfiler.h">
+      <Filter>ヘッダー ファイル\gpuProfiler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -577,9 +589,6 @@
     <FxCompile Include="Shaders\ScreenBlit.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\Tonemap.hlsl">
-      <Filter>リソース ファイル\shader_postprocess</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\BloomUpsample.hlsl">
       <Filter>リソース ファイル\shader_postprocess</Filter>
     </FxCompile>
@@ -602,6 +611,12 @@
       <Filter>リソース ファイル\deferred</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\FxaaShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Tonemap.hlsl">
+      <Filter>リソース ファイル\shader_postprocess</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\LutBakeCS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

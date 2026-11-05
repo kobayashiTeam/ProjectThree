@@ -101,7 +101,9 @@ enum class ShaderID {
     // Scene12：GPUパーティクル
     ParticleUpdateCS,  // 粒の更新（ParticleUpdateCS.hlsl の CSMain）
     ParticleDraw,      // 粒の描画の VS/PS（ParticleDraw.hlsl。InputLayout なし、SV_VertexID で粒を読む）
-    ParticleDrawGS     // 粒の描画の GS（同じファイルの GSmain。点 → カメラ向きの板）
+    ParticleDrawGS,    // 粒の描画の GS（同じファイルの GSmain。点 → カメラ向きの板）
+    // カラーグレーディング：32x32x32 の LUT を焼く CS（LutBakeCS.hlsl の CSMain）
+    LutBakeCS
 };
 
 // Scene12：パーティクルの更新をどちらで行うか（同じ動きのまま、更新の ms だけを比べるため）
@@ -192,6 +194,16 @@ enum class BlurMode {
     ComputeShared    // 分離（横→縦）。近所を groupshared から読む
 };
 
+// カラーグレーディング（LUT）の状態（F9で循環。全シーン共通。BeginFrameでは戻さない）
+//   Neutral は「何もしない表」を通すモード。Off と見た目が同じなら、ガンマの往復と半マスのずれが正しい
+enum class LutMode {
+    Off,
+    Neutral,
+    Warm,
+    Cool,
+    Sepia  // チェーンのセピアを LUT で作り直したもの
+};
+
 // トーンマッピングの方式（Scene6で切り替えて比較する）
 // 番号はそのままGPUへ送り、Tonemap.hlsl の分岐と一致させる（並べ替え・途中への追加をしないこと）
 // FXAAの状態（F8で循環。全シーン共通。BeginFrameでは戻さない）
@@ -212,6 +224,11 @@ struct PostProcessConstantBuffer {
     float gammaCorrection = 1.0f; // Scene2用：1.0=ON（補正あり）、0.0=OFF（補正なし）
     int   tonemapper = 0;         // Tonemapperの番号（0=Exposure、1=ACES）。floatと同じ4バイトなので並びは変わらない
     float bloomIntensity = 0.0f;  // Bloomを足す強さ。Bloom OFFのときは0を送る
+    // カラーグレーディング（Tonemap.hlsl だけが読む。ScreenBlit.hlsl は先頭の16バイトしか宣言していないが、
+    // バッファが宣言より大きい分には問題ない）
+    int   lutEnabled = 0;         // 1ならトーンマップの後に LUT（t2）を読む
+    float lutSize = 32.0f;        // LUT の一辺の格子数（ColorGradingLut::LUT_SIZE）
+    float padding[2] = {};        // 16バイトの倍数にする
 };
 
 // Bloomの縮小／拡大パス用のcb（b9）

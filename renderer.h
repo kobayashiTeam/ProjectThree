@@ -36,6 +36,7 @@ class PointSpriteGSEffect;
 class InstancedModel;
 class TonemapPostProcess;
 class FxaaPostProcess;
+class ColorGradingLut;
 class PostProcessChain;
 class BloomPass;
 class GBufferPass;
@@ -131,6 +132,9 @@ public:
     // FXAA：Off → On → EdgeView（デバッグ表示）→ Off の順に切り替え（全シーン共通。BeginFrameでは戻さない）
     void CycleFxaaMode();
     FxaaMode GetFxaaMode() const { return m_fxaaMode; }
+    // カラーグレーディング（LUT）：Off → Neutral → Warm → Cool → Sepia → Off（全シーン共通。BeginFrameでは戻さない）
+    void CycleLutMode();
+    LutMode GetLutMode() const { return m_lutMode; }
 
     // 直近のフレームで、本描画のキューに登録された数と実際に描いた数
     const RenderQueue::CullStats& GetCullStats() const { return m_cullStats; }
@@ -173,6 +177,10 @@ private:
     // LDRの段の最初：FXAA。チェーンには入れず、Tonemapの直後に直接呼ぶ
     FxaaPostProcess* m_fxaa = nullptr;
     FxaaMode m_fxaaMode = FxaaMode::On;
+    // カラーグレーディングの 3D LUT。Tonemap の中で読む（焼き直すのはモードが変わったときだけ）
+    ColorGradingLut* m_colorGradingLut = nullptr;
+    LutMode m_lutMode = LutMode::Off;
+    bool m_lutDirty = true; // true なら次の Execute で焼き直す
     // LDRの段のポストプロセス（モノクロ・セピア・ビネットなど）を担当するクラス
     PostProcessChain* m_postProcessChain = nullptr;
     VignettePostProcess* m_vignette = nullptr; // チェーン内の要素への参照（所有はチェーン）

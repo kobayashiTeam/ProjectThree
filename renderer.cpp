@@ -30,6 +30,7 @@
 #include"graphicsCommon.h"
 #include"tonemapPostProcess.h"
 #include"fxaaPostProcess.h"
+#include"colorGradingLut.h"
 #include<random>
 #include"postProcessChain.h"
 #include"bloomPass.h"
@@ -50,6 +51,7 @@ Renderer::~Renderer()
     delete m_blendStates;
     delete m_gpuProfiler;
     delete m_fxaa;
+    delete m_colorGradingLut;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -123,6 +125,10 @@ bool Renderer::Initialize(Graphics* graphics)
     m_tonemapPostProcess = new TonemapPostProcess();
     m_tonemapPostProcess->Initialize(pDevice,
         ShaderManager::GetInstance().GetShader(ShaderID::Tonemap));
+
+    // カラーグレーディングの 3D LUT（Tonemap の中で読む。中身は最初の Execute で焼く）
+    m_colorGradingLut = new ColorGradingLut();
+    if (!m_colorGradingLut->Initialize(pDevice)) return false;
 
     // LDRの段の最初：FXAA（Tonemapの直後に直接呼ぶ。チェーンの外）
     m_fxaa = new FxaaPostProcess();
@@ -605,13 +611,24 @@ void Renderer::Execute()
     }
 
     // ==========================================
-    // 5. HDR → LDR：Bloom合成＋トーンマッピング（offscreenRT → tmpRT）
+    // 4.5 カラーグレーディング：LUT の焼き直し（モードが変わったときだけ。32x32x32 の CS 1回）
+    //    Post 区間の外で行う（普段のフレームの Post の ms に、たまにしか起きない処理を混ぜないため）
+    // ==========================================
+    const bool lutOn = (m_colorGradingLut && m_lutMode != LutMode::Off);
+    if (lutOn && m_lutDirty) {
+        m_colorGradingLut->Bake(pContext, ColorGradingLut::GetPreset(m_lutMode));
+        m_lutDirty = false;
+    }
+
+    // ==========================================
+    // 5. HDR → LDR：Bloom合成＋トーンマッピング＋カラーグレーディング（offscreenRT → tmpRT）
     // ==========================================
     m_gpuProfiler->Begin(pContext, GpuProfiler::Section::Post);
     m_blendStates->Bind(pContext, BlendMode::Opaque);
     m_tmpRT->Clear(pContext);
     m_tmpRT->Bind(pContext); // ビューポートも画面サイズに戻る
     m_tonemapPostProcess->SetBloomTexture(bloomSRV);
+    m_tonemapPostProcess->SetLutTexture(lutOn ? m_colorGradingLut->GetSRV() : nullptr);
     m_tonemapPostProcess->Render(pContext, m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
     m_tonemapPostProcess->Unbind(pContext);
@@ -693,6 +710,8 @@ void Renderer::UpdatePostProcessConstantBuffer()
     postParams.gammaCorrection = m_postProcessData.gammaCorrection;
     postParams.tonemapper = static_cast<int>(m_tonemapper); // enumの番号をそのまま送る
     postParams.bloomIntensity = m_bloomActive ? m_bloomIntensity : 0.0f;
+    postParams.lutEnabled = (m_colorGradingLut && m_lutMode != LutMode::Off) ? 1 : 0;
+    postParams.lutSize = static_cast<float>(ColorGradingLut::LUT_SIZE);
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};
     HRESULT hr = pContext->Map(m_pPostProcessCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
@@ -813,4 +832,18 @@ void Renderer::CycleFxaaMode()
     case FxaaMode::On:       m_fxaaMode = FxaaMode::EdgeView; break;
     case FxaaMode::EdgeView: m_fxaaMode = FxaaMode::Off;      break;
     }
+}
+
+// カラーグレーディングの切り替え：Off → Neutral → Warm → Cool → Sepia → Off
+// 表の中身が変わるので、次の Execute で焼き直す印を付ける
+void Renderer::CycleLutMode()
+{
+    switch (m_lutMode) {
+    case LutMode::Off:     m_lutMode = LutMode::Neutral; break;
+    case LutMode::Neutral: m_lutMode = LutMode::Warm;    break;
+    case LutMode::Warm:    m_lutMode = LutMode::Cool;    break;
+    case LutMode::Cool:    m_lutMode = LutMode::Sepia;   break;
+    case LutMode::Sepia:   m_lutMode = LutMode::Off;     break;
+    }
+    m_lutDirty = true;
 }

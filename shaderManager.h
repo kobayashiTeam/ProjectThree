@@ -111,6 +111,7 @@ public:
         if (!loadComputeShader(pDevice, ShaderID::BoxBlurCS, L"Shaders/BoxBlurCS.hlsl")) return false;
         if (!loadComputeShader(pDevice, ShaderID::BoxBlurCSNoShared, L"Shaders/BoxBlurCS.hlsl", "CSMainNoShared")) return false;
         if (!loadComputeShader(pDevice, ShaderID::ParticleUpdateCS, L"Shaders/ParticleUpdateCS.hlsl")) return false;
+        if (!loadComputeShader(pDevice, ShaderID::LutBakeCS, L"Shaders/LutBakeCS.hlsl")) return false;
         return true;
     }
 

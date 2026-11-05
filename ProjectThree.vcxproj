@@ -204,6 +204,7 @@
     <ClInclude Include="boxBlurCSPostProcess.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="cascadedShadowMap.h" />
+    <ClInclude Include="colorGradingLut.h" />
     <ClInclude Include="deferredCBMaterial.h" />
     <ClInclude Include="deferredLightingPass.h" />
     <ClInclude Include="depthStencilStates.h" />
@@ -439,6 +440,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\LitShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\LutBakeCS.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
