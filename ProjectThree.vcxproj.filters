@@ -551,14 +551,14 @@
     <ClInclude Include="particleSystem.h">
       <Filter>ヘッダー ファイル\particle</Filter>
     </ClInclude>
-    <ClInclude Include="fxaaPostProcess.h">
-      <Filter>ヘッダー ファイル\pass</Filter>
-    </ClInclude>
     <ClInclude Include="colorGradingLut.h">
       <Filter>ヘッダー ファイル\colorGrading</Filter>
     </ClInclude>
     <ClInclude Include="gpuProfiler.h">
       <Filter>ヘッダー ファイル\gpuProfiler</Filter>
+    </ClInclude>
+    <ClInclude Include="fxaaPostProcess.h">
+      <Filter>ヘッダー ファイル\postProcess</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
