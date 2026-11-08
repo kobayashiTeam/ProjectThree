@@ -31,6 +31,7 @@
 #include"tonemapPostProcess.h"
 #include"fxaaPostProcess.h"
 #include"colorGradingLut.h"
+#include"importedLut.h"
 #include<random>
 #include"postProcessChain.h"
 #include"bloomPass.h"
@@ -52,6 +53,7 @@ Renderer::~Renderer()
     delete m_gpuProfiler;
     delete m_fxaa;
     delete m_colorGradingLut;
+    delete m_importedLut;
 }
 
 bool Renderer::Initialize(Graphics* graphics)
@@ -129,6 +131,13 @@ bool Renderer::Initialize(Graphics* graphics)
     // カラーグレーディングの 3D LUT（Tonemap の中で読む。中身は最初の Execute で焼く）
     m_colorGradingLut = new ColorGradingLut();
     if (!m_colorGradingLut->Initialize(pDevice)) return false;
+
+    // GIMP で作った LUT（PNG）。無くても起動は続ける（F9 の循環から FromPng が外れるだけ）
+    m_importedLut = new ImportedLut();
+    if (!m_importedLut->Initialize(pDevice, L"assets/lut/lut_custom.png")) {
+        delete m_importedLut;
+        m_importedLut = nullptr;
+    }
 
     // LDRの段の最初：FXAA（Tonemapの直後に直接呼ぶ。チェーンの外）
     m_fxaa = new FxaaPostProcess();
@@ -614,11 +623,15 @@ void Renderer::Execute()
     // 4.5 カラーグレーディング：LUT の焼き直し（モードが変わったときだけ。32x32x32 の CS 1回）
     //    Post 区間の外で行う（普段のフレームの Post の ms に、たまにしか起きない処理を混ぜないため）
     // ==========================================
+    //    FromPng は読み込み済みの表を使うので焼かない（t2 につなぐ SRV を選ぶだけ）
     const bool lutOn = (m_colorGradingLut && m_lutMode != LutMode::Off);
-    if (lutOn && m_lutDirty) {
+    const bool lutFromPng = (m_lutMode == LutMode::FromPng && m_importedLut);
+    if (lutOn && !lutFromPng && m_lutDirty) {
         m_colorGradingLut->Bake(pContext, ColorGradingLut::GetPreset(m_lutMode));
         m_lutDirty = false;
     }
+    ID3D11ShaderResourceView* lutSRV = nullptr;
+    if (lutOn) lutSRV = lutFromPng ? m_importedLut->GetSRV() : m_colorGradingLut->GetSRV();
 
     // ==========================================
     // 5. HDR → LDR：Bloom合成＋トーンマッピング＋カラーグレーディング（offscreenRT → tmpRT）
@@ -628,7 +641,7 @@ void Renderer::Execute()
     m_tmpRT->Clear(pContext);
     m_tmpRT->Bind(pContext); // ビューポートも画面サイズに戻る
     m_tonemapPostProcess->SetBloomTexture(bloomSRV);
-    m_tonemapPostProcess->SetLutTexture(lutOn ? m_colorGradingLut->GetSRV() : nullptr);
+    m_tonemapPostProcess->SetLutTexture(lutSRV);
     m_tonemapPostProcess->Render(pContext, m_offscreenRT);
     m_finalRenderMesh->Render(pContext);
     m_tonemapPostProcess->Unbind(pContext);
@@ -834,8 +847,8 @@ void Renderer::CycleFxaaMode()
     }
 }
 
-// カラーグレーディングの切り替え：Off → Neutral → Warm → Cool → Sepia → Off
-// 表の中身が変わるので、次の Execute で焼き直す印を付ける
+// カラーグレーディングの切り替え：Off → Neutral → Warm → Cool → Sepia → FromPng → Off
+// 表の中身が変わるので、次の Execute で焼き直す印を付ける（FromPng は焼かないが、印が残っていても次の焼くモードで使われるだけ）
 void Renderer::CycleLutMode()
 {
     switch (m_lutMode) {
@@ -843,7 +856,8 @@ void Renderer::CycleLutMode()
     case LutMode::Neutral: m_lutMode = LutMode::Warm;    break;
     case LutMode::Warm:    m_lutMode = LutMode::Cool;    break;
     case LutMode::Cool:    m_lutMode = LutMode::Sepia;   break;
-    case LutMode::Sepia:   m_lutMode = LutMode::Off;     break;
+    case LutMode::Sepia:   m_lutMode = m_importedLut ? LutMode::FromPng : LutMode::Off; break;
+    case LutMode::FromPng: m_lutMode = LutMode::Off;     break;
     }
     m_lutDirty = true;
 }

@@ -217,6 +217,7 @@
     <ClInclude Include="graphics.h" />
     <ClInclude Include="graphicsCommon.h" />
     <ClInclude Include="gsEffect.h" />
+    <ClInclude Include="importedLut.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="instancedModel.h" />
     <ClInclude Include="inversionCSPostProcess.h" />

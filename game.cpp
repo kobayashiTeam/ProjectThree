@@ -94,7 +94,7 @@ void Game::Update(float dt)
     if (Input::IsKeyPressed(VK_F8)) {
         m_renderer->CycleFxaaMode();
     }
-    // F9：カラーグレーディング（LUT）を OFF → Neutral → Warm → Cool → Sepia の順に切り替え（全シーン共通）
+    // F9：カラーグレーディング（LUT）を OFF → Neutral → Warm → Cool → Sepia → PNG の順に切り替え（全シーン共通）
     if (Input::IsKeyPressed(VK_F9)) {
         m_renderer->CycleLutMode();
     }
@@ -155,7 +155,8 @@ void Game::Render(float dt)
                 (lut == LutMode::Off) ? L"LUT OFF     F9" :
                 (lut == LutMode::Neutral) ? L"LUT Neutral F9" :
                 (lut == LutMode::Warm) ? L"LUT Warm    F9" :
-                (lut == LutMode::Cool) ? L"LUT Cool    F9" : L"LUT Sepia   F9";
+                (lut == LutMode::Cool) ? L"LUT Cool    F9" :
+                (lut == LutMode::Sepia) ? L"LUT Sepia   F9" : L"LUT PNG     F9";
             const bool lutOn = (lut != LutMode::Off);
             m_textRenderer->DrawString(lutText, left + 170.0f, 22.0f,
                 lutOn ? 0.5f : 1.0f, 1.0f, lutOn ? 0.5f : 1.0f, 1.0f, 0.6f);

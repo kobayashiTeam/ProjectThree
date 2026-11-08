@@ -201,7 +201,8 @@ enum class LutMode {
     Neutral,
     Warm,
     Cool,
-    Sepia  // チェーンのセピアを LUT で作り直したもの
+    Sepia, // チェーンのセピアを LUT で作り直したもの
+    FromPng // GIMP で作った帯（assets/lut/lut_custom.png）を読み込んだもの。読めなかったときは循環から外れる
 };
 
 // トーンマッピングの方式（Scene6で切り替えて比較する）

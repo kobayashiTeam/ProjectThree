@@ -35,6 +35,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    // COM の初期化：WIC（PNG/JPG の読み込み。DirectXTK の WICTextureLoader と ImportedLut）は COM の部品なので、
+    // 使う前にこのスレッドで1回だけ初期化しておく。終わりに CoUninitialize で対にする
+    if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) return 0;
+
     const wchar_t CLASS_NAME[] = L"DX11_CleanBase";
 
     WNDCLASS wc = {};
@@ -57,15 +61,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
         rc.right - rc.left, rc.bottom - rc.top,
         nullptr, nullptr, hInstance, nullptr);
-    if (!hWnd) return 0;
+    if (!hWnd) { CoUninitialize(); return 0; }
     ShowWindow(hWnd, nCmdShow);
 
-    Game game;
-    if (!game.Initialize(hWnd, kWidth, kHeight)) {
-        return 0;
+    {   // Game（中の COM のオブジェクトも含む）を CoUninitialize より先に片付けるためのスコープ
+        Game game;
+        if (game.Initialize(hWnd, kWidth, kHeight)) {
+            game.Run();
+        }
+        game.Shutdown();
     }
 
-    game.Run();
-    game.Shutdown();
+    CoUninitialize();
     return 0;
 }
