@@ -94,6 +94,7 @@ void Graphics::Finalize()
     if (m_pDepthStencilView) { m_pDepthStencilView->Release(); m_pDepthStencilView = nullptr; }
     if (m_pDepthStencil) { m_pDepthStencil->Release();     m_pDepthStencil = nullptr; }
     if (m_pRenderTargetView) { m_pRenderTargetView->Release(); m_pRenderTargetView = nullptr; }
+	if (pBackBuffer) { pBackBuffer->Release();             pBackBuffer = nullptr; }
     if (m_pSwapChain) { m_pSwapChain->Release();        m_pSwapChain = nullptr; }
     if (m_pImmediateContext) { m_pImmediateContext->Release(); m_pImmediateContext = nullptr; }
     if (m_pd3dDevice) { m_pd3dDevice->Release();        m_pd3dDevice = nullptr; }
